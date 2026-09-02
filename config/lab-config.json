@@ -1,0 +1,17 @@
+{
+  "project": "NetworkLab",
+  "environment": "stage-lab",
+  "monitoring": {
+    "interval_seconds": 30,
+    "connectivity_targets": [],
+    "services": []
+  },
+  "network": {
+    "interfaces": [],
+    "dns_servers": []
+  },
+  "safety": {
+    "configuration_enabled": false,
+    "require_lab_scope": true
+  }
+}
