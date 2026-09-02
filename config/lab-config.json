@@ -1,10 +1,21 @@
 {
   "project": "NetworkLab",
   "environment": "stage-lab",
+  "scope": {
+    "model": "software-only",
+    "physical_hardware_required": false,
+    "production_network_allowed": false
+  },
   "monitoring": {
     "interval_seconds": 30,
-    "connectivity_targets": [],
-    "services": []
+    "connectivity_targets": [
+      "127.0.0.1"
+    ],
+    "services": [
+      "Dnscache",
+      "Dhcp",
+      "NlaSvc"
+    ]
   },
   "network": {
     "interfaces": [],
