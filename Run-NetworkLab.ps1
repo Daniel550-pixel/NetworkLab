@@ -45,34 +45,53 @@ Write-Host "Application: $App" -ForegroundColor DarkGray
 Write-Host "Starting Streamlit..." -ForegroundColor Cyan
 Write-Host ""
 
-$arguments = @(
-    '-m',
-    'streamlit',
-    'run',
-    $App,
-    '--server.port',
-    $Port,
-    '--server.address',
-    '127.0.0.1',
-    '--browser.gatherUsageStats',
-    'false'
-)
+$LogDirectory = Join-Path $Root '.networklab'
+$StdOutLog = Join-Path $LogDirectory 'streamlit.stdout.log'
+$StdErrLog = Join-Path $LogDirectory 'streamlit.stderr.log'
 
-$process = Start-Process python.exe -ArgumentList $arguments -WorkingDirectory $Root -PassThru
+New-Item -ItemType Directory -Path $LogDirectory -Force | Out-Null
+Remove-Item $StdOutLog, $StdErrLog -Force -ErrorAction SilentlyContinue
 
-Start-Sleep -Seconds 3
+# Windows PowerShell 5.1 can mishandle argument arrays when paths contain spaces.
+# Pass the complete command line as one quoted argument string.
+$arguments = "-m streamlit run `"$App` --server.port $Port --server.address 127.0.0.1 --browser.gatherUsageStats false"
+
+$process = Start-Process ``
+    -FilePath 'python.exe' ``
+    -ArgumentList $arguments ``
+    -WorkingDirectory $Root ``
+    -RedirectStandardOutput $StdOutLog ``
+    -RedirectStandardError $StdErrLog ``
+    -PassThru
+
+Start-Sleep -Seconds 4
 
 $listener = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
 
 if (-not $listener) {
+    $stderr = if (Test-Path $StdErrLog) { Get-Content $StdErrLog -Raw } else { '' }
+    $stdout = if (Test-Path $StdOutLog) { Get-Content $StdOutLog -Raw } else { '' }
+
     if ($process.HasExited) {
-        throw "Streamlit exited immediately with code $($process.ExitCode)."
+        Write-Host ''
+        Write-Host 'STREAMLIT STARTUP FAILED' -ForegroundColor Red
+        Write-Host "Exit code: $($process.ExitCode)" -ForegroundColor Red
+        if ($stderr.Trim()) {
+            Write-Host ''
+            Write-Host 'Error output:' -ForegroundColor Yellow
+            Write-Host $stderr.Trim()
+        }
+        if ($stdout.Trim()) {
+            Write-Host ''
+            Write-Host 'Standard output:' -ForegroundColor Yellow
+            Write-Host $stdout.Trim()
+        }
+        throw "Streamlit failed to start. Logs: $LogDirectory"
     }
 
     Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-    throw "Streamlit started but did not open port $Port."
+    throw "Streamlit started but did not open port $Port. Logs: $LogDirectory"
 }
-
 Write-Host "NetworkLab running: $Url" -ForegroundColor Green
 Write-Host "Streamlit PID: $($process.Id)" -ForegroundColor DarkGray
 Write-Host "Press Ctrl+C to stop." -ForegroundColor DarkGray
