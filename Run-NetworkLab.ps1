@@ -18,13 +18,23 @@ if (-not (Test-Path $App)) {
     throw "Streamlit application not found: $App"
 }
 
-if (-not (Get-Command python.exe -ErrorAction SilentlyContinue)) {
+$PythonCommand = Get-Command python.exe -ErrorAction SilentlyContinue
+
+if (-not $PythonCommand) {
     throw "Python was not found on PATH."
+}
+
+$PythonPath = $PythonCommand.Source
+if ([string]::IsNullOrWhiteSpace($PythonPath)) {
+    $PythonPath = $PythonCommand.Path
+}
+if ([string]::IsNullOrWhiteSpace($PythonPath)) {
+    throw "Python executable path could not be resolved."
 }
 
 if (-not $SkipInstall) {
     Write-Host "Checking Streamlit dependency..." -ForegroundColor Cyan
-    & python.exe -m pip install -r $Requirements
+    & $PythonPath -m pip install -r $Requirements
     if ($LASTEXITCODE -ne 0) {
         throw "Dependency installation failed."
     }
@@ -57,7 +67,7 @@ Remove-Item $StdOutLog, $StdErrLog -Force -ErrorAction SilentlyContinue
 $arguments = "-m streamlit run `"$App` --server.port $Port --server.address 127.0.0.1 --browser.gatherUsageStats false"
 
 $process = Start-Process ``
-    -FilePath 'python.exe' ``
+    -FilePath $PythonPath ``
     -ArgumentList $arguments ``
     -WorkingDirectory $Root ``
     -RedirectStandardOutput $StdOutLog ``
