@@ -8,7 +8,8 @@ $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 $Url = "http://localhost:$Port"
 $LogDir = Join-Path $Root 'logs'
-$LogFile = Join-Path $LogDir 'networklab-web.log'
+$StdOutLog = Join-Path $LogDir 'networklab-web.out.log'
+$StdErrLog = Join-Path $LogDir 'networklab-web.err.log'
 
 if (-not (Test-Path (Join-Path $Root '.git'))) {
     throw "NetworkLab Git repository not found: $Root"
@@ -37,7 +38,7 @@ if ($existing) {
 }
 
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
-"$(Get-Date -Format o) Starting NetworkLab web backend on port $Port" | Set-Content $LogFile
+Remove-Item $StdOutLog,$StdErrLog -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
 Write-Host "NETWORKLAB" -ForegroundColor Cyan
@@ -49,17 +50,17 @@ $serverProcess = Start-Process powershell.exe -ArgumentList @(
     '-ExecutionPolicy','Bypass',
     '-File',$Server,
     '-Port',$Port
-) -RedirectStandardOutput $LogFile -RedirectStandardError $LogFile -PassThru
+) -RedirectStandardOutput $StdOutLog -RedirectStandardError $StdErrLog -PassThru
 
 Start-Sleep -Seconds 2
 
 if ($serverProcess.HasExited) {
     Write-Host ""
     Write-Host "Backend failed to start." -ForegroundColor Red
-    Write-Host "Backend log: $LogFile" -ForegroundColor Yellow
-    if (Test-Path $LogFile) {
-        Get-Content $LogFile | Write-Host
-    }
+    Write-Host "STDOUT: $StdOutLog" -ForegroundColor Yellow
+    Write-Host "STDERR: $StdErrLog" -ForegroundColor Yellow
+    if (Test-Path $StdOutLog) { Get-Content $StdOutLog | Write-Host }
+    if (Test-Path $StdErrLog) { Get-Content $StdErrLog | Write-Host }
     throw "NetworkLab web backend exited with code $($serverProcess.ExitCode)."
 }
 
@@ -67,15 +68,17 @@ $listener = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction Sil
 if (-not $listener) {
     Write-Host ""
     Write-Host "Backend process exists, but port $Port is not listening." -ForegroundColor Red
-    Write-Host "Backend log: $LogFile" -ForegroundColor Yellow
-    Get-Content $LogFile | Write-Host
+    Write-Host "STDOUT: $StdOutLog" -ForegroundColor Yellow
+    Write-Host "STDERR: $StdErrLog" -ForegroundColor Yellow
+    if (Test-Path $StdOutLog) { Get-Content $StdOutLog | Write-Host }
+    if (Test-Path $StdErrLog) { Get-Content $StdErrLog | Write-Host }
     Stop-Process -Id $serverProcess.Id -Force -ErrorAction SilentlyContinue
     throw "NetworkLab backend did not bind to $Url."
 }
 
 Write-Host "Webapp running: $Url" -ForegroundColor Green
 Write-Host "Backend PID: $($serverProcess.Id)" -ForegroundColor DarkGray
-Write-Host "Log: $LogFile" -ForegroundColor DarkGray
+Write-Host "Logs: $LogDir" -ForegroundColor DarkGray
 
 if (-not $NoBrowser) {
     Start-Process $Url
