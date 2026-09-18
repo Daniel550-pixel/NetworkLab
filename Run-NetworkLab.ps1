@@ -45,12 +45,9 @@ Write-Host "NETWORKLAB" -ForegroundColor Cyan
 Write-Host "Repository: $Root" -ForegroundColor DarkGray
 Write-Host "Starting local webapp..." -ForegroundColor Cyan
 
-$serverProcess = Start-Process powershell.exe -ArgumentList @(
-    '-NoProfile',
-    '-ExecutionPolicy','Bypass',
-    '-File',$Server,
-    '-Port',$Port
-) -RedirectStandardOutput $StdOutLog -RedirectStandardError $StdErrLog -PassThru
+$argumentList = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$Server,'-Port',$Port)
+
+$serverProcess = Start-Process powershell.exe -ArgumentList $argumentList -RedirectStandardOutput $StdOutLog -RedirectStandardError $StdErrLog -PassThru
 
 Start-Sleep -Seconds 2
 
