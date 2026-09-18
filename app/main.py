@@ -12,452 +12,480 @@ from app.services.network_service import get_state
 
 st.set_page_config(
     page_title="NetworkLab",
-    page_icon="⌘",
+    page_icon="◈",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ---------------------------------------------------------------------------
-# Lab console theme
-# ---------------------------------------------------------------------------
 st.markdown(
     """
     <style>
     :root {
-        --nl-bg: #071018;
-        --nl-panel: #0c1721;
-        --nl-panel-2: #101e2a;
-        --nl-border: #1d3444;
-        --nl-text: #e6eef5;
-        --nl-muted: #7f96a8;
-        --nl-accent: #37b6ff;
-        --nl-green: #3ddc97;
-        --nl-yellow: #f4c95d;
-        --nl-red: #ff6b6b;
+        --bg: #071019;
+        --sidebar: #09131c;
+        --panel: #0d1923;
+        --panel2: #101f2b;
+        --border: #1c3342;
+        --text: #e7eef4;
+        --muted: #8095a5;
+        --accent: #4bb8ff;
+        --ok: #45d39a;
+        --warn: #e8bd5c;
+        --bad: #ff7070;
     }
 
-    .stApp { background: var(--nl-bg); color: var(--nl-text); }
-    [data-testid="stSidebar"] { background: #09131c; border-right: 1px solid var(--nl-border); }
-    [data-testid="stSidebar"] .block-container { padding-top: 1.25rem; }
-    .block-container { max-width: 1540px; padding-top: 1.5rem; padding-bottom: 3rem; }
-
-    h1, h2, h3 { letter-spacing: -0.02em; }
-    h1 { font-size: 2.15rem !important; }
-    h2 { font-size: 1.35rem !important; margin-top: 1.2rem !important; }
-    h3 { font-size: 1.02rem !important; }
-
-    .nl-brand {
-        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-        font-size: 1.25rem;
-        font-weight: 800;
-        letter-spacing: .12em;
+    .stApp { background: var(--bg); color: var(--text); }
+    [data-testid="stSidebar"] {
+        background: var(--sidebar);
+        border-right: 1px solid var(--border);
     }
-    .nl-kicker {
-        color: var(--nl-accent);
-        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-        font-size: .72rem;
+    [data-testid="stSidebar"] .block-container { padding: 1.25rem 1rem; }
+    .block-container {
+        max-width: 1380px;
+        padding: 1.6rem 2.2rem 3rem;
+    }
+
+    /* Sidebar */
+    .brand {
+        font: 800 1.12rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
         letter-spacing: .14em;
+        margin-bottom: .25rem;
+    }
+    .brand-sub {
+        color: var(--muted);
+        font-size: .72rem;
+        margin-bottom: 1.25rem;
+    }
+    .side-section {
+        color: #5f7788;
+        font: 700 .63rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+        letter-spacing: .13em;
         text-transform: uppercase;
+        margin: 1.1rem 0 .45rem;
     }
-    .nl-subtitle { color: var(--nl-muted); margin-top: -.45rem; margin-bottom: 1.1rem; }
-    .nl-panel {
-        background: linear-gradient(180deg, var(--nl-panel), #0a141d);
-        border: 1px solid var(--nl-border);
-        border-radius: 10px;
-        padding: 16px 18px;
-        min-height: 108px;
-    }
-    .nl-panel-title {
-        color: var(--nl-muted);
-        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-        font-size: .68rem;
-        letter-spacing: .11em;
-        text-transform: uppercase;
-    }
-    .nl-value { font-size: 1.65rem; font-weight: 750; margin-top: 6px; }
-    .nl-ok { color: var(--nl-green); }
-    .nl-warn { color: var(--nl-yellow); }
-    .nl-bad { color: var(--nl-red); }
 
-    .nl-topology {
+    /* Header */
+    .eyebrow {
+        color: var(--accent);
+        font: 700 .65rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+        margin-bottom: .35rem;
+    }
+    .page-subtitle {
+        color: var(--muted);
+        font-size: .86rem;
+        margin-top: -.65rem;
+        margin-bottom: 1.4rem;
+    }
+
+    /* Status strip */
+    .status-strip {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr 1fr 1fr;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: var(--panel);
+        overflow: hidden;
+        margin-bottom: 1.35rem;
+    }
+    .status-cell {
+        padding: 13px 16px;
+        border-right: 1px solid var(--border);
+    }
+    .status-cell:last-child { border-right: 0; }
+    .status-label {
+        color: var(--muted);
+        font: 700 .61rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+    }
+    .status-value { font-size: 1rem; font-weight: 700; margin-top: 6px; }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
+
+    /* Cards */
+    .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 15px 17px;
+    }
+    .card-title {
+        font-weight: 700;
+        font-size: .88rem;
+        margin-bottom: 3px;
+    }
+    .card-meta {
+        color: var(--muted);
+        font-size: .72rem;
+        margin-bottom: 12px;
+    }
+    .metric-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    .metric {
+        background: var(--panel2);
+        border: 1px solid #1b3040;
+        border-radius: 7px;
+        padding: 11px;
+    }
+    .metric-label {
+        color: var(--muted);
+        font: 700 .59rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+        letter-spacing: .09em;
+        text-transform: uppercase;
+    }
+    .metric-value { font-size: 1.25rem; font-weight: 750; margin-top: 5px; }
+
+    /* Topology */
+    .topology {
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 10px;
-        padding: 24px 8px;
-        background: #09141e;
-        border: 1px solid var(--nl-border);
-        border-radius: 10px;
-        overflow-x: auto;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 20px 12px;
+        background: #09141d;
+        border: 1px solid var(--border);
+        border-radius: 9px;
     }
-    .nl-node {
-        min-width: 150px;
+    .node {
+        flex: 1;
         text-align: center;
-        padding: 14px 12px;
-        border: 1px solid #29485b;
-        border-radius: 8px;
-        background: #0e1d29;
+        background: var(--panel);
+        border: 1px solid #254455;
+        border-radius: 7px;
+        padding: 11px 7px;
     }
-    .nl-node strong { display: block; }
-    .nl-node small { color: var(--nl-muted); }
-    .nl-link { color: var(--nl-accent); font-family: monospace; font-size: 1.1rem; }
+    .node strong { display: block; font-size: .78rem; }
+    .node span { color: var(--muted); font-size: .62rem; }
+    .arrow { color: var(--accent); font-family: monospace; }
 
-    .nl-status {
-        display: inline-block;
-        padding: 3px 8px;
-        border-radius: 999px;
-        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-        font-size: .68rem;
-        letter-spacing: .06em;
-        border: 1px solid currentColor;
+    /* Section labels */
+    .section-label {
+        color: #6d8799;
+        font: 700 .63rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+        letter-spacing: .13em;
+        text-transform: uppercase;
+        margin: 1.35rem 0 .55rem;
     }
-    .nl-footer {
-        color: #62798b;
-        border-top: 1px solid var(--nl-border);
+
+    /* Footer */
+    .footer {
+        border-top: 1px solid var(--border);
+        color: #5f7484;
+        font: .66rem ui-monospace, SFMono-Regular, Consolas, monospace;
         margin-top: 2rem;
-        padding-top: .8rem;
-        font-size: .76rem;
-        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        padding-top: .75rem;
     }
+
+    /* Reduce Streamlit chrome */
+    [data-testid="stMetric"] { background: transparent; }
+    div[data-testid="stDataFrame"] { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# ---------------------------------------------------------------------------
-# Data layer
-# ---------------------------------------------------------------------------
 @st.cache_data(ttl=10)
 def state() -> dict:
     return get_state()
-
 
 @st.cache_data(ttl=10)
 def health() -> dict:
     return get_health()
 
-
 @st.cache_data(ttl=30)
 def evidence() -> dict:
     return get_evidence()
 
+def rows(value):
+    return value if isinstance(value, list) else []
 
-def status_text(ok: bool) -> str:
-    return "OPERATIONAL" if ok else "ATTENTION"
+def header(kicker: str, title: str, subtitle: str):
+    st.markdown(f'<div class="eyebrow">{kicker}</div>', unsafe_allow_html=True)
+    st.title(title)
+    st.markdown(f'<div class="page-subtitle">{subtitle}</div>', unsafe_allow_html=True)
 
-
-def metric_card(label: str, value: str, state_class: str = "") -> None:
+def status_strip(overall: bool, connectivity: bool, services: bool, adapters: int):
+    overall_text = "OPERATIONAL" if overall else "ATTENTION"
+    overall_class = "ok" if overall else "bad"
+    conn_text = "PASS" if connectivity else "FAIL"
+    conn_class = "ok" if connectivity else "bad"
+    svc_text = "HEALTHY" if services else "ATTENTION"
+    svc_class = "ok" if services else "warn"
     st.markdown(
         f"""
-        <div class="nl-panel">
-            <div class="nl-panel-title">{label}</div>
-            <div class="nl-value {state_class}">{value}</div>
+        <div class="status-strip">
+            <div class="status-cell">
+                <div class="status-label">Laboratory</div>
+                <div class="status-value {overall_class}">{overall_text}</div>
+            </div>
+            <div class="status-cell">
+                <div class="status-label">Connectivity</div>
+                <div class="status-value {conn_class}">{conn_text}</div>
+            </div>
+            <div class="status-cell">
+                <div class="status-label">Services</div>
+                <div class="status-value {svc_class}">{svc_text}</div>
+            </div>
+            <div class="status-cell">
+                <div class="status-label">Interfaces</div>
+                <div class="status-value">{adapters}</div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+def topology():
+    st.markdown(
+        """
+        <div class="topology">
+            <div class="node"><strong>HOST</strong><span>Windows</span></div>
+            <div class="arrow">━━</div>
+            <div class="node"><strong>INTERFACES</strong><span>NIC layer</span></div>
+            <div class="arrow">━━</div>
+            <div class="node"><strong>TCP/IP</strong><span>Addressing</span></div>
+            <div class="arrow">━━</div>
+            <div class="node"><strong>LOOPBACK</strong><span>127.0.0.1</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-def header(title: str, subtitle: str) -> None:
-    st.markdown('<div class="nl-kicker">NETWORKLAB / SOFTWARE NETWORK LABORATORY</div>', unsafe_allow_html=True)
-    st.title(title)
-    st.markdown(f'<div class="nl-subtitle">{subtitle}</div>', unsafe_allow_html=True)
+# Sidebar
+st.sidebar.markdown('<div class="brand">NETWORKLAB</div>', unsafe_allow_html=True)
+st.sidebar.markdown('<div class="brand-sub">SOFTWARE NETWORK LABORATORY</div>', unsafe_allow_html=True)
 
-
-def safe_rows(value):
-    return value if isinstance(value, list) else []
-
-
-# ---------------------------------------------------------------------------
-# Navigation
-# ---------------------------------------------------------------------------
-st.sidebar.markdown('<div class="nl-brand">NETWORKLAB</div>', unsafe_allow_html=True)
-st.sidebar.caption("Software-only / stage laboratory")
-
-st.sidebar.markdown("### Laboratory")
+st.sidebar.markdown('<div class="side-section">Workspace</div>', unsafe_allow_html=True)
 page = st.sidebar.radio(
-    "Laboratory workspace",
-    [
-        "Command Center",
-        "Topology",
-        "Interfaces",
-        "Addressing & DNS",
-        "Connectivity",
-        "Services",
-        "Diagnostics",
-        "Evidence",
-    ],
+    "Workspace",
+    ["Command Center", "Topology", "Interfaces", "Addressing", "Connectivity", "Services", "Diagnostics", "Evidence"],
     label_visibility="collapsed",
 )
 
-st.sidebar.divider()
-st.sidebar.markdown("### Controls")
-
-if st.sidebar.button("Refresh laboratory", use_container_width=True):
+st.sidebar.markdown('<div class="side-section">System</div>', unsafe_allow_html=True)
+if st.sidebar.button("Refresh", use_container_width=True):
     st.cache_data.clear()
     st.rerun()
 
-st.sidebar.caption("Automatic data cache: 10s · Evidence cache: 30s")
+st.sidebar.markdown(
+    '<div class="side-section">Scope</div>'
+    '<div style="font-size:.72rem;color:#8095a5;line-height:1.65">'
+    '<b style="color:#45d39a">READ-ONLY</b><br>'
+    'Software-only laboratory<br>'
+    'Production configuration disabled'
+    '</div>',
+    unsafe_allow_html=True,
+)
 
-st.sidebar.divider()
-st.sidebar.markdown("### Laboratory scope")
-st.sidebar.success("READ-ONLY")
-st.sidebar.caption("Software-only stage environment")
-st.sidebar.caption("Physical hardware: not required")
-st.sidebar.caption("Production configuration: disabled")
-
-# ---------------------------------------------------------------------------
-# Application
-# ---------------------------------------------------------------------------
 try:
     data = state()
-    h = health()
+    health_data = health()
 
-    adapters = safe_rows(data.get("adapters"))
-    ip_config = safe_rows(data.get("ip"))
-    connectivity = safe_rows(data.get("connectivity"))
-    services = safe_rows(data.get("services"))
+    adapters = rows(data.get("adapters"))
+    ip_config = rows(data.get("ip"))
+    connectivity = rows(data.get("connectivity"))
+    services = rows(data.get("services"))
 
-    connectivity_ok = bool(h.get("connectivity_ok"))
-    services_ok = bool(h.get("services_ok"))
-    overall_ok = connectivity_ok and services_ok
+    conn_ok = bool(health_data.get("connectivity_ok"))
+    svc_ok = bool(health_data.get("services_ok"))
+    overall_ok = conn_ok and svc_ok
 
+    # COMMAND CENTER
     if page == "Command Center":
         header(
+            "LAB / OPERATIONS",
             "Command Center",
-            "Primary operating view for the local Windows network laboratory.",
+            "A quiet operational view of the local network environment.",
         )
+        status_strip(overall_ok, conn_ok, svc_ok, len(adapters))
 
-        cols = st.columns(5)
-        with cols[0]:
-            metric_card("LAB STATUS", status_text(overall_ok), "nl-ok" if overall_ok else "nl-bad")
-        with cols[1]:
-            metric_card("ADAPTERS", str(len(adapters)))
-        with cols[2]:
-            metric_card("IP INTERFACES", str(len(ip_config)))
-        with cols[3]:
-            metric_card(
-                "CONNECTIVITY",
-                "PASS" if connectivity_ok else "FAIL",
-                "nl-ok" if connectivity_ok else "nl-bad",
-            )
-        with cols[4]:
-            running = int(h.get("services_running", 0))
-            total = int(h.get("services_total", 0))
-            metric_card("SERVICES", f"{running}/{total}", "nl-ok" if services_ok else "nl-warn")
-
-        st.subheader("Laboratory state")
-
-        left, right = st.columns([1.35, 1])
+        left, right = st.columns([1.35, .9], gap="large")
 
         with left:
-            st.markdown("#### Logical network path")
+            st.markdown('<div class="section-label">Network path</div>', unsafe_allow_html=True)
+            topology()
+
+        with right:
+            st.markdown('<div class="section-label">Environment</div>', unsafe_allow_html=True)
             st.markdown(
-                """
-                <div class="nl-topology">
-                    <div class="nl-node"><strong>WORKSTATION</strong><small>Windows host</small></div>
-                    <div class="nl-link">━━▶</div>
-                    <div class="nl-node"><strong>NETWORK STACK</strong><small>Adapters / TCP-IP</small></div>
-                    <div class="nl-link">━━▶</div>
-                    <div class="nl-node"><strong>LOOPBACK</strong><small>127.0.0.1</small></div>
-                    <div class="nl-link">━━▶</div>
-                    <div class="nl-node"><strong>LAB SERVICES</strong><small>DNS / DHCP / NLA</small></div>
+                f"""
+                <div class="card">
+                    <div class="card-title">Stage laboratory</div>
+                    <div class="card-meta">Current execution boundary</div>
+                    <div class="metric-row">
+                        <div class="metric"><div class="metric-label">Model</div><div class="metric-value">Software</div></div>
+                        <div class="metric"><div class="metric-label">Write access</div><div class="metric-value ok">OFF</div></div>
+                        <div class="metric"><div class="metric-label">Production</div><div class="metric-value ok">OFF</div></div>
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-        with right:
-            st.markdown("#### Environment")
-            st.json(
-                {
-                    "project": CONFIG.get("project"),
-                    "environment": CONFIG.get("environment"),
-                    "model": CONFIG.get("scope", {}).get("model"),
-                    "production_allowed": CONFIG.get("scope", {}).get("production_network_allowed"),
-                    "configuration_enabled": CONFIG.get("safety", {}).get("configuration_enabled"),
-                }
+        st.markdown('<div class="section-label">Inventory</div>', unsafe_allow_html=True)
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.markdown(
+                f'<div class="card"><div class="card-title">Interfaces</div><div class="card-meta">Windows adapter inventory</div><div class="metric-value">{len(adapters)}</div></div>',
+                unsafe_allow_html=True,
+            )
+        with c2:
+            st.markdown(
+                f'<div class="card"><div class="card-title">Addressing</div><div class="card-meta">Observed IPv4 configurations</div><div class="metric-value">{len(ip_config)}</div></div>',
+                unsafe_allow_html=True,
+            )
+        with c3:
+            running = sum(1 for x in services if x.get("status") == "Running")
+            st.markdown(
+                f'<div class="card"><div class="card-title">Services</div><div class="card-meta">Monitored Windows services</div><div class="metric-value">{running}/{len(services)}</div></div>',
+                unsafe_allow_html=True,
             )
 
-        st.subheader("Active observations")
-
+        st.markdown('<div class="section-label">Recent state</div>', unsafe_allow_html=True)
         if connectivity:
-            conn_rows = []
-            for item in connectivity:
-                conn_rows.append(
+            st.dataframe(
+                [
                     {
-                        "Target": item.get("target", "—"),
-                        "Status": "PASS" if item.get("ok") else "FAIL",
-                        "Latency": item.get("latency", "—"),
+                        "Target": x.get("target", "—"),
+                        "Result": "PASS" if x.get("ok") else "FAIL",
+                        "Latency": x.get("latency", "—"),
                     }
-                )
-            st.dataframe(conn_rows, use_container_width=True, hide_index=True)
+                    for x in connectivity
+                ],
+                use_container_width=True,
+                hide_index=True,
+            )
 
-        if services:
-            service_rows = []
-            for item in services:
-                running = item.get("status") == "Running"
-                service_rows.append(
-                    {
-                        "Service": item.get("name", "—"),
-                        "State": "RUNNING" if running else str(item.get("status", "—")).upper(),
-                        "Start type": item.get("startType", "—"),
-                    }
-                )
-            st.dataframe(service_rows, use_container_width=True, hide_index=True)
-
+    # TOPOLOGY
     elif page == "Topology":
-        header(
-            "Topology",
-            "Logical topology of the software-only laboratory. No physical network changes are performed.",
-        )
-
-        st.markdown(
-            """
-            <div class="nl-topology">
-                <div class="nl-node"><strong>HOST</strong><small>Windows 11</small></div>
-                <div class="nl-link">━━▶</div>
-                <div class="nl-node"><strong>NIC LAYER</strong><small>Network adapters</small></div>
-                <div class="nl-link">━━▶</div>
-                <div class="nl-node"><strong>IP LAYER</strong><small>IPv4 / gateway / DNS</small></div>
-                <div class="nl-link">━━▶</div>
-                <div class="nl-node"><strong>TEST TARGET</strong><small>127.0.0.1</small></div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        st.subheader("Topology inventory")
+        header("LAB / TOPOLOGY", "Topology", "Logical structure of the software laboratory.")
+        topology()
+        st.markdown('<div class="section-label">Layers</div>', unsafe_allow_html=True)
         st.dataframe(
             [
-                {"Layer": "Host", "Component": "Windows workstation", "Mode": "Observed"},
-                {"Layer": "Link", "Component": "Network adapters", "Mode": "Observed"},
-                {"Layer": "Network", "Component": "IPv4 configuration", "Mode": "Observed"},
-                {"Layer": "Transport/Test", "Component": "Loopback 127.0.0.1", "Mode": "Tested"},
-                {"Layer": "Services", "Component": "DNS Cache / DHCP / NLA", "Mode": "Observed"},
+                {"Layer": "Host", "Component": "Windows workstation", "State": "Observed"},
+                {"Layer": "Link", "Component": "Network adapters", "State": "Observed"},
+                {"Layer": "Network", "Component": "IPv4 / gateway / DNS", "State": "Observed"},
+                {"Layer": "Test", "Component": "127.0.0.1", "State": "Tested"},
+                {"Layer": "Services", "Component": "DNS Cache / DHCP / NLA", "State": "Observed"},
             ],
             use_container_width=True,
             hide_index=True,
         )
 
+    # INTERFACES
     elif page == "Interfaces":
-        header("Interfaces", "Adapter inventory and link state reported by Windows.")
-
-        if adapters:
-            rows = []
-            for item in adapters:
-                rows.append(
-                    {
-                        "Interface": item.get("Name", "—"),
-                        "State": item.get("Status", "—"),
-                        "Link speed": item.get("LinkSpeed", "—"),
-                        "MAC address": item.get("MacAddress", "—"),
-                    }
-                )
-            st.dataframe(rows, use_container_width=True, hide_index=True)
-        else:
-            st.info("No network adapters were returned by the Windows diagnostic layer.")
-
-    elif page == "Addressing & DNS":
-        header("Addressing & DNS", "IPv4 addressing, default gateways and DNS servers.")
-
-        if ip_config:
-            rows = []
-            for item in ip_config:
-                rows.append(
-                    {
-                        "Interface": item.get("interface", "—"),
-                        "IPv4": item.get("ipv4", "—"),
-                        "Gateway": item.get("gateway", "—"),
-                        "DNS": item.get("dns", "—"),
-                    }
-                )
-            st.dataframe(rows, use_container_width=True, hide_index=True)
-        else:
-            st.info("No IPv4 configuration was returned by the Windows diagnostic layer.")
-
-    elif page == "Connectivity":
-        header("Connectivity Tests", "Read-only connectivity probes against configured laboratory targets.")
-
-        if connectivity:
-            for item in connectivity:
-                ok = bool(item.get("ok"))
-                label = "PASS" if ok else "FAIL"
-                with st.container(border=True):
-                    a, b, c = st.columns([2, 1, 1])
-                    a.markdown(f"**{item.get('target', 'Unknown target')}**")
-                    b.markdown(f'<span class="nl-status {"nl-ok" if ok else "nl-bad"}">{label}</span>', unsafe_allow_html=True)
-                    c.write(item.get("latency", "—"))
-        else:
-            st.warning("No connectivity targets are currently configured.")
-
-        st.caption("Connectivity testing is observational. Network configuration remains disabled.")
-
-    elif page == "Services":
-        header("Infrastructure Services", "Windows services monitored by the laboratory.")
-
-        rows = []
-        for item in services:
-            running = item.get("status") == "Running"
-            rows.append(
+        header("LAB / INTERFACES", "Interfaces", "Network adapter inventory reported by Windows.")
+        st.markdown('<div class="section-label">Adapter inventory</div>', unsafe_allow_html=True)
+        st.dataframe(
+            [
                 {
-                    "Service": item.get("name", "—"),
-                    "State": "RUNNING" if running else str(item.get("status", "—")).upper(),
-                    "Start type": item.get("startType", "—"),
-                    "Health": "OK" if running else "ATTENTION",
+                    "Interface": x.get("Name", "—"),
+                    "State": x.get("Status", "—"),
+                    "Link": x.get("LinkSpeed", "—"),
+                    "MAC": x.get("MacAddress", "—"),
                 }
-            )
-
-        if rows:
-            st.dataframe(rows, use_container_width=True, hide_index=True)
-        else:
-            st.warning("No monitored services were returned.")
-
-    elif page == "Diagnostics":
-        header("Diagnostics", "Runtime and network health checks used to validate the laboratory.")
-
-        cols = st.columns(4)
-        with cols[0]:
-            metric_card("CONNECTIVITY", "PASS" if connectivity_ok else "FAIL", "nl-ok" if connectivity_ok else "nl-bad")
-        with cols[1]:
-            metric_card("SERVICES", "PASS" if services_ok else "FAIL", "nl-ok" if services_ok else "nl-bad")
-        with cols[2]:
-            metric_card("POWERSHELL", str(h.get("powershell", "—")))
-        with cols[3]:
-            metric_card("PYTHON", "AVAILABLE" if h.get("python_available") else "MISSING", "nl-ok" if h.get("python_available") else "nl-bad")
-
-        st.subheader("Diagnostic output")
-        st.json(h)
-
-    elif page == "Evidence":
-        header(
-            "Evidence & Reporting",
-            "Machine-readable evidence for stage documentation, troubleshooting and GitHub traceability.",
+                for x in adapters
+            ],
+            use_container_width=True,
+            hide_index=True,
         )
 
-        e = evidence()
+    # ADDRESSING
+    elif page == "Addressing":
+        header("LAB / TCP-IP", "Addressing & DNS", "Observed IPv4 addressing, gateways and DNS configuration.")
+        st.markdown('<div class="section-label">IPv4 configuration</div>', unsafe_allow_html=True)
+        st.dataframe(
+            [
+                {
+                    "Interface": x.get("interface", "—"),
+                    "IPv4": x.get("ipv4", "—"),
+                    "Gateway": x.get("gateway", "—"),
+                    "DNS": x.get("dns", "—"),
+                }
+                for x in ip_config
+            ],
+            use_container_width=True,
+            hide_index=True,
+        )
 
-        c1, c2 = st.columns([1, 3])
+    # CONNECTIVITY
+    elif page == "Connectivity":
+        header("LAB / TESTING", "Connectivity", "Controlled read-only probes against laboratory targets.")
+        st.markdown('<div class="section-label">Test results</div>', unsafe_allow_html=True)
+        for x in connectivity:
+            ok = bool(x.get("ok"))
+            with st.container(border=True):
+                a, b, c = st.columns([2.2, 1, 1])
+                a.markdown(f"**{x.get('target', 'Unknown')}**")
+                b.markdown(
+                    f'<span class="{"ok" if ok else "bad"}">{ "PASS" if ok else "FAIL"}</span>',
+                    unsafe_allow_html=True,
+                )
+                c.write(x.get("latency", "—"))
+        if not connectivity:
+            st.info("No laboratory targets configured.")
+
+    # SERVICES
+    elif page == "Services":
+        header("LAB / SERVICES", "Services", "Windows services relevant to the laboratory environment.")
+        st.markdown('<div class="section-label">Service state</div>', unsafe_allow_html=True)
+        st.dataframe(
+            [
+                {
+                    "Service": x.get("name", "—"),
+                    "State": x.get("status", "—"),
+                    "Start type": x.get("startType", "—"),
+                }
+                for x in services
+            ],
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    # DIAGNOSTICS
+    elif page == "Diagnostics":
+        header("LAB / HEALTH", "Diagnostics", "Runtime and infrastructure health information.")
+        status_strip(overall_ok, conn_ok, svc_ok, len(adapters))
+        c1, c2 = st.columns(2, gap="large")
         with c1:
-            st.download_button(
-                "Download JSON evidence",
-                data=json.dumps(e, indent=2),
-                file_name="networklab-evidence.json",
-                mime="application/json",
-                use_container_width=True,
+            st.markdown('<div class="section-label">Runtime</div>', unsafe_allow_html=True)
+            st.json(
+                {
+                    "PowerShell": health_data.get("powershell"),
+                    "Python available": health_data.get("python_available"),
+                }
             )
         with c2:
-            st.caption("Evidence is generated from the same read-only PowerShell diagnostic layer used by the laboratory UI.")
+            st.markdown('<div class="section-label">Health response</div>', unsafe_allow_html=True)
+            st.json(health_data)
 
-        st.json(e)
+    # EVIDENCE
+    elif page == "Evidence":
+        header("LAB / EVIDENCE", "Evidence", "Exportable read-only evidence for documentation and troubleshooting.")
+        st.markdown('<div class="section-label">Export</div>', unsafe_allow_html=True)
+        evidence_data = evidence()
+        st.download_button(
+            "Download evidence JSON",
+            data=json.dumps(evidence_data, indent=2),
+            file_name="networklab-evidence.json",
+            mime="application/json",
+        )
+        st.markdown('<div class="section-label">Payload</div>', unsafe_allow_html=True)
+        st.json(evidence_data)
 
     st.markdown(
-        f'<div class="nl-footer">NETWORKLAB · {CONFIG.get("environment", "stage-lab")} · READ-ONLY · '
-        f'Last UI refresh {datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")}</div>',
+        f'<div class="footer">NETWORKLAB · {CONFIG.get("environment", "stage-lab")} · READ-ONLY · '
+        f'{datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")}</div>',
         unsafe_allow_html=True,
     )
 
 except Exception as exc:
-    st.error("NetworkLab diagnostic layer error")
+    st.error("NetworkLab backend error")
     st.code(str(exc))
-    st.caption("The UI is running, but a Windows diagnostic service returned an error.")
