@@ -7,6 +7,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 $Url = "http://localhost:$Port"
+$LogDir = Join-Path $Root 'logs'
+$LogFile = Join-Path $LogDir 'networklab-web.log'
 
 if (-not (Test-Path (Join-Path $Root '.git'))) {
     throw "NetworkLab Git repository not found: $Root"
@@ -15,6 +17,9 @@ if (-not (Test-Path (Join-Path $Root '.git'))) {
 if (-not $SkipPull) {
     Write-Host "Updating NetworkLab from GitHub..." -ForegroundColor Cyan
     git -C $Root pull origin main
+    if ($LASTEXITCODE -ne 0) {
+        throw "git pull failed with exit code $LASTEXITCODE"
+    }
 }
 
 $Server = Join-Path $Root 'Start-NetworkLabWeb.ps1'
@@ -31,6 +36,9 @@ if ($existing) {
     return
 }
 
+New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+"$(Get-Date -Format o) Starting NetworkLab web backend on port $Port" | Set-Content $LogFile
+
 Write-Host ""
 Write-Host "NETWORKLAB" -ForegroundColor Cyan
 Write-Host "Repository: $Root" -ForegroundColor DarkGray
@@ -41,22 +49,47 @@ $serverProcess = Start-Process powershell.exe -ArgumentList @(
     '-ExecutionPolicy','Bypass',
     '-File',$Server,
     '-Port',$Port
-) -PassThru
+) -RedirectStandardOutput $LogFile -RedirectStandardError $LogFile -PassThru
 
-Start-Sleep -Milliseconds 800
+Start-Sleep -Seconds 2
 
-if (-not $serverProcess.HasExited) {
-    Write-Host "Webapp running: $Url" -ForegroundColor Green
-    if (-not $NoBrowser) { Start-Process $Url }
-    Write-Host "Backend PID: $($serverProcess.Id)" -ForegroundColor DarkGray
-    Write-Host "Press Ctrl+C to stop the launcher and backend." -ForegroundColor DarkGray
-    try {
-        while (-not $serverProcess.HasExited) { Start-Sleep -Seconds 1 }
+if ($serverProcess.HasExited) {
+    Write-Host ""
+    Write-Host "Backend failed to start." -ForegroundColor Red
+    Write-Host "Backend log: $LogFile" -ForegroundColor Yellow
+    if (Test-Path $LogFile) {
+        Get-Content $LogFile | Write-Host
     }
-    finally {
-        if (-not $serverProcess.HasExited) { Stop-Process -Id $serverProcess.Id -Force -ErrorAction SilentlyContinue }
+    throw "NetworkLab web backend exited with code $($serverProcess.ExitCode)."
+}
+
+$listener = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+if (-not $listener) {
+    Write-Host ""
+    Write-Host "Backend process exists, but port $Port is not listening." -ForegroundColor Red
+    Write-Host "Backend log: $LogFile" -ForegroundColor Yellow
+    Get-Content $LogFile | Write-Host
+    Stop-Process -Id $serverProcess.Id -Force -ErrorAction SilentlyContinue
+    throw "NetworkLab backend did not bind to $Url."
+}
+
+Write-Host "Webapp running: $Url" -ForegroundColor Green
+Write-Host "Backend PID: $($serverProcess.Id)" -ForegroundColor DarkGray
+Write-Host "Log: $LogFile" -ForegroundColor DarkGray
+
+if (-not $NoBrowser) {
+    Start-Process $Url
+}
+
+Write-Host "Press Ctrl+C to stop the launcher and backend." -ForegroundColor DarkGray
+
+try {
+    while (-not $serverProcess.HasExited) {
+        Start-Sleep -Seconds 1
     }
 }
-else {
-    throw "NetworkLab web backend exited immediately. Check the server output."
+finally {
+    if (-not $serverProcess.HasExited) {
+        Stop-Process -Id $serverProcess.Id -Force -ErrorAction SilentlyContinue
+    }
 }
