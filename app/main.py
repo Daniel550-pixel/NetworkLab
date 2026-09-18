@@ -9,6 +9,7 @@ from app.core.config import CONFIG
 from app.services.evidence_service import get_evidence
 from app.services.health_service import get_health
 from app.services.network_service import get_state
+from app.ui.topology3d import render_topology
 
 st.set_page_config(
     page_title="NetworkLab",
@@ -264,7 +265,7 @@ st.sidebar.markdown('<div class="brand-sub">SOFTWARE NETWORK LABORATORY</div>', 
 st.sidebar.markdown('<div class="side-section">Workspace</div>', unsafe_allow_html=True)
 page = st.sidebar.radio(
     "Workspace",
-    ["Command Center", "Topology", "Interfaces", "Addressing", "Connectivity", "Services", "Diagnostics", "Evidence"],
+    ["3D Lab", "Command Center", "Topology", "Interfaces", "Addressing", "Connectivity", "Services", "Diagnostics", "Evidence"],
     label_visibility="collapsed",
 )
 
@@ -295,6 +296,36 @@ try:
     conn_ok = bool(health_data.get("connectivity_ok"))
     svc_ok = bool(health_data.get("services_ok"))
     overall_ok = conn_ok and svc_ok
+
+    # 3D LAB
+    if page == "3D Lab":
+        header(
+            "LAB / VISUALIZATION",
+            "3D Laboratory",
+            "Live interactive reconstruction of the observed logical network environment.",
+        )
+        status_strip(overall_ok, conn_ok, svc_ok, len(adapters))
+
+        @st.fragment(run_every="5s")
+        def live_topology():
+            current = state()
+            render_topology(current, height=700)
+
+        live_topology()
+
+        st.markdown('<div class="section-label">Selected telemetry</div>', unsafe_allow_html=True)
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            st.metric("Interfaces", len(adapters))
+        with c2:
+            st.metric("IPv4 configurations", len(ip_config))
+        with c3:
+            st.metric("Connectivity tests", len(connectivity))
+        with c4:
+            st.metric("Services", f"{sum(1 for x in services if x.get('status') == 'Running')}/{len(services)}")
+
+        with st.expander("Raw topology state"):
+            st.json(data)
 
     # COMMAND CENTER
     if page == "Command Center":
