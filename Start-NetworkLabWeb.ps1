@@ -3,7 +3,7 @@ param(
 )
 
 $ErrorActionPreference = 'Continue'
-$Root = Split-Path -Parent $PSScriptRoot
+$Root = $PSScriptRoot
 $WebRoot = Join-Path $Root 'web'
 $Index = Join-Path $WebRoot 'index.html'
 
