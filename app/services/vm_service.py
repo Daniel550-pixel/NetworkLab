@@ -132,6 +132,38 @@ def create_vm_topology() -> dict[str, Any]:
     return get_vm_topology()
 
 
+def get_vm_runtime(name: str) -> dict[str, Any]:
+    vbox = _vboxmanage()
+    if not vbox:
+        raise RuntimeError("VirtualBox VBoxManage.exe was not found.")
+    if name not in {item["name"] for item in VM_DEFINITIONS}:
+        raise ValueError("Unknown NetworkLab VM.")
+    if not _find_vm(vbox, name):
+        raise RuntimeError(f"{name} does not exist. Create the VM topology first.")
+
+    ok, show, err = _run(vbox, "showvminfo", name, "--machinereadable")
+    if not ok:
+        raise RuntimeError(err or show or f"Unable to inspect {name}.")
+
+    fields: dict[str, str] = {}
+    for line in show.splitlines():
+        if "=" in line:
+            key, value = line.split("=", 1)
+            fields[key.strip('"')] = value.strip('"')
+
+    state = fields.get("VMState", "unknown").lower()
+    return {
+        "name": name,
+        "state": state,
+        "running": state == "running",
+        "boot_order": [fields.get("boot1", "none"), fields.get("boot2", "none"), fields.get("boot3", "none"), fields.get("boot4", "none")],
+        "memory_mb": fields.get("memory", ""),
+        "cpus": fields.get("cpus", ""),
+        "nic1": fields.get("nic1", ""),
+        "host_only_adapter": fields.get("hostonlyadapter1", ""),
+    }
+
+
 def vm_action(name: str, action: str) -> dict[str, Any]:
     vbox = _vboxmanage()
     if not vbox:
