@@ -4,6 +4,7 @@ import json
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+import os
 from urllib.parse import urlparse
 
 from app.services.evidence_service import get_evidence
@@ -13,6 +14,7 @@ from app.services.network_service import get_state
 ROOT = Path(__file__).resolve().parents[1]
 WEB_ROOT = ROOT / "web"
 HOST = "127.0.0.1"
+PORT = int(os.environ.get("NETWORKLAB_PORT", "8501"))
 
 
 def json_bytes(payload: object) -> bytes:
@@ -85,8 +87,8 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    server = ThreadingHTTPServer((HOST, 8501), NetworkLabHandler)
-    print(f"NetworkLab local server: http://{HOST}:8501")
+    server = ThreadingHTTPServer((HOST, PORT), NetworkLabHandler)
+    print(f"NetworkLab local server: http://{HOST}:{PORT}")
     print("Press Ctrl+C to stop.")
     try:
         server.serve_forever()
