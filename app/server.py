@@ -13,6 +13,7 @@ from app.services.network_service import get_state
 from app.services.virtualization_service import create_virtual_network, get_virtual_network
 from app.services.vm_service import create_vm_topology, get_vm_runtime, get_vm_topology, vm_action
 from app.services.storage_service import attach_vm_iso, create_vm_storage, eject_vm_iso, get_vm_storage
+from app.services.readiness_service import get_lab_readiness
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB_ROOT = ROOT / "web"
