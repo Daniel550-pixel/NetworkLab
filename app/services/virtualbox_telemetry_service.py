@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -325,7 +326,7 @@ def check_and_recover(force_repair: bool = False) -> dict[str, Any]:
             })
             if was_incident:
                 _record("recovered", message="VirtualBox probes returned to healthy state.")
-                    return _snapshot(
+            return _snapshot(
                 probe=probe,
                 vboxmanage=vbox,
                 recommendation=_recovery_recommendation(probe),
@@ -400,7 +401,7 @@ def check_and_recover(force_repair: bool = False) -> dict[str, Any]:
                 recommendation=recommendation,
             )
 
-            return _snapshot(
+        return _snapshot(
             probe=verification,
             repair=repair,
             vboxmanage=vbox,
