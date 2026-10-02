@@ -280,6 +280,65 @@ def _recovery_recommendation(probe: dict[str, Any], repair: dict[str, Any] | Non
     }
 
 
+def _issue_engine(probe: dict[str, Any], vbox: str) -> dict[str, Any]:
+    """Classify a telemetry incident and select the safest automatic fixer."""
+    detail = "\n".join(item.get("error", "") for item in probe.get("failures", []))
+    lowered = detail.lower()
+
+    if _is_com_lock_error(detail):
+        issue = "com-session-lock"
+        fixer = "restart-vboxsvc"
+        safety = "only-when-no-vms-are-running"
+        description = "VirtualBox COM/session state is inconsistent or locked."
+    elif "not found" in lowered or "cannot find" in lowered:
+        issue = "virtualbox-executable"
+        fixer = "rediscover-vboxmanage"
+        safety = "read-only"
+        description = "VBoxManage could not be located."
+    elif "timeout" in lowered or "timed out" in lowered:
+        issue = "virtualbox-timeout"
+        fixer = "restart-vboxsvc"
+        safety = "only-when-no-vms-are-running"
+        description = "VBoxManage did not respond within the telemetry timeout."
+    else:
+        issue = "unknown-virtualbox-failure"
+        fixer = "diagnose-only"
+        safety = "no-destructive-action"
+        description = "The failure is not recognized as a safe autonomous repair case."
+
+    return {
+        "issue": issue,
+        "description": description,
+        "fixer": fixer,
+        "safety": safety,
+        "automatic": fixer != "diagnose-only",
+        "vboxmanage": vbox,
+    }
+
+
+def _run_issue_fixer(issue: dict[str, Any], vbox: str) -> dict[str, Any]:
+    """Execute only fixers explicitly approved by the issue engine."""
+    fixer = issue.get("fixer")
+
+    if fixer == "restart-vboxsvc":
+        return _repair_vboxsvc(vbox)
+
+    if fixer == "rediscover-vboxmanage":
+        return {
+            "attempted": False,
+            "success": _find_vboxmanage() is not None,
+            "stage": "rediscovery",
+            "message": "VBoxManage discovery was retried without changing VirtualBox state.",
+        }
+
+    return {
+        "attempted": False,
+        "success": False,
+        "stage": "diagnosis",
+        "message": "No autonomous fixer is approved for this issue classification.",
+    }
+
+
 def _repair(force_repair: bool = False) -> dict[str, Any]:
     vbox = _find_vboxmanage()
     if not vbox:
@@ -352,7 +411,10 @@ def check_and_recover(force_repair: bool = False) -> dict[str, Any]:
             failures=probe["failures"],
         )
 
-        should_repair = force_repair or int(_state["consecutive_failures"]) >= REPAIR_THRESHOLD
+        issue = _issue_engine(probe, vbox)
+        _state["active_issue"] = issue
+
+        should_repair = force_repair or (issue["automatic"] and int(_state["consecutive_failures"]) >= REPAIR_THRESHOLD)
 
         if _state["last_repair"] and not force_repair:
             try:
@@ -373,7 +435,7 @@ def check_and_recover(force_repair: bool = False) -> dict[str, Any]:
             )
             return result
 
-        repair = _repair(force_repair=force_repair)
+        repair = _run_issue_fixer(issue, vbox)
         _state["last_repair"] = now
         _state["last_repair_result"] = repair
         _state["repair_count"] = int(_state["repair_count"]) + 1
