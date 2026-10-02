@@ -33,6 +33,7 @@ _state: dict[str, Any] = {
     "monitor_running": False,
     "repair_count": 0,
     "active_incident": False,
+    "active_issue": None,
 }
 
 
@@ -386,6 +387,7 @@ def check_and_recover(force_repair: bool = False) -> dict[str, Any]:
                 "last_check": now,
                 "last_error": None,
                 "active_incident": False,
+                "active_issue": None,
             })
             if was_incident:
                 _record("recovered", message="VirtualBox probes returned to healthy state.")
@@ -488,6 +490,12 @@ def _snapshot(**extra: Any) -> dict[str, Any]:
             "max_history": MAX_HISTORY,
         },
         "processes": _process_snapshot(),
+        "issue_engine": {
+            "enabled": True,
+            "mode": "autonomous-safe-recovery",
+            "supported_fixers": ["restart-vboxsvc", "rediscover-vboxmanage"],
+            "unsafe_cases": ["running-vms", "unknown-failure", "configuration-corruption"],
+        },
         **extra,
     }
 
