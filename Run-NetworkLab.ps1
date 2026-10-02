@@ -1,25 +1,22 @@
 param(
     [int]$Port = 8501,
-    [switch]$NoBrowser,
-    [switch]$SkipInstall
+    [switch]$NoBrowser
 )
 
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
-$App = Join-Path $Root 'app\main.py'
-$Requirements = Join-Path $Root 'requirements.txt'
-$Url = "http://localhost:$Port"
+$Server = Join-Path $Root 'app\server.py'
+$Url = "http://127.0.0.1:$Port"
 
 if (-not (Test-Path (Join-Path $Root '.git'))) {
     throw "NetworkLab Git repository not found: $Root"
 }
 
-if (-not (Test-Path $App)) {
-    throw "Streamlit application not found: $App"
+if (-not (Test-Path $Server)) {
+    throw "Local web server not found: $Server"
 }
 
 $PythonCommand = Get-Command python.exe -ErrorAction SilentlyContinue
-
 if (-not $PythonCommand) {
     throw "Python was not found on PATH."
 }
@@ -28,83 +25,43 @@ $PythonPath = $PythonCommand.Source
 if ([string]::IsNullOrWhiteSpace($PythonPath)) {
     $PythonPath = $PythonCommand.Path
 }
-if ([string]::IsNullOrWhiteSpace($PythonPath)) {
-    throw "Python executable path could not be resolved."
-}
-
-if (-not $SkipInstall) {
-    Write-Host "Checking Streamlit dependency..." -ForegroundColor Cyan
-    & $PythonPath -m pip install -r $Requirements
-    if ($LASTEXITCODE -ne 0) {
-        throw "Dependency installation failed."
-    }
-}
 
 $existing = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
-
 if ($existing) {
-    Write-Host "Port $Port is already in use." -ForegroundColor Yellow
-    Write-Host "Opening $Url" -ForegroundColor Green
+    Write-Host "NetworkLab is already running: $Url" -ForegroundColor Green
     if (-not $NoBrowser) { Start-Process $Url }
     return
 }
 
 Write-Host ""
 Write-Host "NETWORKLAB" -ForegroundColor Cyan
-Write-Host "Application: $App" -ForegroundColor DarkGray
-Write-Host "Starting Streamlit..." -ForegroundColor Cyan
+Write-Host "Mode: pure localhost web application" -ForegroundColor DarkGray
+Write-Host "Server: $Server" -ForegroundColor DarkGray
+Write-Host "URL: $Url" -ForegroundColor Green
 Write-Host ""
 
-$LogDirectory = Join-Path $Root '.networklab'
-$StdOutLog = Join-Path $LogDirectory 'streamlit.stdout.log'
-$StdErrLog = Join-Path $LogDirectory 'streamlit.stderr.log'
+$env:NETWORKLAB_PORT = "$Port"
 
-New-Item -ItemType Directory -Path $LogDirectory -Force | Out-Null
-Remove-Item $StdOutLog, $StdErrLog -Force -ErrorAction SilentlyContinue
+$process = Start-Process `
+    -FilePath $PythonPath `
+    -ArgumentList "-m app.server" `
+    -WorkingDirectory $Root `
+    -PassThru `
+    -WindowStyle Hidden
 
-# Windows PowerShell 5.1 can mishandle argument arrays when paths contain spaces.
-# Pass the complete command line as one quoted argument string.
-$arguments = "-m streamlit run `"$App` --server.port $Port --server.address 127.0.0.1 --browser.gatherUsageStats false"
-
-$process = Start-Process ``
-    -FilePath $PythonPath ``
-    -ArgumentList $arguments ``
-    -WorkingDirectory $Root ``
-    -RedirectStandardOutput $StdOutLog ``
-    -RedirectStandardError $StdErrLog ``
-    -PassThru
-
-Start-Sleep -Seconds 4
+Start-Sleep -Seconds 2
 
 $listener = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
-
 if (-not $listener) {
-    $stderr = if (Test-Path $StdErrLog) { Get-Content $StdErrLog -Raw } else { '' }
-    $stdout = if (Test-Path $StdOutLog) { Get-Content $StdOutLog -Raw } else { '' }
-
     if ($process.HasExited) {
-        Write-Host ''
-        Write-Host 'STREAMLIT STARTUP FAILED' -ForegroundColor Red
-        Write-Host "Exit code: $($process.ExitCode)" -ForegroundColor Red
-        if ($stderr.Trim()) {
-            Write-Host ''
-            Write-Host 'Error output:' -ForegroundColor Yellow
-            Write-Host $stderr.Trim()
-        }
-        if ($stdout.Trim()) {
-            Write-Host ''
-            Write-Host 'Standard output:' -ForegroundColor Yellow
-            Write-Host $stdout.Trim()
-        }
-        throw "Streamlit failed to start. Logs: $LogDirectory"
+        throw "NetworkLab local server failed to start. Exit code: $($process.ExitCode)"
     }
-
     Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-    throw "Streamlit started but did not open port $Port. Logs: $LogDirectory"
+    throw "NetworkLab did not open port $Port."
 }
+
 Write-Host "NetworkLab running: $Url" -ForegroundColor Green
-Write-Host "Streamlit PID: $($process.Id)" -ForegroundColor DarkGray
-Write-Host "Press Ctrl+C to stop." -ForegroundColor DarkGray
+Write-Host "Python PID: $($process.Id)" -ForegroundColor DarkGray
 
 if (-not $NoBrowser) {
     Start-Process $Url
