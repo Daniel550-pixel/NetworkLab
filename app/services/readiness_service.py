@@ -1,8 +1,12 @@
-from app.services.network_service import get_virtual_network
 from app.services.storage_service import get_vm_storage
+from app.services.virtualization_service import get_virtual_network
 from app.services.vm_service import get_vm_topology
 
-EXPECTED_VMS = {"NetworkLab-VM01-MGMT", "NetworkLab-VM02-INFRA", "NetworkLab-VM03-CLIENT"}
+EXPECTED_VMS = {
+    "NetworkLab-VM01-MGMT",
+    "NetworkLab-VM02-INFRA",
+    "NetworkLab-VM03-CLIENT",
+}
 
 
 def get_lab_readiness():
@@ -10,14 +14,28 @@ def get_lab_readiness():
     topology = get_vm_topology()
     storage = get_vm_storage()
 
-    vm_names = {vm.get("name") for vm in topology if vm.get("name")}
-    storage_by_name = {item.get("name"): item for item in storage if item.get("name")}
+    topology_vms = topology.get("vms", []) if isinstance(topology, dict) else []
+    storage_vms = storage.get("vms", []) if isinstance(storage, dict) else []
+
+    vm_names = {
+        vm.get("name")
+        for vm in topology_vms
+        if isinstance(vm, dict) and vm.get("name")
+    }
+    storage_by_name = {
+        item.get("name"): item
+        for item in storage_vms
+        if isinstance(item, dict) and item.get("name")
+    }
 
     network_ready = bool(network.get("ready"))
-    vm_ready = vm_names == EXPECTED_VMS and all(
-        vm.get("network") == "NetworkLab-Lab"
-        for vm in topology
-        if vm.get("name") in EXPECTED_VMS
+    vm_ready = (
+        vm_names == EXPECTED_VMS
+        and all(
+            vm.get("network") == "NetworkLab-Lab"
+            for vm in topology_vms
+            if isinstance(vm, dict) and vm.get("name") in EXPECTED_VMS
+        )
     )
     storage_ready = all(
         name in storage_by_name and bool(storage_by_name[name].get("disk"))
