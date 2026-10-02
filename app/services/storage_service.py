@@ -19,7 +19,7 @@ def _machine_fields(vbox: str, name: str) -> dict[str, str]:
     for line in out.splitlines():
         if "=" in line:
             key, value = line.split("=", 1)
-            fields[key] = value.strip('"')
+            fields[key.strip('"')] = value.strip('"')
     return fields
 
 
