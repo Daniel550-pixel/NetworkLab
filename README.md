@@ -2,67 +2,87 @@
 
 ## Stage Project — Network & Infrastructure Management
 
-NetworkLab is a controlled, reproducible lab environment for demonstrating:
+NetworkLab is a controlled, reproducible local laboratory for demonstrating:
 
-1. **Installeert en configureert netwerk- en infrastructuuronderdelen**
-2. **Beheert en monitort netwerk- en infrastructuuronderdelen**
+1. **Installatie en configuratie van netwerk- en infrastructuuronderdelen**
+2. **Beheer en monitoring van netwerk- en infrastructuuronderdelen**
 
 ## Technology Stack
 
 | Technology | Purpose |
 |---|---|
 | GitHub | Version control, implementation, documentation and evidence |
-| PowerShell | Installation checks, configuration, administration and diagnostics |
-| Python | Monitoring, diagnostics and reporting |
-| JSON | Lab configuration and safety controls |
-| GitHub Actions | Automated syntax and runtime validation |
+| Python | Local HTTP server, monitoring, diagnostics and reporting |
+| HTML/CSS/JavaScript | Localhost web application and laboratory UI |
+| PowerShell | Network inspection, configuration safeguards and diagnostics |
+| JSON | Lab configuration and evidence format |
+| GitHub Actions | Automated validation |
 
-## Current implementation
+## Local Web Application
 
-- Environment prerequisite validation
-- Network adapter and IP configuration inspection
-- Guarded baseline configuration workflow
-- Infrastructure service and process inspection
-- Consolidated health and diagnostic checks
-- Python configuration-driven monitoring
-- JSON monitoring/report generation
-- Connectivity, network and infrastructure validation tests
-- Reproducible runbook
-- Automated GitHub validation pipeline
-- Stage evidence framework
+The NetworkLab interface is now a **pure localhost web application**.
 
-## Safety model
+- No Streamlit runtime is required.
+- No external frontend CDN or remote UI service is required.
+- The Python standard library provides the local HTTP server.
+- The browser connects only to `127.0.0.1`.
+- Network telemetry is exposed through local `/api/*` endpoints.
+- The UI is served from the repository's `web/` directory.
 
-Network-changing operations are disabled by default in `config/lab-config.json`. The baseline configuration script refuses to run unless the lab-scope safety controls are enabled and an explicit interface is supplied.
+### Start
+
+From the repository root in PowerShell:
+
+```powershell
+.\Run-NetworkLab.ps1
+```
+
+Then open:
+
+```
+http://127.0.0.1:8501
+```
+
+Optional custom port:
+
+```powershell
+.\Run-NetworkLab.ps1 -Port 8510
+```
+
+The launcher starts `app/server.py`, which serves the frontend and local telemetry API.
+
+## Web Application Sections
+
+- Command Center
+- Topology
+- Interfaces
+- Addressing
+- Connectivity
+- Services
+- Diagnostics
+- Evidence
+
+The topology visualization is rendered with native SVG. There are no external JavaScript dependencies.
+
+## Safety Model
+
+Network-changing operations remain disabled by default in `config/lab-config.json`. The baseline configuration workflow refuses to run unless the laboratory safety controls are explicitly enabled and an interface is supplied.
 
 No production-network assumptions are encoded in the repository.
 
-## Repository Structure
-
-```text
-NetworkLab/
-├── .github/workflows/validate.yml
-├── README.md
-├── config/lab-config.json
-├── docs/
-├── logs/
-├── powershell/
-├── python/
-└── tests/
-```
-
-## Execution order
+## Execution Order
 
 1. Initialize and validate the environment.
-2. Inspect the current network state.
-3. Define and document the actual stage-lab topology.
-4. Enable guarded configuration only when that topology is known.
-5. Validate network and infrastructure state.
-6. Run monitoring and reporting.
-7. Preserve results as stage evidence.
+2. Start the local NetworkLab web application.
+3. Inspect the current network state.
+4. Define and document the actual stage-lab topology.
+5. Enable guarded configuration only when that topology is known.
+6. Validate network and infrastructure state.
+7. Run monitoring and reporting.
+8. Preserve results as stage evidence.
 
 ## Status
 
-**Implementation baseline: COMPLETE**
+**Localhost web application: IMPLEMENTED**
 
-The repository now contains the executable baseline for installation checks, configuration safeguards, management, monitoring, diagnostics, testing, reporting and evidence. The remaining environment-specific work is to apply it to the actual stage-lab topology and record the observed results.
+The web layer is now independent of Streamlit and runs as a local Python HTTP application on `127.0.0.1`.
