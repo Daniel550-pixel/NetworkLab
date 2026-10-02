@@ -11,7 +11,7 @@ from app.services.evidence_service import get_evidence
 from app.services.health_service import get_health
 from app.services.network_service import get_state
 from app.services.virtualization_service import create_virtual_network, get_virtual_network
-from app.services.vm_service import create_vm_topology, get_vm_topology, vm_action
+from app.services.vm_service import create_vm_topology, get_vm_runtime, get_vm_topology, vm_action
 from app.services.storage_service import attach_vm_iso, create_vm_storage, eject_vm_iso, get_vm_storage
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -111,6 +111,13 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, get_vm_topology())
             elif route == "/api/vms/storage":
                 self._json(HTTPStatus.OK, get_vm_storage())
+            elif route.startswith("/api/vms/") and route.endswith("/runtime"):
+                parts = route.split("/")
+                if len(parts) != 5:
+                    self._json(HTTPStatus.NOT_FOUND, {"error": "Invalid VM runtime route"})
+                    return
+                from urllib.parse import unquote
+                self._json(HTTPStatus.OK, get_vm_runtime(unquote(parts[3])))
             elif route == "/api/status":
                 health = get_health()
                 state = get_state()
