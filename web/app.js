@@ -1,0 +1,117 @@
+const state = { data:null, health:null, evidence:null, view:"command" };
+
+const meta = {
+  command:["Command Center","Operational view of the local software network laboratory."],
+  topology:["Topology","Logical representation of the observed local network environment."],
+  interfaces:["Interfaces","Windows network adapter inventory and state."],
+  addressing:["Addressing","Observed IP configuration and addressing data."],
+  connectivity:["Connectivity","Connectivity checks and reachability observations."],
+  services:["Services","Infrastructure service state reported by the local host."],
+  diagnostics:["Diagnostics","Health signals and diagnostic output from the laboratory."],
+  evidence:["Evidence","Structured evidence output suitable for stage documentation."]
+};
+
+const $ = id => document.getElementById(id);
+const arr = value => Array.isArray(value) ? value : [];
+const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[c]));
+const badge = (value, cls="") => '<span class="badge '+cls+'">'+esc(value)+'</span>';
+
+async function get(path){
+  const response = await fetch(path,{cache:"no-store"});
+  const payload = await response.json();
+  if(!response.ok) throw new Error(payload.error || "Request failed");
+  return payload;
+}
+
+function setStatus(){
+  const h = state.health || {};
+  const d = state.data || {};
+  const adapters = arr(d.adapters);
+  const conn = !!h.connectivity_ok;
+  const services = !!h.services_ok;
+  const operational = conn && services;
+  $("lab-status").textContent = operational ? "OPERATIONAL" : "ATTENTION";
+  $("lab-status").className = operational ? "ok" : "bad";
+  $("connectivity-status").textContent = conn ? "PASS" : "FAIL";
+  $("connectivity-status").className = conn ? "ok" : "bad";
+  $("services-status").textContent = services ? "HEALTHY" : "ATTENTION";
+  $("services-status").className = services ? "ok" : "warn";
+  $("interface-count").textContent = adapters.length;
+  $("last-updated").textContent = "UPDATED " + new Date().toLocaleTimeString();
+}
+
+function table(items, columns){
+  if(!items.length) return '<div class="empty">No data returned by the local telemetry layer.</div>';
+  return '<div class="card" style="padding:7px"><table><thead><tr>'+columns.map(c=>'<th>'+esc(c.label)+'</th>').join("")+'</tr></thead><tbody>'+
+    items.map(item=>'<tr>'+columns.map(c=>'<td>'+esc(typeof c.value==="function"?c.value(item):item[c.key])+'</td>').join("")+'</tr>').join("")+
+    '</tbody></table></div>';
+}
+
+function topology(){
+  return '<div class="topology"><svg viewBox="0 0 900 430" preserveAspectRatio="xMidYMid meet">'+
+    '<defs><filter id="glow"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>'+
+    '<line class="edge live" x1="145" y1="215" x2="350" y2="215"/><line class="edge" x1="350" y1="215" x2="550" y2="215"/><line class="edge live" x1="550" y1="215" x2="755" y2="215"/>'+
+    '<circle cx="145" cy="215" r="34" fill="#102735" stroke="#55c7ff" filter="url(#glow)"/><circle cx="350" cy="215" r="34" fill="#102735" stroke="#55c7ff"/><circle cx="550" cy="215" r="34" fill="#102735" stroke="#55c7ff"/><circle cx="755" cy="215" r="34" fill="#102735" stroke="#46d7a0" filter="url(#glow)"/>'+
+    '<text class="node-text" x="145" y="270" text-anchor="middle">HOST</text><text class="node-sub" x="145" y="287" text-anchor="middle">WINDOWS</text>'+
+    '<text class="node-text" x="350" y="270" text-anchor="middle">INTERFACES</text><text class="node-sub" x="350" y="287" text-anchor="middle">NIC LAYER</text>'+
+    '<text class="node-text" x="550" y="270" text-anchor="middle">TCP/IP</text><text class="node-sub" x="550" y="287" text-anchor="middle">ADDRESSING</text>'+
+    '<text class="node-text" x="755" y="270" text-anchor="middle">LOOPBACK</text><text class="node-sub" x="755" y="287" text-anchor="middle">127.0.0.1</text>'+
+    '</svg></div>';
+}
+
+function render(){
+  const d=state.data||{}, h=state.health||{}, e=state.evidence||{};
+  const adapters=arr(d.adapters), ip=arr(d.ip), conn=arr(d.connectivity), services=arr(d.services);
+  const view=state.view;
+  $("view-title").textContent=meta[view][0]; $("view-subtitle").textContent=meta[view][1];
+  let html="";
+  if(view==="command"){
+    const running=services.filter(x=>String(x.status||"").toLowerCase()==="running").length;
+    html='<div class="grid four">'+
+      [['Interfaces',adapters.length],['IPv4 configurations',ip.length],['Connectivity tests',conn.length],['Running services',running+'/'+services.length]].map(x=>'<div class="metric"><label>'+x[0]+'</label><strong>'+esc(x[1])+'</strong></div>').join("")+
+      '</div><div class="grid two" style="margin-top:15px"><div class="card"><h2>Logical network path</h2><div class="meta">Local telemetry model</div>'+topology()+'</div>'+
+      '<div class="card"><h2>Execution boundary</h2><div class="meta">Current laboratory safety model</div>'+
+      '<div class="kv"><b>Environment</b><span>Software laboratory</span></div><div class="kv"><b>Write operations</b><span>'+badge("DISABLED")+'</span></div><div class="kv"><b>Production assumptions</b><span>'+badge("NONE")+'</span></div><div class="kv"><b>Server</b><span>127.0.0.1:8501</span></div></div></div>';
+  } else if(view==="topology"){
+    html='<div class="card"><h2>Network topology</h2><div class="meta">Pure SVG visualization — no external 3D or frontend service required</div>'+topology()+'</div>';
+  } else if(view==="interfaces"){
+    html='<div class="section">ADAPTER INVENTORY</div>'+table(adapters,[{label:"Name",key:"name"},{label:"Status",key:"status"},{label:"Description",key:"description"},{label:"MAC",key:"mac"}]);
+  } else if(view==="addressing"){
+    html='<div class="section">IP CONFIGURATION</div>'+table(ip,[{label:"Interface",key:"interface"},{label:"Address",key:"address"},{label:"Prefix",key:"prefix"},{label:"Gateway",key:"gateway"}]);
+  } else if(view==="connectivity"){
+    html='<div class="section">CONNECTIVITY OBSERVATIONS</div>'+table(conn,[{label:"Target",key:"target"},{label:"Status",value:x=>x.status||x.result||""},{label:"Latency",value:x=>x.latency_ms??x.latency??""},{label:"Details",value:x=>x.message||x.details||""}]);
+  } else if(view==="services"){
+    html='<div class="section">SERVICE INVENTORY</div>'+table(services,[{label:"Name",key:"name"},{label:"Status",value:x=>x.status||""},{label:"Start mode",value:x=>x.start_type||x.startMode||""},{label:"Details",value:x=>x.display_name||x.description||""}]);
+  } else if(view==="diagnostics"){
+    html='<div class="grid three">'+
+      '<div class="metric"><label>Connectivity</label><strong class="'+(h.connectivity_ok?"ok":"bad")+'">'+(h.connectivity_ok?"PASS":"FAIL")+'</strong></div>'+
+      '<div class="metric"><label>Services</label><strong class="'+(h.services_ok?"ok":"warn")+'">'+(h.services_ok?"HEALTHY":"ATTENTION")+'</strong></div>'+
+      '<div class="metric"><label>Telemetry</label><strong class="ok">LIVE</strong></div></div>'+
+      '<div class="card" style="margin-top:15px"><h2>Health payload</h2><div class="meta">Raw diagnostic result from PowerShell</div><pre>'+esc(JSON.stringify(h,null,2))+'</pre></div>';
+  } else if(view==="evidence"){
+    html='<div class="grid two"><div class="card"><h2>Evidence package</h2><div class="meta">Current structured evidence returned by the local evidence service</div><pre>'+esc(JSON.stringify(e,null,2))+'</pre></div>'+
+      '<div class="card"><h2>Export</h2><div class="meta">Save the current evidence payload locally.</div><button class="button primary" id="download">Download JSON</button></div></div>';
+  }
+  $("content").innerHTML=html;
+  const download=$("download");
+  if(download) download.onclick=()=>{const blob=new Blob([JSON.stringify(state.evidence,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="networklab-evidence.json";a.click();URL.revokeObjectURL(a.href)};
+}
+
+async function load(){
+  $("alert").classList.add("hidden");
+  try{
+    const [data,health,evidence]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence")]);
+    state.data=data; state.health=health; state.evidence=evidence; setStatus(); render();
+  }catch(error){
+    $("alert").textContent="LOCAL TELEMETRY ERROR: "+error.message;
+    $("alert").classList.remove("hidden");
+  }
+}
+
+document.querySelectorAll(".nav-item").forEach(button=>button.addEventListener("click",()=>{
+  document.querySelectorAll(".nav-item").forEach(x=>x.classList.remove("active"));
+  button.classList.add("active"); state.view=button.dataset.view; render();
+}));
+$("refresh").addEventListener("click",load);
+load();
+setInterval(load,10000);
