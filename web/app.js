@@ -9,7 +9,8 @@ const meta = {
   services:["Services","Infrastructure service state reported by the local host."],
   diagnostics:["Diagnostics","Health signals and diagnostic output from the laboratory."],
   evidence:["Evidence","Structured evidence output suitable for stage documentation."],
-  "vm-lab":["VM Lab","VirtualBox runtime, storage and boot-state control for the isolated stage laboratory."]
+  "vm-lab":["VM Lab","VirtualBox runtime, storage and boot-state control for the isolated stage laboratory."],
+  telemetry:["Self-Healing Telemetry","Continuous VirtualBox health monitoring, incident detection and controlled recovery."]
 };
 
 const $ = id => document.getElementById(id);
@@ -104,6 +105,7 @@ function storageCard(){
 }
 function render(){
   const d=state.data||{}, h=state.health||{}, e=state.evidence||{};
+  const telemetry=state.telemetry||{};
   const adapters=arr(d.adapters), ip=arr(d.ip), conn=arr(d.connectivity), services=arr(d.services);
   const view=state.view;
   $("view-title").textContent=meta[view][0]; $("view-subtitle").textContent=meta[view][1];
@@ -134,6 +136,34 @@ function render(){
   } else if(view==="evidence"){
     html='<div class="grid two"><div class="card"><h2>Evidence package</h2><div class="meta">Current structured evidence returned by the local evidence service</div><pre>'+esc(JSON.stringify(e,null,2))+'</pre></div>'+
       '<div class="card"><h2>Export</h2><div class="meta">Save the current evidence payload locally.</div><button class="button primary" id="download">Download JSON</button></div></div>';
+  } else if(view==="telemetry"){
+    const t=telemetry;
+    const healthy=!!t.healthy;
+    const history=arr(t.history);
+    const failures=arr(t.last_error);
+    const processRows=Object.entries(t.processes||{}).map(([name,item])=>`<tr><td>${esc(name)}</td><td>${item.running?badge("RUNNING","ok"):badge("NOT RUNNING")}</td></tr>`).join("");
+    const historyRows=history.slice(0,12).map(item=>`<tr><td>${esc(new Date(item.timestamp).toLocaleTimeString())}</td><td>${esc(item.event)}</td><td>${esc(item.classification||item.message||item.stage||"")}</td></tr>`).join("");
+    html=`<div class="grid four">
+      <div class="metric"><label>Engine</label><strong class="${healthy?"ok":"bad"}">${healthy?"HEALTHY":"ATTENTION"}</strong></div>
+      <div class="metric"><label>Failures</label><strong>${esc(t.consecutive_failures||0)}</strong></div>
+      <div class="metric"><label>Repairs</label><strong>${esc(t.repair_count||0)}</strong></div>
+      <div class="metric"><label>Incident</label><strong class="${t.active_incident?"warn":"ok"}">${t.active_incident?"ACTIVE":"CLEAR"}</strong></div>
+    </div>
+    <div class="grid two" style="margin-top:15px">
+      <div class="card"><div class="eyebrow">AUTONOMOUS RECOVERY</div><h2>VirtualBox control plane</h2><div class="meta">Safe recovery only: running VMs are never terminated by the repair engine.</div>
+        <div class="kv"><b>Status</b><span>${badge(t.status||"UNKNOWN",healthy?"ok":t.status==="degraded"?"warn":"bad")}</span></div>
+        <div class="kv"><b>Classification</b><span>${esc((t.probe||{}).classification||"—")}</span></div>
+        <div class="kv"><b>Last check</b><span>${esc(t.last_check||"—")}</span></div>
+        <div class="kv"><b>Last repair</b><span>${esc(t.last_repair||"—")}</span></div>
+        <div class="kv"><b>Repair policy</b><span>${esc(REPAIR_THRESHOLD_LABEL())}</span></div>
+        <div class="vm-actions"><button class="button primary" id="telemetry-repair">Run controlled repair</button><button class="button" id="telemetry-refresh">Probe now</button></div>
+      </div>
+      <div class="card"><div class="eyebrow">PROCESS SAFETY</div><h2>VirtualBox process state</h2><div class="meta">Diagnostic snapshot used before automatic recovery.</div><table><thead><tr><th>Process</th><th>State</th></tr></thead><tbody>${processRows||"<tr><td colspan=\"2\">No process snapshot yet.</td></tr>"}</tbody></table></div>
+    </div>
+    <div class="grid two" style="margin-top:15px">
+      <div class="card"><div class="eyebrow">ACTIVE INCIDENT</div><h2>Latest fault</h2><pre>${esc(JSON.stringify(failures||t.last_error||"No active error",null,2))}</pre></div>
+      <div class="card"><div class="eyebrow">EVENT LEDGER</div><h2>Recovery history</h2><div style="overflow:auto"><table><thead><tr><th>Time</th><th>Event</th><th>Detail</th></tr></thead><tbody>${historyRows||"<tr><td colspan=\"3\">No events recorded.</td></tr>"}</tbody></table></div></div>
+    </div>`;
   } else if(view==="vm-lab"){
     const vmItems=arr((state.vms||{}).vms);
     const storageItems=arr((state.storage||{}).vms);
@@ -169,6 +199,14 @@ function render(){
     '<div class="life-step '+(steps.find(x=>x.id==="media")?.ready?"done":"")+'"><span>04</span><b>OS media</b><small>'+storageItems.filter(x=>x.iso).length+'/3 ISO mounts</small></div></div></div>';
   }
   $("content").innerHTML=html;
+  const telemetryRepair=$("telemetry-repair");
+  if(telemetryRepair) telemetryRepair.onclick=async()=>{
+    telemetryRepair.disabled=true; telemetryRepair.textContent="REPAIRING...";
+    try { state.telemetry=await post("/api/vm/telemetry/repair"); render(); }
+    catch(error){ $("alert").textContent="VIRTUALBOX REPAIR ERROR: "+error.message; $("alert").classList.remove("hidden"); telemetryRepair.disabled=false; telemetryRepair.textContent="Retry"; }
+  };
+  const telemetryRefresh=$("telemetry-refresh");
+  if(telemetryRefresh) telemetryRefresh.onclick=loadTelemetry;
   const createStorage=$("create-storage");
   if(createStorage) createStorage.onclick=async()=>{
     createStorage.disabled=true; createStorage.textContent="PROVISIONING...";
@@ -222,11 +260,18 @@ function render(){
   if(download) download.onclick=()=>{const blob=new Blob([JSON.stringify(state.evidence,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="networklab-evidence.json";a.click();URL.revokeObjectURL(a.href)};
 }
 
+function REPAIR_THRESHOLD_LABEL(){ return "Automatic recovery after repeated failures; cooldown protected."; }
+
+async function loadTelemetry(){
+  try { state.telemetry=await get("/api/vm/telemetry"); } catch(error) { state.telemetry={status:"failed",healthy:false,last_error:error.message}; }
+  if(state.view==="telemetry") render();
+}
+
 async function load(){
   $("alert").classList.add("hidden");
   try{
-    const [data,health,evidence,virtualNetwork,vms,storage,readiness]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms"),get("/api/vms/storage"),get("/api/vm/readiness")]);
-    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; state.storage=storage; state.readiness=readiness; setStatus(); render();
+    const [data,health,evidence,virtualNetwork,vms,storage,readiness,telemetry]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms"),get("/api/vms/storage"),get("/api/vm/readiness"),get("/api/vm/telemetry")]);
+    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; state.storage=storage; state.readiness=readiness; state.telemetry=telemetry; setStatus(); render();
   }catch(error){
     $("alert").textContent="LOCAL TELEMETRY ERROR: "+error.message;
     $("alert").classList.remove("hidden");
