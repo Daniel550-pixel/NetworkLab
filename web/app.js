@@ -150,6 +150,7 @@ function render(){
       "<div class=\"grid two\" style=\"margin-top:15px\"><div class=\"card\"><div class=\"eyebrow\">CONNECTIVITY GATE</div><h2>Read-only reachability</h2><div class=\"kv\"><b>Status</b><span>"+badge(conn.reachable?"PASS":"ATTENTION",conn.reachable?"ok":"warn")+"</span></div><pre>"+esc(JSON.stringify(conn.targets||[],null,2))+"</pre></div><div class=\"card\"><div class=\"eyebrow\">VM RECOVERY</div><h2>Autonomous boundary</h2><pre>"+esc(JSON.stringify(a.telemetry||{},null,2))+"</pre></div></div>";
   } else if(view==="telemetry"){
     const t=telemetry;
+    const recommendation=t.recommendation||{};
     const healthy=!!t.healthy;
     const history=arr(t.history);
     const failures=arr(t.last_error);
