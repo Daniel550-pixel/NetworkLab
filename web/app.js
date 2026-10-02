@@ -89,7 +89,7 @@ function vmTopologyCard(){
   }).join("");
   return '<div class="card"><h2>Virtual machine topology</h2><div class="meta">Three lab nodes attached to NetworkLab-Lab</div><div style="overflow:auto"><table><thead><tr><th>VM</th><th>Role</th><th>State</th><th>Network</th><th>Actions</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5">No VM definitions returned.</td></tr>')+'</tbody></table></div><button class="button primary" id="create-vms">Create / reconcile VM topology</button></div>';
 }
-\nfunction storageCard(){
+function storageCard(){
   const items=arr((state.storage||{}).vms);
   const rows=items.map(vm=>{
     const disk=vm.disk ? "ATTACHED" : "NOT CREATED";
