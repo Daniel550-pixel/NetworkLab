@@ -8,7 +8,8 @@ const meta = {
   connectivity:["Connectivity","Connectivity checks and reachability observations."],
   services:["Services","Infrastructure service state reported by the local host."],
   diagnostics:["Diagnostics","Health signals and diagnostic output from the laboratory."],
-  evidence:["Evidence","Structured evidence output suitable for stage documentation."]
+  evidence:["Evidence","Structured evidence output suitable for stage documentation."],
+  "vm-lab":["VM Lab","VirtualBox runtime, storage and boot-state control for the isolated stage laboratory."]
 };
 
 const $ = id => document.getElementById(id);
@@ -133,6 +134,26 @@ function render(){
   } else if(view==="evidence"){
     html='<div class="grid two"><div class="card"><h2>Evidence package</h2><div class="meta">Current structured evidence returned by the local evidence service</div><pre>'+esc(JSON.stringify(e,null,2))+'</pre></div>'+
       '<div class="card"><h2>Export</h2><div class="meta">Save the current evidence payload locally.</div><button class="button primary" id="download">Download JSON</button></div></div>';
+  } else if(view==="vm-lab"){
+    const vmItems=arr((state.vms||{}).vms);
+    const storageItems=arr((state.storage||{}).vms);
+    html='<div class="grid three">'+vmItems.map(vm=>{
+      const storage=storageItems.find(x=>x.name===vm.name)||{};
+      const runtimeState=String(vm.state||"unknown").toUpperCase();
+      const runtimeClass=runtimeState==="RUNNING"?"ok":runtimeState==="POWERED OFF"?"warn":"";
+      return '<div class="card vm-card"><div class="vm-head"><div><div class="eyebrow">'+esc(vm.role)+'</div><h2>'+esc(vm.name)+'</h2></div>'+badge(runtimeState,runtimeClass)+'</div>'+
+        '<div class="kv"><b>CPU / RAM</b><span>'+esc(vm.cpus)+' vCPU / '+esc(vm.memory)+' MB</span></div>'+
+        '<div class="kv"><b>NIC</b><span>'+esc(vm.nic1||"—")+'</span></div>'+
+        '<div class="kv"><b>Host-only</b><span>'+esc(vm.host_only_adapter||"—")+'</span></div>'+
+        '<div class="kv"><b>Disk</b><span>'+esc(storage.disk_path||"Not provisioned")+'</span></div>'+
+        '<div class="kv"><b>ISO</b><span>'+esc(storage.iso||"None attached")+'</span></div>'+
+        '<div class="vm-actions"><button class="button" data-vm-action="start" data-vm="'+esc(vm.name)+'">Start</button><button class="button" data-vm-action="stop" data-vm="'+esc(vm.name)+'">Stop</button><button class="button danger" data-vm-action="poweroff" data-vm="'+esc(vm.name)+'">Power off</button><button class="button primary" data-vm-runtime="'+esc(vm.name)+'">Inspect runtime</button></div></div>';
+    }).join('')+'</div>'+
+    '<div class="card" style="margin-top:15px"><h2>Lab lifecycle</h2><div class="meta">Provision in order: virtual network → VM topology → 20 GB storage → OS ISO → boot → runtime inspection.</div>'+
+    '<div class="lifecycle"><div class="life-step done"><span>01</span><b>Host-only network</b><small>'+esc((state.virtualNetwork||{}).name||"NetworkLab-Lab")+'</small></div>'+
+    '<div class="life-step '+(vmItems.some(x=>x.exists)?"done":"")+'"><span>02</span><b>VM topology</b><small>'+vmItems.filter(x=>x.exists).length+'/3 registered</small></div>'+
+    '<div class="life-step '+(storageItems.some(x=>x.disk)?"done":"")+'"><span>03</span><b>Storage</b><small>'+storageItems.filter(x=>x.disk).length+'/3 disks</small></div>'+
+    '<div class="life-step '+(storageItems.some(x=>x.iso)?"done":"")+'"><span>04</span><b>OS media</b><small>'+storageItems.filter(x=>x.iso).length+'/3 ISO mounts</small></div></div></div>';
   }
   $("content").innerHTML=html;
   const createStorage=$("create-storage");
