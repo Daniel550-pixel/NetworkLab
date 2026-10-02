@@ -116,11 +116,20 @@ function render(){
   let html="";
   if(view==="command"){
     const running=services.filter(x=>String(x.status||"").toLowerCase()==="running").length;
-    html='<div class="grid four">'+
-      [['Interfaces',adapters.length],['IPv4 configurations',ip.length],['Connectivity tests',conn.length],['Running services',running+'/'+services.length]].map(x=>'<div class="metric"><label>'+x[0]+'</label><strong>'+esc(x[1])+'</strong></div>').join("")+
-      '</div><div class="grid two" style="margin-top:15px"><div class="card"><h2>Virtual network</h2><div class="meta">Managed directly by the NetworkLab application</div>'+virtualNetworkCard()+'</div><div class="card"><h2>Logical network path</h2><div class="meta">Local telemetry model</div>'+topology()+'</div>'+
-      '<div style="grid-column:1 / -1">'+vmTopologyCard()+'</div><div style="grid-column:1 / -1">'+storageCard()+'</div><div class="card"><h2>Execution boundary</h2><div class="meta">Current laboratory safety model</div>'+
-      '<div class="kv"><b>Environment</b><span>Software laboratory</span></div><div class="kv"><b>Write operations</b><span>'+badge("DISABLED")+'</span></div><div class="kv"><b>Production assumptions</b><span>'+badge("NONE")+'</span></div><div class="kv"><b>Server</b><span>127.0.0.1:8501</span></div></div></div>';
+    const vmItems=arr((state.vms||{}).vms);
+    const runningVms=vmItems.filter(x=>String(x.state||"").toLowerCase()==="running").length;
+    const readiness=state.readiness||{}; const t=state.telemetry||{};
+    const verified=state.verification?.verified===true;
+    const healthScore=[!!h.connectivity_ok,!!h.services_ok,!!t.healthy,!!readiness.ready,verified].filter(Boolean).length;
+    html='<div class="dashboard-hero"><div><div class="eyebrow">NETWORKLAB CONTROL CENTER</div><h2>Laboratory operations</h2><p>Live host, virtualization, network and verification state from the local laboratory.</p></div><div class="hero-state">'+badge(healthScore>=4?"STABLE":healthScore>=2?"DEGRADED":"ATTENTION",healthScore>=4?"ok":healthScore>=2?"warn":"bad")+'<span>'+healthScore+'/5 control gates</span></div></div>'+
+    '<div class="grid four dashboard-metrics">'+[['Lab health',healthScore+'/5'],['VM runtime',runningVms+'/'+vmItems.length],['Readiness',String(readiness.completed??0)+'/'+String(readiness.total??0)],['Services',running+'/'+services.length]].map(x=>'<div class="metric"><label>'+x[0]+'</label><strong>'+esc(x[1])+'</strong></div>').join("")+'</div>'+
+    '<div class="dashboard-section"><div class="section-heading"><div><div class="eyebrow">OPERATIONS</div><h3>Current system state</h3></div><span class="section-note">AUTO REFRESH 10S</span></div><div class="grid three">'+
+    '<div class="card state-card"><div class="state-icon">01</div><div><b>Connectivity</b><span>'+badge(h.connectivity_ok?"PASS":"FAIL",h.connectivity_ok?"ok":"bad")+'</span></div><p>Host reachability and local network checks.</p></div>'+
+    '<div class="card state-card"><div class="state-icon">02</div><div><b>VirtualBox telemetry</b><span>'+badge(t.healthy?"HEALTHY":"ATTENTION",t.healthy?"ok":"warn")+'</span></div><p>'+esc(t.active_incident?"Active incident detected.":"No active incident.")+'</p></div>'+
+    '<div class="card state-card"><div class="state-icon">03</div><div><b>Verification</b><span>'+badge(verified?"VERIFIED":"PENDING",verified?"ok":"warn")+'</span></div><p>Lab verification gate across infrastructure and runtime.</p></div></div></div>'+
+    '<div class="grid two dashboard-section"><div class="card"><div class="eyebrow">VIRTUALIZATION</div><h2>Lab nodes</h2><div class="meta">Runtime state of the defined laboratory VMs.</div>'+vmTopologyCard()+'</div><div class="card"><div class="eyebrow">NETWORK</div><h2>NetworkLab-Lab</h2><div class="meta">Host-only segment and control path.</div>'+virtualNetworkCard()+'</div></div>'+
+    '<div class="grid two dashboard-section"><div class="card"><div class="eyebrow">READINESS</div><h2>Build progression</h2><div class="readiness-mini">'+arr(readiness.steps).map((x,i)=>'<div class="'+(x.ready?"ready":"pending")+'"><span>0'+(i+1)+'</span><b>'+esc(x.label)+'</b></div>').join("")+'</div></div>'+
+    '<div class="card"><div class="eyebrow">OPERATIONS</div><h2>Quick navigation</h2><div class="quick-actions"><button class="button primary" data-nav-view="vm-lab">Open VM Lab</button><button class="button" data-nav-view="guest-build">Guest Build</button><button class="button" data-nav-view="telemetry">Telemetry</button><button class="button" data-nav-view="evidence-capture">Capture Evidence</button></div></div></div>';
   } else if(view==="topology"){
     html='<div class="card"><h2>Network topology</h2><div class="meta">Pure SVG visualization — no external 3D or frontend service required</div>'+topology()+'</div>';
   } else if(view==="interfaces"){
