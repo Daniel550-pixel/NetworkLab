@@ -14,7 +14,7 @@ from app.services.virtualization_service import create_virtual_network, get_virt
 from app.services.vm_service import create_vm_topology, get_vm_runtime, get_vm_topology, vm_action
 from app.services.storage_service import attach_vm_iso, create_vm_storage, eject_vm_iso, get_vm_storage
 from app.services.readiness_service import get_lab_readiness
-from app.services.virtualbox_telemetry_service import get_telemetry, start_monitor
+from app.services.virtualbox_telemetry_service import force_repair, get_telemetry, start_monitor
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB_ROOT = ROOT / "web"
@@ -62,6 +62,8 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, create_vm_topology())
             elif route == "/api/vms/storage/create":
                 self._json(HTTPStatus.OK, create_vm_storage())
+            elif route == "/api/vm/telemetry/repair":
+                self._json(HTTPStatus.OK, force_repair())
             elif route.startswith("/api/vms/") and route.endswith("/iso"):
                 parts = route.split("/")
                 if len(parts) != 5:
