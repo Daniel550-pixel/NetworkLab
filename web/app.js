@@ -1,4 +1,4 @@
-const state = { data:null, health:null, evidence:null, virtualNetwork:null, vms:null, storage:null, view:"command" };
+const state = { data:null, health:null, evidence:null, virtualNetwork:null, vms:null, storage:null, readiness:null, view:"command" };
 
 const meta = {
   command:["Command Center","Operational view of the local software network laboratory."],
@@ -137,7 +137,20 @@ function render(){
   } else if(view==="vm-lab"){
     const vmItems=arr((state.vms||{}).vms);
     const storageItems=arr((state.storage||{}).vms);
-    html='<div class="grid three">'+vmItems.map(vm=>{
+    const readiness=state.readiness||{};
+    const steps=arr(readiness.steps);
+    const readinessClass=readiness.ready?"ok":readiness.completed>0?"warn":"bad";
+    const readinessLabel=readiness.ready?"LAB READY":readiness.completed+"/"+readiness.total+" READY";
+    const readinessSteps=steps.map((step,index)=>{
+      const cls=step.ready?"done":"pending";
+      const status=step.ready?"READY":"PENDING";
+      return '<div class="readiness-step '+cls+'"><span class="readiness-index">0'+(index+1)+'</span><div><b>'+esc(step.label)+'</b><small>'+status+'</small></div></div>';
+    }).join("");
+    const nextLabel=readiness.next_step ? (steps.find(x=>x.id===readiness.next_step)||{}).label : "None";
+    html='<div class="card readiness-card"><div class="readiness-head"><div><div class="eyebrow">INSTALLATION / READINESS CONTROL</div><h2>Lab readiness</h2><div class="meta">Live validation of the required NetworkLab provisioning chain.</div></div>'+badge(readinessLabel,readinessClass)+'</div>'+
+      '<div class="readiness-track">'+readinessSteps+'</div>'+
+      '<div class="readiness-footer"><span><b>Next required:</b> '+esc(nextLabel)+'</span><span><b>OS media:</b> explicit ISO selection only</span></div></div>'+
+    '<div class="grid three">'+vmItems.map(vm=>{
       const storage=storageItems.find(x=>x.name===vm.name)||{};
       const runtimeState=String(vm.state||"unknown").toUpperCase();
       const runtimeClass=runtimeState==="RUNNING"?"ok":runtimeState==="POWERED OFF"?"warn":"";
@@ -150,10 +163,10 @@ function render(){
         '<div class="vm-actions"><button class="button" data-vm-action="start" data-vm="'+esc(vm.name)+'">Start</button><button class="button" data-vm-action="stop" data-vm="'+esc(vm.name)+'">Stop</button><button class="button danger" data-vm-action="poweroff" data-vm="'+esc(vm.name)+'">Power off</button><button class="button primary" data-vm-runtime="'+esc(vm.name)+'">Inspect runtime</button></div></div>';
     }).join('')+'</div>'+
     '<div class="card" style="margin-top:15px"><h2>Lab lifecycle</h2><div class="meta">Provision in order: virtual network → VM topology → 20 GB storage → OS ISO → boot → runtime inspection.</div>'+
-    '<div class="lifecycle"><div class="life-step done"><span>01</span><b>Host-only network</b><small>'+esc((state.virtualNetwork||{}).name||"NetworkLab-Lab")+'</small></div>'+
-    '<div class="life-step '+(vmItems.some(x=>x.exists)?"done":"")+'"><span>02</span><b>VM topology</b><small>'+vmItems.filter(x=>x.exists).length+'/3 registered</small></div>'+
-    '<div class="life-step '+(storageItems.some(x=>x.disk)?"done":"")+'"><span>03</span><b>Storage</b><small>'+storageItems.filter(x=>x.disk).length+'/3 disks</small></div>'+
-    '<div class="life-step '+(storageItems.some(x=>x.iso)?"done":"")+'"><span>04</span><b>OS media</b><small>'+storageItems.filter(x=>x.iso).length+'/3 ISO mounts</small></div></div></div>';
+    '<div class="lifecycle"><div class="life-step '+(steps.find(x=>x.id==="network")?.ready?"done":"")+'"><span>01</span><b>Host-only network</b><small>'+esc((state.virtualNetwork||{}).name||"NetworkLab-Lab")+'</small></div>'+
+    '<div class="life-step '+(steps.find(x=>x.id==="vms")?.ready?"done":"")+'"><span>02</span><b>VM topology</b><small>'+vmItems.filter(x=>x.exists).length+'/3 registered</small></div>'+
+    '<div class="life-step '+(steps.find(x=>x.id==="storage")?.ready?"done":"")+'"><span>03</span><b>Storage</b><small>'+storageItems.filter(x=>x.disk).length+'/3 disks</small></div>'+
+    '<div class="life-step '+(steps.find(x=>x.id==="media")?.ready?"done":"")+'"><span>04</span><b>OS media</b><small>'+storageItems.filter(x=>x.iso).length+'/3 ISO mounts</small></div></div></div>';
   }
   $("content").innerHTML=html;
   const createStorage=$("create-storage");
@@ -212,8 +225,8 @@ function render(){
 async function load(){
   $("alert").classList.add("hidden");
   try{
-    const [data,health,evidence,virtualNetwork,vms,storage]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms"),get("/api/vms/storage")]);
-    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; state.storage=storage; setStatus(); render();
+    const [data,health,evidence,virtualNetwork,vms,storage,readiness]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms"),get("/api/vms/storage"),get("/api/vm/readiness")]);
+    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; state.storage=storage; state.readiness=readiness; setStatus(); render();
   }catch(error){
     $("alert").textContent="LOCAL TELEMETRY ERROR: "+error.message;
     $("alert").classList.remove("hidden");
