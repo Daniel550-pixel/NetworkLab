@@ -146,7 +146,7 @@ function render(){
     html="<div class=\"grid four\">"+
       [["Mode",a.mode||"—"],["Network",a.network?.ready?"READY":"ATTENTION"],["Readiness",a.readiness?.ready?"READY":"ATTENTION"],["Telemetry",a.telemetry?.healthy?"HEALTHY":"ATTENTION"]].map(x=>"<div class=\"metric\"><label>"+esc(x[0])+"</label><strong>"+esc(x[1])+"</strong></div>").join("")+
       "</div><div class=\"card\" style=\"margin-top:15px\"><div class=\"eyebrow\">SYSTEM ARCHITECTURE</div><h2>NetworkLab control plane</h2><div class=\"meta\">"+esc(a.principle||"observe -> decide -> safely execute -> verify -> record")+"</div><table><thead><tr><th>Layer</th><th>Status</th><th>Purpose</th></tr></thead><tbody>"+(layerRows||"<tr><td colspan=\"3\">No architecture state returned.</td></tr>")+"</tbody></table></div>"+
-      "<div class=\"card\" style=\"margin-top:15px\"><div class=\"eyebrow\">EXECUTION PIPELINE</div><h2>Operational sequence</h2><div class=\"lifecycle\">"+pipeline+"</div></div>"+
+      "<div class=\"card\" style=\"margin-top:15px\"><div class=\"eyebrow\">EXECUTION PIPELINE</div><h2>Operational sequence</h2><div class=\"lifecycle\">"+pipeline+"</div><div class=\"vm-actions\"><button class=\"button primary\" id=\"run-audit\">Run full architecture audit</button></div></div>"+
       "<div class=\"grid two\" style=\"margin-top:15px\"><div class=\"card\"><div class=\"eyebrow\">CONNECTIVITY GATE</div><h2>Read-only reachability</h2><div class=\"kv\"><b>Status</b><span>"+badge(conn.reachable?"PASS":"ATTENTION",conn.reachable?"ok":"warn")+"</span></div><pre>"+esc(JSON.stringify(conn.targets||[],null,2))+"</pre></div><div class=\"card\"><div class=\"eyebrow\">VM RECOVERY</div><h2>Autonomous boundary</h2><pre>"+esc(JSON.stringify(a.telemetry||{},null,2))+"</pre></div></div>";
   } else if(view==="telemetry"){
     const t=telemetry;
@@ -211,6 +211,13 @@ function render(){
     '<div class="life-step '+(steps.find(x=>x.id==="media")?.ready?"done":"")+'"><span>04</span><b>OS media</b><small>'+storageItems.filter(x=>x.iso).length+'/3 ISO mounts</small></div></div></div>';
   }
   $("content").innerHTML=html;
+  const runAudit=$("run-audit");
+  if(runAudit) runAudit.onclick=async()=>{
+    runAudit.disabled=true; runAudit.textContent="AUDITING...";
+    try { const audit=await get("/api/orchestrator/audit"); state.architecture=audit.architecture; state.connectivity=audit.connectivity; state.readiness=audit.readiness; state.telemetry=audit.telemetry; render(); }
+    catch(error){ $("alert").textContent="ARCHITECTURE AUDIT ERROR: "+error.message; $("alert").classList.remove("hidden"); }
+    finally { runAudit.disabled=false; runAudit.textContent="Run full architecture audit"; }
+  };
   const telemetryRepair=$("telemetry-repair");
   if(telemetryRepair) telemetryRepair.onclick=async()=>{
     telemetryRepair.disabled=true; telemetryRepair.textContent="REPAIRING...";
