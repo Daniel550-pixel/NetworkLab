@@ -60,6 +60,67 @@ def _storage_for_vm(vbox: str, definition: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def attach_vm_iso(name: str, iso_path: str) -> dict[str, Any]:
+    vbox = _vboxmanage()
+    if not vbox:
+        raise RuntimeError("VirtualBox VBoxManage.exe was not found.")
+    if name not in {item["name"] for item in VM_DEFINITIONS}:
+        raise ValueError("Unknown NetworkLab VM.")
+    if not _find_vm(vbox, name):
+        raise RuntimeError(f"{name} does not exist. Create the VM topology first.")
+
+    path = Path(iso_path).expanduser().resolve()
+    if not path.is_file():
+        raise RuntimeError(f"ISO file does not exist: {path}")
+    if path.suffix.lower() != ".iso":
+        raise RuntimeError("OS media must be an .iso file.")
+
+    fields = _machine_fields(vbox, name)
+    if not fields.get("storagecontrollername0"):
+        raise RuntimeError(f"{name} has no {STORAGE_CONTROLLER} controller. Create VM storage first.")
+
+    ok, out, err = _run(
+        vbox, "storageattach", name, "--storagectl", STORAGE_CONTROLLER,
+        "--port", "1", "--device", "0", "--type", "dvddrive",
+        "--medium", str(path),
+    )
+    if not ok:
+        raise RuntimeError(err or out or f"Unable to attach ISO to {name}.")
+
+    ok, out, err = _run(
+        vbox, "modifyvm", name, "--boot1", "dvd", "--boot2", "disk",
+        "--boot3", "none", "--boot4", "none",
+    )
+    if not ok:
+        raise RuntimeError(err or out or f"Unable to configure boot order for {name}.")
+    return get_vm_storage()
+
+
+def eject_vm_iso(name: str) -> dict[str, Any]:
+    vbox = _vboxmanage()
+    if not vbox:
+        raise RuntimeError("VirtualBox VBoxManage.exe was not found.")
+    if name not in {item["name"] for item in VM_DEFINITIONS}:
+        raise ValueError("Unknown NetworkLab VM.")
+    if not _find_vm(vbox, name):
+        raise RuntimeError(f"{name} does not exist. Create the VM topology first.")
+
+    ok, out, err = _run(
+        vbox, "storageattach", name, "--storagectl", STORAGE_CONTROLLER,
+        "--port", "1", "--device", "0", "--type", "dvddrive", "--medium", "none",
+    )
+    if not ok:
+        raise RuntimeError(err or out or f"Unable to eject ISO from {name}.")
+
+    ok, out, err = _run(
+        vbox, "modifyvm", name, "--boot1", "disk", "--boot2", "none",
+        "--boot3", "none", "--boot4", "none",
+    )
+    if not ok:
+        raise RuntimeError(err or out or f"Unable to restore disk boot order for {name}.")
+    return get_vm_storage()
+
+
 def get_vm_storage() -> dict[str, Any]:
     vbox = _vboxmanage()
     if not vbox:
