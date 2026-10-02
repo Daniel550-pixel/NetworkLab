@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from app.services.evidence_service import get_evidence
 from app.services.health_service import get_health
 from app.services.network_service import get_state
+from app.services.virtualization_service import create_virtual_network, get_virtual_network
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB_ROOT = ROOT / "web"
@@ -41,6 +42,19 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
             return
         self._send(HTTPStatus.OK, content_type, path.read_bytes())
 
+    def do_POST(self) -> None:
+        route = urlparse(self.path).path
+        try:
+            if route == "/api/virtual-network/create":
+                self._json(HTTPStatus.OK, create_virtual_network())
+            else:
+                self._json(HTTPStatus.NOT_FOUND, {"error": "Route not found"})
+        except Exception as exc:
+            self._json(
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                {"error": str(exc), "type": type(exc).__name__},
+            )
+
     def do_GET(self) -> None:
         route = urlparse(self.path).path
 
@@ -57,6 +71,8 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, get_health())
             elif route == "/api/evidence":
                 self._json(HTTPStatus.OK, get_evidence())
+            elif route == "/api/virtual-network":
+                self._json(HTTPStatus.OK, get_virtual_network())
             elif route == "/api/status":
                 health = get_health()
                 state = get_state()
@@ -70,6 +86,7 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                         "connectivity_ok": connectivity_ok,
                         "services_ok": services_ok,
                         "interfaces": len(adapters) if isinstance(adapters, list) else 0,
+                        "virtual_network": get_virtual_network(),
                     },
                 )
             elif route == "/healthz":
