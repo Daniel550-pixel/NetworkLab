@@ -14,6 +14,7 @@ from app.services.virtualization_service import create_virtual_network, get_virt
 from app.services.vm_service import create_vm_topology, get_vm_runtime, get_vm_topology, vm_action
 from app.services.storage_service import attach_vm_iso, create_vm_storage, eject_vm_iso, get_vm_storage
 from app.services.readiness_service import get_lab_readiness
+from app.services.virtualbox_telemetry_service import get_telemetry, start_monitor
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB_ROOT = ROOT / "web"
@@ -114,6 +115,8 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, get_vm_storage())
             elif route == "/api/vm/readiness":
                 self._json(HTTPStatus.OK, get_lab_readiness())
+            elif route == "/api/vm/telemetry":
+                self._json(HTTPStatus.OK, get_telemetry())
             elif route.startswith("/api/vms/") and route.endswith("/runtime"):
                 parts = route.split("/")
                 if len(parts) != 5:
@@ -154,6 +157,7 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
+    start_monitor()
     server = ThreadingHTTPServer((HOST, PORT), NetworkLabHandler)
     print(f"NetworkLab local server: http://{HOST}:{PORT}")
     print("Press Ctrl+C to stop.")
