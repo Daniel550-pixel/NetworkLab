@@ -99,7 +99,7 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                         "services_ok": services_ok,
                         "interfaces": len(adapters) if isinstance(adapters, list) else 0,
                         "virtual_network": get_virtual_network(),
-                        "vms": get_vm_topology(),\n                        "vms": get_vm_topology(),
+                        "vms": get_vm_topology(),
                     },
                 )
             elif route == "/healthz":
