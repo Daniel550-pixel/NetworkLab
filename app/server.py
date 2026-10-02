@@ -14,6 +14,8 @@ from app.services.virtualization_service import create_virtual_network, get_virt
 from app.services.vm_service import create_vm_topology, get_vm_runtime, get_vm_topology, vm_action
 from app.services.storage_service import attach_vm_iso, create_vm_storage, eject_vm_iso, get_vm_storage
 from app.services.readiness_service import get_lab_readiness
+from app.services.architecture_service import get_architecture_state
+from app.services.connectivity_service import get_connectivity_state
 from app.services.virtualbox_telemetry_service import force_repair, get_telemetry, start_monitor
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -117,6 +119,10 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, get_vm_storage())
             elif route == "/api/vm/readiness":
                 self._json(HTTPStatus.OK, get_lab_readiness())
+            elif route == "/api/architecture":
+                self._json(HTTPStatus.OK, get_architecture_state())
+            elif route == "/api/connectivity":
+                self._json(HTTPStatus.OK, get_connectivity_state())
             elif route == "/api/vm/telemetry":
                 self._json(HTTPStatus.OK, get_telemetry())
             elif route.startswith("/api/vms/") and route.endswith("/runtime"):
