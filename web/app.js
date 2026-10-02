@@ -222,6 +222,7 @@ function render(){
     '<div class="life-step '+(steps.find(x=>x.id==="media")?.ready?"done":"")+'"><span>04</span><b>OS media</b><small>'+storageItems.filter(x=>x.iso).length+'/3 ISO mounts</small></div></div></div>';
   }
   $("content").innerHTML=html;
+  bindLabControl();
   const runAudit=$("run-audit");
   if(runAudit) runAudit.onclick=async()=>{
     runAudit.disabled=true; runAudit.textContent="AUDITING...";
@@ -331,4 +332,3 @@ async function bindLabControl(){
   };
 }
 
-bindLabControl();
