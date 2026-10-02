@@ -111,6 +111,8 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, get_vm_topology())
             elif route == "/api/vms/storage":
                 self._json(HTTPStatus.OK, get_vm_storage())
+            elif route == "/api/vm/readiness":
+                self._json(HTTPStatus.OK, get_lab_readiness())
             elif route.startswith("/api/vms/") and route.endswith("/runtime"):
                 parts = route.split("/")
                 if len(parts) != 5:
