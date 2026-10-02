@@ -35,8 +35,13 @@ Write-Host ""
 $existing = & $VBoxManage list hostonlyifs | Out-String
 $adapterName = $null
 
-if ($existing -match [regex]::Escape($NetworkName)) {
-    $adapterName = $NetworkName
+# Reuse an existing host-only adapter already carrying the lab gateway address.
+$blocks = [regex]::Matches($existing, "(?ms)(?=^Name:).+?(?=\r?\n\r?\n|\z)")
+foreach ($block in $blocks) {
+    if ($block.Value -match ("(?m)^IPAddress:\s+" + [regex]::Escape($HostAddress) + "\s*$")) {
+        $nameMatch = [regex]::Match($block.Value, "(?m)^Name:\s+(.+)$")
+        if ($nameMatch.Success) { $adapterName = $nameMatch.Groups[1].Value.Trim(); break }
+    }
 }
 
 if (-not $adapterName) {
