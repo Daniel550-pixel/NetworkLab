@@ -36,7 +36,12 @@ def _now() -> str:
 
 
 def _record(event: str, **data: Any) -> None:
-    _history.appendleft({"timestamp": _now(), "event": event, **data})
+    item = {"timestamp": _now(), "event": event, **data}
+    _history.appendleft(item)
+    try:
+        persist_event(item)
+    except (OSError, TypeError, ValueError):
+        pass
 
 
 def _find_vboxmanage() -> str | None:
@@ -218,6 +223,58 @@ def _repair_vboxsvc(vbox: str) -> dict[str, Any]:
     return result
 
 
+def _windows_event_correlation() -> dict[str, Any]:
+    script = (
+        "$start=(Get-Date).AddMinutes(-15); "
+        "Get-WinEvent -FilterHashtable @{LogName=@('System','Application');StartTime=$start} "
+        "-ErrorAction SilentlyContinue | "
+        "Where-Object {$_.ProviderName -match 'VirtualBox|VBox|Service Control Manager'} | "
+        "Select-Object -First 25 TimeCreated,ProviderName,Id,LevelDisplayName,Message | "
+        "ConvertTo-Json -Depth 3 -Compress"
+    )
+    try:
+        result = subprocess.run(
+            ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=20,
+            check=False,
+        )
+        if result.returncode != 0:
+            return {"available": False, "error": _combined_error(result.stdout, result.stderr)}
+        raw = result.stdout.strip()
+        if not raw:
+            return {"available": True, "events": []}
+        payload = json.loads(raw)
+        events = payload if isinstance(payload, list) else [payload]
+        return {"available": True, "events": events}
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
+        return {"available": False, "error": str(exc)}
+
+
+def _recovery_recommendation(probe: dict[str, Any], repair: dict[str, Any] | None = None) -> dict[str, Any]:
+    detail = "\n".join(item["error"] for item in probe.get("failures", []))
+    if "E_ACCESSDENIED" in detail or "SessionMachine" in detail or "VBoxSVC" in detail:
+        return {
+            "priority": "high",
+            "action": "Restart VBoxSVC only when no VMs are running; otherwise stop affected VMs cleanly first.",
+            "reason": "The failure matches a VirtualBox COM/session-lock condition.",
+        }
+    if repair and not repair.get("success"):
+        return {
+            "priority": "critical",
+            "action": "Manual host-level VirtualBox investigation required.",
+            "reason": "The safe VBoxSVC recovery boundary did not restore VBoxManage.",
+        }
+    return {
+        "priority": "medium",
+        "action": "Review the failed VBoxManage probe and VirtualBox host state.",
+        "reason": "The telemetry engine detected an unclassified VirtualBox failure.",
+    }
+
+
 def _repair(force_repair: bool = False) -> dict[str, Any]:
     vbox = _find_vboxmanage()
     if not vbox:
@@ -268,7 +325,11 @@ def check_and_recover(force_repair: bool = False) -> dict[str, Any]:
             })
             if was_incident:
                 _record("recovered", message="VirtualBox probes returned to healthy state.")
-            return _snapshot(probe=probe, vboxmanage=vbox)
+                    return _snapshot(
+                probe=probe,
+                vboxmanage=vbox,
+                recommendation=_recovery_recommendation(probe),
+            )
 
         _state["consecutive_failures"] = int(_state["consecutive_failures"]) + 1
         _state.update({
@@ -328,9 +389,18 @@ def check_and_recover(force_repair: bool = False) -> dict[str, Any]:
                 "healthy": False,
                 "last_error": verification["failures"],
             })
-            _record("repair-failed", repair=repair, verification=verification)
+            correlation = _windows_event_correlation()
+            recommendation = _recovery_recommendation(verification, repair)
+            repair["windows_event_correlation"] = correlation
+            repair["recommendation"] = recommendation
+            _record(
+                "repair-failed",
+                repair=repair,
+                verification=verification,
+                recommendation=recommendation,
+            )
 
-        return _snapshot(
+            return _snapshot(
             probe=verification,
             repair=repair,
             vboxmanage=vbox,
@@ -341,6 +411,8 @@ def _snapshot(**extra: Any) -> dict[str, Any]:
     return {
         **_state,
         "history": list(_history),
+        "persistent_history": persistent_history()[:MAX_HISTORY],
+        "incident_log_path": incident_log_path(),
         "policy": {
             "monitor_interval_seconds": MONITOR_INTERVAL_SECONDS,
             "repair_threshold": REPAIR_THRESHOLD,
