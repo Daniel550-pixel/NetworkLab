@@ -1,4 +1,4 @@
-const state = { data:null, health:null, evidence:null, virtualNetwork:null, vms:null, storage:null, readiness:null, architecture:null, connectivity:null, view:"command" };
+const state = { data:null, health:null, evidence:null, virtualNetwork:null, vms:null, storage:null, readiness:null, architecture:null, connectivity:null, lab:null, verification:null, view:"command" };
 
 const meta = {
   command:["Command Center","Operational view of the local software network laboratory."],
@@ -11,7 +11,8 @@ const meta = {
   evidence:["Evidence","Structured evidence output suitable for stage documentation."],
   "vm-lab":["VM Lab","VirtualBox runtime, storage and boot-state control for the isolated stage laboratory."],
   telemetry:["Self-Healing Telemetry","Continuous VirtualBox health monitoring, incident detection and controlled recovery."],
-  architecture:["Architecture","Consolidated control plane, runtime, verification, recovery and evidence architecture."]
+  architecture:["Architecture","Consolidated control plane, runtime, verification, recovery and evidence architecture."],
+  "lab-control":["Lab Control","Provision the host-side lab, inspect roles, and verify the complete build state."]
 };
 
 const $ = id => document.getElementById(id);
@@ -137,6 +138,15 @@ function render(){
   } else if(view==="evidence"){
     html='<div class="grid two"><div class="card"><h2>Evidence package</h2><div class="meta">Current structured evidence returned by the local evidence service</div><pre>'+esc(JSON.stringify(e,null,2))+'</pre></div>'+
       '<div class="card"><h2>Export</h2><div class="meta">Save the current evidence payload locally.</div><button class="button primary" id="download">Download JSON</button></div></div>';
+  } else if(view==="lab-control"){
+    const lab=state.lab||{};
+    const def=lab.definition||{};
+    const roles=arr(def.roles);
+    const checks=arr((state.verification||{}).checks);
+    html='<div class="grid four">'+
+      [['Lab',def.lab_id||"—"],['Network',lab.network?.ready?"READY":"ATTENTION"],['VMs',String((lab.topology?.vms||[]).filter(x=>x.exists).length)+"/3"],['Storage',String((lab.storage?.vms||[]).filter(x=>x.disk).length)+"/3"]].map(x=>'<div class="metric"><label>'+esc(x[0])+'</label><strong>'+esc(x[1])+'</strong></div>').join("")+
+      '</div><div class="grid two" style="margin-top:15px"><div class="card"><div class="eyebrow">HOST BUILD</div><h2>Lab provisioning</h2><div class="meta">Creates only the host-side network, VM topology and storage. OS media remains manual.</div><div class="vm-actions"><button class="button primary" id="prepare-lab">Prepare lab</button><button class="button" id="verify-lab">Verify lab</button></div><pre id="lab-result">'+esc(JSON.stringify(lab.readiness||{},null,2))+'</pre></div><div class="card"><div class="eyebrow">ROLE MAP</div><h2>Guest architecture</h2><table><thead><tr><th>VM</th><th>Role</th><th>Purpose</th><th>Recommended IP</th></tr></thead><tbody>'+roles.map(x=>'<tr><td>'+esc(x.hostname)+'</td><td>'+esc(x.role)+'</td><td>'+esc(x.purpose)+'</td><td>'+esc(x.recommended_ip)+'</td></tr>').join("")+'</tbody></table></div></div>'+
+      '<div class="card" style="margin-top:15px"><div class="eyebrow">VERIFICATION GATES</div><h2>Build status</h2><table><thead><tr><th>Gate</th><th>Status</th></tr></thead><tbody>'+checks.map(x=>'<tr><td>'+esc(x.label)+'</td><td>'+badge(x.passed?"PASS":"ATTENTION",x.passed?"ok":"warn")+'</td></tr>').join("")+'</tbody></table></div>';
   } else if(view==="architecture"){
     const a=state.architecture||{};
     const layers=arr(a.layers);
@@ -288,8 +298,8 @@ async function loadTelemetry(){
 async function load(){
   $("alert").classList.add("hidden");
   try{
-    const [data,health,evidence,virtualNetwork,vms,storage,readiness,telemetry,architecture,connectivity]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms"),get("/api/vms/storage"),get("/api/vm/readiness"),get("/api/vm/telemetry"),get("/api/architecture"),get("/api/connectivity")]);
-    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; state.storage=storage; state.readiness=readiness; state.telemetry=telemetry; state.architecture=architecture; state.connectivity=connectivity; setStatus(); render();
+    const [data,health,evidence,virtualNetwork,vms,storage,readiness,telemetry,architecture,connectivity,lab,verification]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms"),get("/api/vms/storage"),get("/api/vm/readiness"),get("/api/vm/telemetry"),get("/api/architecture"),get("/api/connectivity")]);
+    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; state.storage=storage; state.readiness=readiness; state.telemetry=telemetry; state.architecture=architecture; state.connectivity=connectivity; state.lab=lab; state.verification=verification; setStatus(); render();
   }catch(error){
     $("alert").textContent="LOCAL TELEMETRY ERROR: "+error.message;
     $("alert").classList.remove("hidden");
@@ -303,3 +313,20 @@ document.querySelectorAll(".nav-item").forEach(button=>button.addEventListener("
 $("refresh").addEventListener("click",load);
 load();
 setInterval(load,10000);
+
+
+async function bindLabControl(){
+  const prepare=$("prepare-lab"), verify=$("verify-lab"), result=$("lab-result");
+  if(prepare) prepare.onclick=async()=>{
+    prepare.disabled=true; prepare.textContent="PREPARING...";
+    try { const x=await post("/api/lab/prepare",{}); state.lab=x; state.readiness=x.readiness; result.textContent=JSON.stringify(x,null,2); }
+    catch(error){ result.textContent="ERROR: "+error.message; }
+    finally { prepare.disabled=false; prepare.textContent="Prepare lab"; }
+  };
+  if(verify) verify.onclick=async()=>{
+    verify.disabled=true; verify.textContent="VERIFYING...";
+    try { const x=await get("/api/lab/verify"); state.verification=x; result.textContent=JSON.stringify(x,null,2); }
+    catch(error){ result.textContent="ERROR: "+error.message; }
+    finally { verify.disabled=false; verify.textContent="Verify lab"; }
+  };
+}
