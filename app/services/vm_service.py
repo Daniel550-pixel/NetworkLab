@@ -6,6 +6,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from app.services.virtualization_service import get_virtual_network
+
 NETWORK_NAME = "NetworkLab-Lab"
 VM_DEFINITIONS = [
     {"name": "NetworkLab-VM01-MGMT", "role": "MGMT", "memory": 2048, "cpus": 2},
@@ -103,6 +105,13 @@ def create_vm_topology() -> dict[str, Any]:
     vbox = _vboxmanage()
     if not vbox:
         raise RuntimeError("VirtualBox VBoxManage.exe was not found.")
+
+    network = get_virtual_network()
+    if not network.get("ready"):
+        raise RuntimeError("NetworkLab-Lab is not ready. Provision the virtual network first.")
+    adapter = (network.get("host_only_adapter") or {}).get("Name")
+    if not adapter:
+        raise RuntimeError("NetworkLab could not resolve the VirtualBox host-only adapter.")
 
     for definition in VM_DEFINITIONS:
         name = definition["name"]
