@@ -122,7 +122,7 @@ def create_vm_topology() -> dict[str, Any]:
 
         commands = [
             ("modifyvm", name, "--memory", str(definition["memory"]), "--cpus", str(definition["cpus"])),
-            ("modifyvm", name, "--nic1", "hostonly", "--hostonlyadapter1", NETWORK_NAME),
+            ("modifyvm", name, "--nic1", "hostonly", "--hostonlyadapter1", adapter),
         ]
         for args in commands:
             ok, out, err = _run(vbox, *args)
