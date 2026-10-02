@@ -163,29 +163,45 @@ def create_virtual_network() -> dict[str, Any]:
             "VirtualBox VBoxManage.exe was not found. Install VirtualBox or add its installation directory to PATH."
         )
 
+    # Resolve an existing NetworkLab adapter first.
     host = _find_host_only(vbox)
 
     if not host:
+        # Capture the adapter names before creation so we can reliably identify
+        # the adapter VirtualBox creates, regardless of localized VBoxManage
+        # output or changes in the create command's stdout format.
+        before_result = _run(vbox, "list", "hostonlyifs")
+        before = {
+            item.get("Name")
+            for item in _records(before_result.stdout)
+            if item.get("Name")
+        }
+
         created = _run(vbox, "hostonlyif", "create")
         if not created.ok:
             raise RuntimeError(
                 created.stderr or created.stdout or "Unable to create the VirtualBox host-only adapter."
             )
 
-        # The create command normally reports the adapter name in stdout.
-        match = re.search(r"Name:\s*([^\r\n]+)", created.stdout, re.IGNORECASE)
-        adapter_name = match.group(1).strip() if match else None
+        # Prefer the newly-created adapter from VBoxManage's authoritative
+        # list output instead of parsing the human-readable create message.
+        after_result = _run(vbox, "list", "hostonlyifs")
+        after = [
+            item
+            for item in _records(after_result.stdout)
+            if item.get("Name")
+        ]
 
-        host = _find_host_only(vbox)
+        new_adapters = [item for item in after if item.get("Name") not in before]
 
-        # If the adapter still has VirtualBox's default address, resolve it
-        # by the reported name and configure it below.
-        if not host and adapter_name:
-            result = _run(vbox, "list", "hostonlyifs")
-            for item in _records(result.stdout):
-                if item.get("Name") == adapter_name:
-                    host = item
-                    break
+        if new_adapters:
+            host = new_adapters[-1]
+        else:
+            # A previously-created adapter may have existed with a different
+            # address. Fall back to the first host-only adapter only when it is
+            # the sole adapter available.
+            if len(after) == 1:
+                host = after[0]
 
     if not host or not host.get("Name"):
         raise RuntimeError(
