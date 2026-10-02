@@ -39,8 +39,17 @@ def _storage_for_vm(vbox: str, definition: dict[str, Any]) -> dict[str, Any]:
         return {**definition, "exists": False, "disk": None, "iso": None}
 
     fields = _machine_fields(vbox, name)
-    disk = fields.get("SATA-0-0") or fields.get("SATA-0-1")
-    iso = fields.get("SATA-1-0") or fields.get("IDE-1-0")
+    disk = (
+        fields.get("SATA-0-0")
+        or fields.get("NetworkLab-SATA-0-0")
+        or fields.get("SATA-0-1")
+        or fields.get("NetworkLab-SATA-0-1")
+    )
+    iso = (
+        fields.get("SATA-1-0")
+        or fields.get("NetworkLab-SATA-1-0")
+        or fields.get("IDE-1-0")
+    )
     return {
         **definition,
         "exists": True,
