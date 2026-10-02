@@ -12,7 +12,9 @@ const meta = {
   "vm-lab":["VM Lab","VirtualBox runtime, storage and boot-state control for the isolated stage laboratory."],
   telemetry:["Self-Healing Telemetry","Continuous VirtualBox health monitoring, incident detection and controlled recovery."],
   architecture:["Architecture","Consolidated control plane, runtime, verification, recovery and evidence architecture."],
-  "lab-control":["Lab Control","Provision the host-side lab, inspect roles, and verify the complete build state."]
+  "lab-control":["Lab Control","Provision the host-side lab, inspect roles, and verify the complete build state."],
+  "guest-build":["Guest Build","OS-agnostic guest contracts and service validation boundaries for MGMT, INFRA and CLIENT."],
+  "evidence-capture":["Evidence Capture","Capture a complete lab snapshot after provisioning and guest validation."]
 };
 
 const $ = id => document.getElementById(id);
@@ -147,6 +149,15 @@ function render(){
       [['Lab',def.lab_id||"—"],['Network',lab.network?.ready?"READY":"ATTENTION"],['VMs',String((lab.topology?.vms||[]).filter(x=>x.exists).length)+"/3"],['Storage',String((lab.storage?.vms||[]).filter(x=>x.disk).length)+"/3"]].map(x=>'<div class="metric"><label>'+esc(x[0])+'</label><strong>'+esc(x[1])+'</strong></div>').join("")+
       '</div><div class="grid two" style="margin-top:15px"><div class="card"><div class="eyebrow">HOST BUILD</div><h2>Lab provisioning</h2><div class="meta">Creates only the host-side network, VM topology and storage. OS media remains manual.</div><div class="vm-actions"><button class="button primary" id="prepare-lab">Prepare lab</button><button class="button" id="verify-lab">Verify lab</button></div><pre id="lab-result">'+esc(JSON.stringify(lab.readiness||{},null,2))+'</pre></div><div class="card"><div class="eyebrow">ROLE MAP</div><h2>Guest architecture</h2><table><thead><tr><th>VM</th><th>Role</th><th>Purpose</th><th>Recommended IP</th></tr></thead><tbody>'+roles.map(x=>'<tr><td>'+esc(x.hostname)+'</td><td>'+esc(x.role)+'</td><td>'+esc(x.purpose)+'</td><td>'+esc(x.recommended_ip)+'</td></tr>').join("")+'</tbody></table></div></div>'+
       '<div class="card" style="margin-top:15px"><div class="eyebrow">VERIFICATION GATES</div><h2>Build status</h2><table><thead><tr><th>Gate</th><th>Status</th></tr></thead><tbody>'+checks.map(x=>'<tr><td>'+esc(x.label)+'</td><td>'+badge(x.passed?"PASS":"ATTENTION",x.passed?"ok":"warn")+'</td></tr>').join("")+'</tbody></table></div>';
+  } else if(view==="guest-build"){
+    const contracts=arr((state.guestContracts||{}).contracts);
+    const validation=state.guestValidation||{};
+    const endpointRows=arr(validation.endpoints).map(x=>'<tr><td>'+esc(x.role)+'</td><td>'+esc(x.ip)+'</td><td>'+badge(x.icmp?.reachable?"REACHABLE":"NOT REACHABLE",x.icmp?.reachable?"ok":"warn")+'</td><td>'+esc(x.expected_services?.dns?.reachable===true?"DNS OPEN":x.expected_services?.dns?.skipped?"—":"DNS NOT OPEN")+'</td></tr>').join("");
+    html='<div class="card"><div class="eyebrow">GUEST CONTRACTS</div><h2>OS-agnostic role definitions</h2><div class="meta">The host prepares the VM boundary; guest OS installation remains explicit and manual.</div><table><thead><tr><th>Role</th><th>VM</th><th>IP</th><th>Services</th><th>Validation</th></tr></thead><tbody>'+contracts.map(x=>'<tr><td>'+esc(x.role)+'</td><td>'+esc(x.vm)+'</td><td>'+esc(x.recommended_ip)+'</td><td>'+esc(x.services.join(", "))+'</td><td>'+esc(x.validation.join(", "))+'</td></tr>').join("")+'</tbody></table></div>'+
+    '<div class="card" style="margin-top:15px"><div class="eyebrow">HOST-ASSISTED VALIDATION</div><h2>Guest endpoint probes</h2><div class="meta">ICMP and selected TCP probes are observational; guest-to-guest checks require installed/configured guests.</div><table><thead><tr><th>Role</th><th>IP</th><th>ICMP</th><th>DNS</th></tr></thead><tbody>'+endpointRows+'</tbody></table><button class="button primary" id="refresh-guest">Run guest validation</button></div>'+
+    '<div class="card" style="margin-top:15px"><div class="eyebrow">BOUNDARY</div><h2>Manual guest configuration</h2><pre>'+esc(JSON.stringify({os_selection:"manual",next:["Install selected OS ISO","Apply role contract","Configure services","Run validation","Capture evidence"]},null,2))+'</pre></div>';
+  } else if(view==="evidence-capture"){
+    html='<div class="card"><div class="eyebrow">EVIDENCE PIPELINE</div><h2>Capture complete laboratory snapshot</h2><div class="meta">Stores verification, guest contracts, connectivity and VirtualBox telemetry as a timestamped JSON artifact.</div><button class="button primary" id="capture-evidence">Capture evidence</button><pre id="capture-result">Ready.</pre></div>';
   } else if(view==="architecture"){
     const a=state.architecture||{};
     const layers=arr(a.layers);
@@ -287,6 +298,10 @@ function render(){
     try{ state.virtualNetwork=await post("/api/virtual-network/create"); render(); }
     catch(error){ $("alert").textContent="VIRTUAL NETWORK ERROR: "+error.message; $("alert").classList.remove("hidden"); createNetwork.disabled=false; createNetwork.textContent="Retry"; }
   };
+  const refreshGuest=$("refresh-guest");
+  if(refreshGuest) refreshGuest.onclick=async()=>{ refreshGuest.disabled=true; refreshGuest.textContent="VALIDATING..."; try{ state.guestValidation=await get("/api/guest/validation"); render(); } catch(error){ $("alert").textContent="GUEST VALIDATION ERROR: "+error.message; $("alert").classList.remove("hidden"); refreshGuest.disabled=false; refreshGuest.textContent="Retry"; } };
+  const captureEvidence=$("capture-evidence");
+  if(captureEvidence) captureEvidence.onclick=async()=>{ captureEvidence.disabled=true; captureEvidence.textContent="CAPTURING..."; try{ const x=await post("/api/evidence/capture",{}); const result=$("capture-result"); if(result) result.textContent=JSON.stringify({captured:x.captured,path:x.path},null,2); } catch(error){ const result=$("capture-result"); if(result) result.textContent="ERROR: "+error.message; } finally { captureEvidence.disabled=false; captureEvidence.textContent="Capture evidence"; } };
   const download=$("download");
   if(download) download.onclick=()=>{const blob=new Blob([JSON.stringify(state.evidence,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="networklab-evidence.json";a.click();URL.revokeObjectURL(a.href)};
 }
@@ -299,8 +314,8 @@ async function loadTelemetry(){
 async function load(){
   $("alert").classList.add("hidden");
   try{
-    const [data,health,evidence,virtualNetwork,vms,storage,readiness,telemetry,architecture,connectivity,lab,verification]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms"),get("/api/vms/storage"),get("/api/vm/readiness"),get("/api/vm/telemetry"),get("/api/architecture"),get("/api/connectivity"),get("/api/lab/state"),get("/api/lab/verify")]);
-    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; state.storage=storage; state.readiness=readiness; state.telemetry=telemetry; state.architecture=architecture; state.connectivity=connectivity; state.lab=lab; state.verification=verification; setStatus(); render();
+    const [data,health,evidence,virtualNetwork,vms,storage,readiness,telemetry,architecture,connectivity,lab,verification,guestContracts,guestValidation]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms"),get("/api/vms/storage"),get("/api/vm/readiness"),get("/api/vm/telemetry"),get("/api/architecture"),get("/api/connectivity"),get("/api/lab/state"),get("/api/lab/verify"),get("/api/guest/contracts"),get("/api/guest/validation")]);
+    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; state.storage=storage; state.readiness=readiness; state.telemetry=telemetry; state.architecture=architecture; state.connectivity=connectivity; state.lab=lab; state.verification=verification; state.guestContracts=guestContracts; state.guestValidation=guestValidation; setStatus(); render();
   }catch(error){
     $("alert").textContent="LOCAL TELEMETRY ERROR: "+error.message;
     $("alert").classList.remove("hidden");
