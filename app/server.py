@@ -12,6 +12,7 @@ from app.services.health_service import get_health
 from app.services.network_service import get_state
 from app.services.virtualization_service import create_virtual_network, get_virtual_network
 from app.services.vm_service import create_vm_topology, get_vm_topology, vm_action
+from app.services.storage_service import create_vm_storage, get_vm_storage
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB_ROOT = ROOT / "web"
@@ -50,6 +51,8 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, create_virtual_network())
             elif route == "/api/vms/create":
                 self._json(HTTPStatus.OK, create_vm_topology())
+            elif route == "/api/vms/storage/create":
+                self._json(HTTPStatus.OK, create_vm_storage())
             elif route.startswith("/api/vms/"):
                 parts = route.split("/")
                 if len(parts) != 5 or parts[4] not in {"start", "stop", "poweroff"}:
@@ -85,6 +88,8 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, get_virtual_network())
             elif route == "/api/vms":
                 self._json(HTTPStatus.OK, get_vm_topology())
+            elif route == "/api/vms/storage":
+                self._json(HTTPStatus.OK, get_vm_storage())
             elif route == "/api/status":
                 health = get_health()
                 state = get_state()
@@ -100,6 +105,7 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                         "interfaces": len(adapters) if isinstance(adapters, list) else 0,
                         "virtual_network": get_virtual_network(),
                         "vms": get_vm_topology(),
+                        "vm_storage": get_vm_storage(),
                     },
                 )
             elif route == "/healthz":
