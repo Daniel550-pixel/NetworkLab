@@ -87,7 +87,7 @@ function render(){
     const running=services.filter(x=>String(x.status||"").toLowerCase()==="running").length;
     html='<div class="grid four">'+
       [['Interfaces',adapters.length],['IPv4 configurations',ip.length],['Connectivity tests',conn.length],['Running services',running+'/'+services.length]].map(x=>'<div class="metric"><label>'+x[0]+'</label><strong>'+esc(x[1])+'</strong></div>').join("")+
-      '</div><div class="grid two" style="margin-top:15px"><div class="card"><h2>Logical network path</h2><div class="meta">Local telemetry model</div>'+topology()+'</div>'+
+      '</div><div class="grid two" style="margin-top:15px"><div class="card"><h2>Virtual network</h2><div class="meta">Managed directly by the NetworkLab application</div>'+virtualNetworkCard()+'</div><div class="card"><h2>Logical network path</h2><div class="meta">Local telemetry model</div>'+topology()+'</div>'+
       '<div class="card"><h2>Execution boundary</h2><div class="meta">Current laboratory safety model</div>'+
       '<div class="kv"><b>Environment</b><span>Software laboratory</span></div><div class="kv"><b>Write operations</b><span>'+badge("DISABLED")+'</span></div><div class="kv"><b>Production assumptions</b><span>'+badge("NONE")+'</span></div><div class="kv"><b>Server</b><span>127.0.0.1:8501</span></div></div></div>';
   } else if(view==="topology"){
