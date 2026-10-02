@@ -19,6 +19,9 @@ from app.services.connectivity_service import get_connectivity_state
 from app.services.orchestrator_service import run_audit
 from app.services.lab_lifecycle_service import get_lab_definition, get_lab_state, prepare_lab
 from app.services.verification_service import verify_lab
+from app.services.guest_contract_service import get_guest_contracts
+from app.services.inter_vm_validation_service import validate_lab_connectivity
+from app.services.lab_evidence_service import capture_lab_evidence
 from app.services.virtualbox_telemetry_service import force_repair, get_telemetry, start_monitor
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -71,6 +74,8 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, create_vm_storage())
             elif route == "/api/vm/telemetry/repair":
                 self._json(HTTPStatus.OK, force_repair())
+            elif route == "/api/evidence/capture":
+                self._json(HTTPStatus.OK, capture_lab_evidence())
             elif route.startswith("/api/vms/") and route.endswith("/iso"):
                 parts = route.split("/")
                 if len(parts) != 5:
@@ -130,6 +135,10 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, get_lab_state())
             elif route == "/api/lab/verify":
                 self._json(HTTPStatus.OK, verify_lab())
+            elif route == "/api/guest/contracts":
+                self._json(HTTPStatus.OK, get_guest_contracts())
+            elif route == "/api/guest/validation":
+                self._json(HTTPStatus.OK, validate_lab_connectivity())
             elif route == "/api/architecture":
                 self._json(HTTPStatus.OK, get_architecture_state())
             elif route == "/api/connectivity":
