@@ -11,6 +11,7 @@ from app.services.evidence_service import get_evidence
 from app.services.health_service import get_health
 from app.services.network_service import get_state
 from app.services.virtualization_service import create_virtual_network, get_virtual_network
+from app.services.vm_service import create_vm_topology, get_vm_topology, vm_action
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB_ROOT = ROOT / "web"
@@ -47,6 +48,15 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
         try:
             if route == "/api/virtual-network/create":
                 self._json(HTTPStatus.OK, create_virtual_network())
+            elif route == "/api/vms/create":
+                self._json(HTTPStatus.OK, create_vm_topology())
+            elif route.startswith("/api/vms/"):
+                parts = route.split("/")
+                if len(parts) != 5 or parts[4] not in {"start", "stop", "poweroff"}:
+                    self._json(HTTPStatus.NOT_FOUND, {"error": "Invalid VM action route"})
+                    return
+                from urllib.parse import unquote
+                self._json(HTTPStatus.OK, vm_action(unquote(parts[3]), parts[4]))
             else:
                 self._json(HTTPStatus.NOT_FOUND, {"error": "Route not found"})
         except Exception as exc:
@@ -73,6 +83,8 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, get_evidence())
             elif route == "/api/virtual-network":
                 self._json(HTTPStatus.OK, get_virtual_network())
+            elif route == "/api/vms":
+                self._json(HTTPStatus.OK, get_vm_topology())
             elif route == "/api/status":
                 health = get_health()
                 state = get_state()
@@ -86,7 +98,8 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                         "connectivity_ok": connectivity_ok,
                         "services_ok": services_ok,
                         "interfaces": len(adapters) if isinstance(adapters, list) else 0,
-                        "virtual_network": get_virtual_network(),\n                        "vms": get_vm_topology(),
+                        "virtual_network": get_virtual_network(),
+                        "vms": get_vm_topology(),\n                        "vms": get_vm_topology(),
                     },
                 )
             elif route == "/healthz":
