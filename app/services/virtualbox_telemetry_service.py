@@ -341,6 +341,14 @@ def _snapshot(**extra: Any) -> dict[str, Any]:
     return {
         **_state,
         "history": list(_history),
+        "policy": {
+            "monitor_interval_seconds": MONITOR_INTERVAL_SECONDS,
+            "repair_threshold": REPAIR_THRESHOLD,
+            "repair_cooldown_seconds": REPAIR_COOLDOWN_SECONDS,
+            "probe_timeout_seconds": PROBE_TIMEOUT_SECONDS,
+            "max_history": MAX_HISTORY,
+        },
+        "processes": _process_snapshot(),
         **extra,
     }
 
