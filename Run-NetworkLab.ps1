@@ -67,13 +67,4 @@ if (-not $NoBrowser) {
     Start-Process $Url
 }
 
-try {
-    while (-not $process.HasExited) {
-        Start-Sleep -Seconds 1
-    }
-}
-finally {
-    if (-not $process.HasExited) {
-        Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-    }
-}
+Write-Host "Local web app detached from this terminal." -ForegroundColor DarkGray
