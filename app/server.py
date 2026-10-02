@@ -12,7 +12,7 @@ from app.services.health_service import get_health
 from app.services.network_service import get_state
 from app.services.virtualization_service import create_virtual_network, get_virtual_network
 from app.services.vm_service import create_vm_topology, get_vm_topology, vm_action
-from app.services.storage_service import create_vm_storage, get_vm_storage
+from app.services.storage_service import attach_vm_iso, create_vm_storage, eject_vm_iso, get_vm_storage
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB_ROOT = ROOT / "web"
@@ -47,12 +47,33 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         route = urlparse(self.path).path
         try:
+            body = {}
+            length = int(self.headers.get("Content-Length", "0"))
+            if length:
+                body = json.loads(self.rfile.read(length).decode("utf-8"))
+            if not isinstance(body, dict):
+                raise ValueError("Request body must be a JSON object.")
+
             if route == "/api/virtual-network/create":
                 self._json(HTTPStatus.OK, create_virtual_network())
             elif route == "/api/vms/create":
                 self._json(HTTPStatus.OK, create_vm_topology())
             elif route == "/api/vms/storage/create":
                 self._json(HTTPStatus.OK, create_vm_storage())
+            elif route.startswith("/api/vms/") and route.endswith("/iso"):
+                parts = route.split("/")
+                if len(parts) != 5:
+                    self._json(HTTPStatus.NOT_FOUND, {"error": "Invalid VM ISO route"})
+                    return
+                from urllib.parse import unquote
+                name = unquote(parts[3])
+                if body.get("action") == "eject":
+                    self._json(HTTPStatus.OK, eject_vm_iso(name))
+                else:
+                    iso_path = str(body.get("path", "")).strip()
+                    if not iso_path:
+                        raise ValueError("ISO path is required.")
+                    self._json(HTTPStatus.OK, attach_vm_iso(name, iso_path))
             elif route.startswith("/api/vms/"):
                 parts = route.split("/")
                 if len(parts) != 5 or parts[4] not in {"start", "stop", "poweroff"}:
