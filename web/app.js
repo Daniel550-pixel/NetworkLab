@@ -298,7 +298,7 @@ async function loadTelemetry(){
 async function load(){
   $("alert").classList.add("hidden");
   try{
-    const [data,health,evidence,virtualNetwork,vms,storage,readiness,telemetry,architecture,connectivity,lab,verification]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms"),get("/api/vms/storage"),get("/api/vm/readiness"),get("/api/vm/telemetry"),get("/api/architecture"),get("/api/connectivity")]);
+    const [data,health,evidence,virtualNetwork,vms,storage,readiness,telemetry,architecture,connectivity,lab,verification]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms"),get("/api/vms/storage"),get("/api/vm/readiness"),get("/api/vm/telemetry"),get("/api/architecture"),get("/api/connectivity"),get("/api/lab/state"),get("/api/lab/verify")]);
     state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; state.storage=storage; state.readiness=readiness; state.telemetry=telemetry; state.architecture=architecture; state.connectivity=connectivity; state.lab=lab; state.verification=verification; setStatus(); render();
   }catch(error){
     $("alert").textContent="LOCAL TELEMETRY ERROR: "+error.message;
@@ -330,3 +330,5 @@ async function bindLabControl(){
     finally { verify.disabled=false; verify.textContent="Verify lab"; }
   };
 }
+
+bindLabControl();
