@@ -1,4 +1,4 @@
-const state = { data:null, health:null, evidence:null, virtualNetwork:null, view:"command" };
+const state = { data:null, health:null, evidence:null, virtualNetwork:null, vms:null, view:"command" };
 
 const meta = {
   command:["Command Center","Operational view of the local software network laboratory."],
@@ -77,7 +77,17 @@ function virtualNetworkCard(){
     '<button class="button primary" id="create-network">'+(exists?"Reconcile virtual network":"Create virtual network")+'</button>';
 }
 
-function render(){
+function vmTopologyCard(){
+  const items=arr((state.vms||{}).vms);
+  const rows=items.map(vm=>{
+    const stateText=vm.exists?String(vm.state||"unknown").toUpperCase():"NOT CREATED";
+    const cls=vm.exists && stateText==="RUNNING"?"ok":vm.exists?"warn":"";
+    const actions=vm.exists ? '<button class="button" data-vm-action="start" data-vm="'+esc(vm.name)+'">Start</button><button class="button" data-vm-action="stop" data-vm="'+esc(vm.name)+'">Stop</button>' : '';
+    return '<tr><td>'+esc(vm.name)+'</td><td>'+esc(vm.role)+'</td><td>'+badge(stateText,cls)+'</td><td>'+esc(vm.network||"")+'</td><td>'+actions+'</td></tr>';
+  }).join("");
+  return '<div class="card"><h2>Virtual machine topology</h2><div class="meta">Three lab nodes attached to NetworkLab-Lab</div><div style="overflow:auto"><table><thead><tr><th>VM</th><th>Role</th><th>State</th><th>Network</th><th>Actions</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5">No VM definitions returned.</td></tr>')+'</tbody></table></div><button class="button primary" id="create-vms">Create / reconcile VM topology</button></div>';
+}
+\nfunction render(){
   const d=state.data||{}, h=state.health||{}, e=state.evidence||{};
   const adapters=arr(d.adapters), ip=arr(d.ip), conn=arr(d.connectivity), services=arr(d.services);
   const view=state.view;
@@ -88,7 +98,7 @@ function render(){
     html='<div class="grid four">'+
       [['Interfaces',adapters.length],['IPv4 configurations',ip.length],['Connectivity tests',conn.length],['Running services',running+'/'+services.length]].map(x=>'<div class="metric"><label>'+x[0]+'</label><strong>'+esc(x[1])+'</strong></div>').join("")+
       '</div><div class="grid two" style="margin-top:15px"><div class="card"><h2>Virtual network</h2><div class="meta">Managed directly by the NetworkLab application</div>'+virtualNetworkCard()+'</div><div class="card"><h2>Logical network path</h2><div class="meta">Local telemetry model</div>'+topology()+'</div>'+
-      '<div class="card"><h2>Execution boundary</h2><div class="meta">Current laboratory safety model</div>'+
+      '<div style="grid-column:1 / -1">${vmTopologyCard()}</div><div class="card"><h2>Execution boundary</h2><div class="meta">Current laboratory safety model</div>'+
       '<div class="kv"><b>Environment</b><span>Software laboratory</span></div><div class="kv"><b>Write operations</b><span>'+badge("DISABLED")+'</span></div><div class="kv"><b>Production assumptions</b><span>'+badge("NONE")+'</span></div><div class="kv"><b>Server</b><span>127.0.0.1:8501</span></div></div></div>';
   } else if(view==="topology"){
     html='<div class="card"><h2>Network topology</h2><div class="meta">Pure SVG visualization — no external 3D or frontend service required</div>'+topology()+'</div>';
@@ -111,6 +121,17 @@ function render(){
       '<div class="card"><h2>Export</h2><div class="meta">Save the current evidence payload locally.</div><button class="button primary" id="download">Download JSON</button></div></div>';
   }
   $("content").innerHTML=html;
+  const createVMs=$("create-vms");
+  if(createVMs) createVMs.onclick=async()=>{
+    createVMs.disabled=true; createVMs.textContent="BUILDING...";
+    try{ state.vms=await post("/api/vms/create"); render(); }
+    catch(error){ $("alert").textContent="VM TOPOLOGY ERROR: "+error.message; $("alert").classList.remove("hidden"); createVMs.disabled=false; createVMs.textContent="Retry"; }
+  };
+  document.querySelectorAll("[data-vm-action]").forEach(button=>button.onclick=async()=>{
+    button.disabled=true;
+    try{ state.vms=await post("/api/vms/"+encodeURIComponent(button.dataset.vm)+"/"+button.dataset.vmAction); render(); }
+    catch(error){ $("alert").textContent="VM ACTION ERROR: "+error.message; $("alert").classList.remove("hidden"); button.disabled=false; }
+  });
   const createNetwork=$("create-network");
   if(createNetwork) createNetwork.onclick=async()=>{
     createNetwork.disabled=true; createNetwork.textContent="BUILDING...";
@@ -124,8 +145,8 @@ function render(){
 async function load(){
   $("alert").classList.add("hidden");
   try{
-    const [data,health,evidence,virtualNetwork]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network")]);
-    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; setStatus(); render();
+    const [data,health,evidence,virtualNetwork,vms]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms")]);
+    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; setStatus(); render();
   }catch(error){
     $("alert").textContent="LOCAL TELEMETRY ERROR: "+error.message;
     $("alert").classList.remove("hidden");
