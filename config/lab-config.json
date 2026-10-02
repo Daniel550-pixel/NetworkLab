@@ -19,7 +19,23 @@
   },
   "network": {
     "interfaces": [],
-    "dns_servers": []
+    "dns_servers": [],
+    "virtual": {
+      "provider": "VirtualBox",
+      "name": "NetworkLab-Lab",
+      "mode": "host-only",
+      "subnet": "192.168.77.0/24",
+      "host_ip": "192.168.77.1",
+      "dhcp": {
+        "ip": "192.168.77.2",
+        "range": [
+          "192.168.77.100",
+          "192.168.77.200"
+        ]
+      },
+      "internet_access": false,
+      "physical_bridge": false
+    }
   },
   "safety": {
     "configuration_enabled": false,
