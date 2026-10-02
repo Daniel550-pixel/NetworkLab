@@ -16,8 +16,10 @@ const arr = value => Array.isArray(value) ? value : [];
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[c]));
 const badge = (value, cls="") => '<span class="badge '+cls+'">'+esc(value)+'</span>';
 
-async function post(path){
-  const response = await fetch(path,{method:"POST",cache:"no-store"});
+async function post(path, body=null){
+  const options={method:"POST",cache:"no-store"};
+  if(body){ options.headers={"Content-Type":"application/json"}; options.body=JSON.stringify(body); }
+  const response = await fetch(path,options);
   const payload = await response.json();
   if(!response.ok) throw new Error(payload.error || "Request failed");
   return payload;
@@ -92,9 +94,12 @@ function vmTopologyCard(){
   const rows=items.map(vm=>{
     const disk=vm.disk ? "ATTACHED" : "NOT CREATED";
     const iso=vm.iso ? "CONFIGURED" : "NOT CONFIGURED";
-    return "<tr><td>"+esc(vm.name)+"</td><td>"+esc(vm.role)+"</td><td>"+badge(disk,disk==="ATTACHED"?"ok":"warn")+"</td><td>"+badge(iso,iso==="CONFIGURED"?"ok":"warn")+"</td><td>"+esc(vm.disk_path||"")+"</td></tr>";
+    const action=vm.iso
+      ? "<button class=\"button\" data-iso-eject=\""+esc(vm.name)+"\">Eject ISO</button>"
+      : "<button class=\"button\" data-iso-attach=\""+esc(vm.name)+"\">Attach ISO</button>";
+    return "<tr><td>"+esc(vm.name)+"</td><td>"+esc(vm.role)+"</td><td>"+badge(disk,disk==="ATTACHED"?"ok":"warn")+"</td><td>"+badge(iso,iso==="CONFIGURED"?"ok":"warn")+"</td><td>"+esc(vm.iso||vm.disk_path||"")+"</td><td>"+action+"</td></tr>";
   }).join("");
-  return "<div class=\"card\"><h2>VM storage</h2><div class=\"meta\">Empty local VirtualBox disks; OS media is deliberately not assumed.</div><div style=\"overflow:auto\"><table><thead><tr><th>VM</th><th>Role</th><th>Disk</th><th>ISO</th><th>Path</th></tr></thead><tbody>"+(rows||"<tr><td colspan=\"5\">No VM storage definitions returned.</td></tr>")+"</tbody></table></div><button class=\"button primary\" id=\"create-storage\">Create / reconcile 20 GB VDI storage</button></div>";
+  return "<div class=\"card\"><h2>VM storage & OS media</h2><div class=\"meta\">20 GB local VDI storage plus explicit ISO assignment for boot/install preparation.</div><div style=\"overflow:auto\"><table><thead><tr><th>VM</th><th>Role</th><th>Disk</th><th>ISO</th><th>Path</th><th>Action</th></tr></thead><tbody>"+(rows||"<tr><td colspan=\"6\">No VM storage definitions returned.</td></tr>")+"</tbody></table></div><div class=\"storage-actions\"><button class=\"button primary\" id=\"create-storage\">Create / reconcile 20 GB VDI storage</button><div class=\"iso-help\">ISO attachment requires a local .iso path. NetworkLab does not download or select OS media automatically.</div></div></div>";
 }
 function render(){
   const d=state.data||{}, h=state.health||{}, e=state.evidence||{};
@@ -136,6 +141,20 @@ function render(){
     try{ state.storage=await post("/api/vms/storage/create"); render(); }
     catch(error){ $("alert").textContent="VM STORAGE ERROR: "+error.message; $("alert").classList.remove("hidden"); createStorage.disabled=false; createStorage.textContent="Retry"; }
   };
+  document.querySelectorAll("[data-iso-attach]").forEach(button=>button.onclick=async()=>{
+    const name=button.dataset.isoAttach;
+    const path=window.prompt("Local ISO path for "+name+":");
+    if(!path) return;
+    button.disabled=true; button.textContent="ATTACHING...";
+    try{ state.storage=await post("/api/vms/"+encodeURIComponent(name)+"/iso",{path}); render(); }
+    catch(error){ $("alert").textContent="ISO ATTACH ERROR: "+error.message; $("alert").classList.remove("hidden"); button.disabled=false; button.textContent="Retry"; }
+  });
+  document.querySelectorAll("[data-iso-eject]").forEach(button=>button.onclick=async()=>{
+    const name=button.dataset.isoEject;
+    button.disabled=true; button.textContent="EJECTING...";
+    try{ state.storage=await post("/api/vms/"+encodeURIComponent(name)+"/iso",{action:"eject"}); render(); }
+    catch(error){ $("alert").textContent="ISO EJECT ERROR: "+error.message; $("alert").classList.remove("hidden"); button.disabled=false; button.textContent="Retry"; }
+  });
   const createVMs=$("create-vms");
   if(createVMs) createVMs.onclick=async()=>{
     createVMs.disabled=true; createVMs.textContent="BUILDING...";
