@@ -1,4 +1,4 @@
-const state = { data:null, health:null, evidence:null, virtualNetwork:null, vms:null, storage:null, readiness:null, view:"command" };
+const state = { data:null, health:null, evidence:null, virtualNetwork:null, vms:null, storage:null, readiness:null, architecture:null, connectivity:null, view:"command" };
 
 const meta = {
   command:["Command Center","Operational view of the local software network laboratory."],
@@ -10,7 +10,8 @@ const meta = {
   diagnostics:["Diagnostics","Health signals and diagnostic output from the laboratory."],
   evidence:["Evidence","Structured evidence output suitable for stage documentation."],
   "vm-lab":["VM Lab","VirtualBox runtime, storage and boot-state control for the isolated stage laboratory."],
-  telemetry:["Self-Healing Telemetry","Continuous VirtualBox health monitoring, incident detection and controlled recovery."]
+  telemetry:["Self-Healing Telemetry","Continuous VirtualBox health monitoring, incident detection and controlled recovery."],
+  architecture:["Architecture","Consolidated control plane, runtime, verification, recovery and evidence architecture."]
 };
 
 const $ = id => document.getElementById(id);
@@ -136,6 +137,17 @@ function render(){
   } else if(view==="evidence"){
     html='<div class="grid two"><div class="card"><h2>Evidence package</h2><div class="meta">Current structured evidence returned by the local evidence service</div><pre>'+esc(JSON.stringify(e,null,2))+'</pre></div>'+
       '<div class="card"><h2>Export</h2><div class="meta">Save the current evidence payload locally.</div><button class="button primary" id="download">Download JSON</button></div></div>';
+  } else if(view==="architecture"){
+    const a=state.architecture||{};
+    const layers=arr(a.layers);
+    const layerRows=layers.map(x=>"<tr><td>"+esc(x.name)+"</td><td>"+badge(String(x.status||"unknown").toUpperCase(),x.status==="ready"?"ok":"warn")+"</td><td>"+esc(x.purpose)+"</td></tr>").join("");
+    const pipeline=arr(a.pipeline).map((x,i)=>"<div class=\"life-step done\"><span>0"+(i+1)+"</span><b>"+esc(x)+"</b><small>CONTROL PLANE</small></div>").join("");
+    const conn=state.connectivity||{};
+    html="<div class=\"grid four\">"+
+      [["Mode",a.mode||"—"],["Network",a.network?.ready?"READY":"ATTENTION"],["Readiness",a.readiness?.ready?"READY":"ATTENTION"],["Telemetry",a.telemetry?.healthy?"HEALTHY":"ATTENTION"]].map(x=>"<div class=\"metric\"><label>"+esc(x[0])+"</label><strong>"+esc(x[1])+"</strong></div>").join("")+
+      "</div><div class=\"card\" style=\"margin-top:15px\"><div class=\"eyebrow\">SYSTEM ARCHITECTURE</div><h2>NetworkLab control plane</h2><div class=\"meta\">"+esc(a.principle||"observe -> decide -> safely execute -> verify -> record")+"</div><table><thead><tr><th>Layer</th><th>Status</th><th>Purpose</th></tr></thead><tbody>"+(layerRows||"<tr><td colspan=\"3\">No architecture state returned.</td></tr>")+"</tbody></table></div>"+
+      "<div class=\"card\" style=\"margin-top:15px\"><div class=\"eyebrow\">EXECUTION PIPELINE</div><h2>Operational sequence</h2><div class=\"lifecycle\">"+pipeline+"</div></div>"+
+      "<div class=\"grid two\" style=\"margin-top:15px\"><div class=\"card\"><div class=\"eyebrow\">CONNECTIVITY GATE</div><h2>Read-only reachability</h2><div class=\"kv\"><b>Status</b><span>"+badge(conn.reachable?"PASS":"ATTENTION",conn.reachable?"ok":"warn")+"</span></div><pre>"+esc(JSON.stringify(conn.targets||[],null,2))+"</pre></div><div class=\"card\"><div class=\"eyebrow\">VM RECOVERY</div><h2>Autonomous boundary</h2><pre>"+esc(JSON.stringify(a.telemetry||{},null,2))+"</pre></div></div>";
   } else if(view==="telemetry"){
     const t=telemetry;
     const healthy=!!t.healthy;
@@ -268,8 +280,8 @@ async function loadTelemetry(){
 async function load(){
   $("alert").classList.add("hidden");
   try{
-    const [data,health,evidence,virtualNetwork,vms,storage,readiness,telemetry]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms"),get("/api/vms/storage"),get("/api/vm/readiness"),get("/api/vm/telemetry")]);
-    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; state.storage=storage; state.readiness=readiness; state.telemetry=telemetry; setStatus(); render();
+    const [data,health,evidence,virtualNetwork,vms,storage,readiness,telemetry,architecture,connectivity]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms"),get("/api/vms/storage"),get("/api/vm/readiness"),get("/api/vm/telemetry"),get("/api/architecture"),get("/api/connectivity")]);
+    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; state.storage=storage; state.readiness=readiness; state.telemetry=telemetry; state.architecture=architecture; state.connectivity=connectivity; setStatus(); render();
   }catch(error){
     $("alert").textContent="LOCAL TELEMETRY ERROR: "+error.message;
     $("alert").classList.remove("hidden");
