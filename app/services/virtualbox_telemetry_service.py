@@ -9,7 +9,7 @@ import time
 from collections import deque
 from datetime import datetime, timezone
 from typing import Any
-
+\nfrom app.services.virtualbox_incident_store import history as persistent_history\nfrom app.services.virtualbox_incident_store import path as incident_log_path\nfrom app.services.virtualbox_incident_store import record as persist_event\n
 MONITOR_INTERVAL_SECONDS = int(os.environ.get("NETWORKLAB_VBOX_MONITOR_INTERVAL", "60"))
 REPAIR_THRESHOLD = int(os.environ.get("NETWORKLAB_VBOX_REPAIR_THRESHOLD", "3"))
 REPAIR_COOLDOWN_SECONDS = int(os.environ.get("NETWORKLAB_VBOX_REPAIR_COOLDOWN", "600"))
