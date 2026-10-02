@@ -93,7 +93,7 @@ def create_vm_storage() -> dict[str, Any]:
                 raise RuntimeError(err or out or f"Unable to create storage controller for {name}.")
 
         fields = _machine_fields(vbox, name)
-        disk_attached = bool(fields.get("SATA-0-0"))
+        disk_attached = bool(fields.get("SATA-0-0") or fields.get(f"{STORAGE_CONTROLLER}-0-0"))
         disk_path = _disk_path(vbox, name)
 
         if not disk_attached:
