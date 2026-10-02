@@ -17,6 +17,8 @@ from app.services.readiness_service import get_lab_readiness
 from app.services.architecture_service import get_architecture_state
 from app.services.connectivity_service import get_connectivity_state
 from app.services.orchestrator_service import run_audit
+from app.services.lab_lifecycle_service import get_lab_definition, get_lab_state, prepare_lab
+from app.services.verification_service import verify_lab
 from app.services.virtualbox_telemetry_service import force_repair, get_telemetry, start_monitor
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -59,7 +61,9 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
             if not isinstance(body, dict):
                 raise ValueError("Request body must be a JSON object.")
 
-            if route == "/api/virtual-network/create":
+            if route == "/api/lab/prepare":
+                self._json(HTTPStatus.OK, prepare_lab())
+            elif route == "/api/virtual-network/create":
                 self._json(HTTPStatus.OK, create_virtual_network())
             elif route == "/api/vms/create":
                 self._json(HTTPStatus.OK, create_vm_topology())
@@ -120,6 +124,12 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, get_vm_storage())
             elif route == "/api/vm/readiness":
                 self._json(HTTPStatus.OK, get_lab_readiness())
+            elif route == "/api/lab/definition":
+                self._json(HTTPStatus.OK, get_lab_definition())
+            elif route == "/api/lab/state":
+                self._json(HTTPStatus.OK, get_lab_state())
+            elif route == "/api/lab/verify":
+                self._json(HTTPStatus.OK, verify_lab())
             elif route == "/api/architecture":
                 self._json(HTTPStatus.OK, get_architecture_state())
             elif route == "/api/connectivity":
