@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NetworkLab — Local Network Laboratory</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">N</span><div><strong>NETWORKLAB</strong><small>LOCAL LABORATORY</small></div></div>
+      <nav id="nav">
+        <button class="nav-item active" data-view="command"><span>01</span>Command Center</button>
+        <button class="nav-item" data-view="topology"><span>02</span>Topology</button>
+        <button class="nav-item" data-view="interfaces"><span>03</span>Interfaces</button>
+        <button class="nav-item" data-view="addressing"><span>04</span>Addressing</button>
+        <button class="nav-item" data-view="connectivity"><span>05</span>Connectivity</button>
+        <button class="nav-item" data-view="services"><span>06</span>Services</button>
+        <button class="nav-item" data-view="diagnostics"><span>07</span>Diagnostics</button>
+        <button class="nav-item" data-view="evidence"><span>08</span>Evidence</button>
+      </nav>
+      <div class="scope">
+        <div class="eyebrow">Execution boundary</div>
+        <strong>READ-ONLY</strong>
+        <p>Local machine telemetry only. No production-network writes.</p>
+      </div>
+      <div class="sidebar-foot">LOCALHOST // 127.0.0.1:8501</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">STAGE PROJECT / NETWORK & INFRASTRUCTURE</div>
+          <h1 id="view-title">Command Center</h1>
+          <p id="view-subtitle">Operational view of the local software network laboratory.</p>
+        </div>
+        <div class="top-actions">
+          <span id="last-updated">Awaiting telemetry</span>
+          <button id="refresh" class="button primary">Refresh</button>
+        </div>
+      </header>
+
+      <section class="status-strip">
+        <div><small>LABORATORY</small><strong id="lab-status">—</strong></div>
+        <div><small>CONNECTIVITY</small><strong id="connectivity-status">—</strong></div>
+        <div><small>SERVICES</small><strong id="services-status">—</strong></div>
+        <div><small>INTERFACES</small><strong id="interface-count">—</strong></div>
+      </section>
+
+      <div id="alert" class="alert hidden"></div>
+      <section id="content" class="content"></section>
+
+      <footer>NETWORKLAB / PURE LOCAL WEB APP / NO EXTERNAL FRONTEND DEPENDENCIES</footer>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
