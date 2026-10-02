@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local runtime logs
+logs/*.log
+
+# Local environment
+.venv/
+venv/
+.env
