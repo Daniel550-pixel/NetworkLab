@@ -155,7 +155,7 @@ function render(){
         <div class="kv"><b>Classification</b><span>${esc((t.probe||{}).classification||"—")}</span></div>
         <div class="kv"><b>Last check</b><span>${esc(t.last_check||"—")}</span></div>
         <div class="kv"><b>Last repair</b><span>${esc(t.last_repair||"—")}</span></div>
-        <div class="kv"><b>Repair policy</b><span>${esc(REPAIR_THRESHOLD_LABEL())}</span></div>
+        <div class="kv"><b>Repair threshold</b><span>${esc(t.policy?.repair_threshold??"—")} failures</span></div><div class="kv"><b>Cooldown</b><span>${esc(t.policy?.repair_cooldown_seconds??"—")} seconds</span></div>
         <div class="vm-actions"><button class="button primary" id="telemetry-repair">Run controlled repair</button><button class="button" id="telemetry-refresh">Probe now</button></div>
       </div>
       <div class="card"><div class="eyebrow">PROCESS SAFETY</div><h2>VirtualBox process state</h2><div class="meta">Diagnostic snapshot used before automatic recovery.</div><table><thead><tr><th>Process</th><th>State</th></tr></thead><tbody>${processRows||"<tr><td colspan=\"2\">No process snapshot yet.</td></tr>"}</tbody></table></div>
@@ -259,8 +259,6 @@ function render(){
   const download=$("download");
   if(download) download.onclick=()=>{const blob=new Blob([JSON.stringify(state.evidence,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="networklab-evidence.json";a.click();URL.revokeObjectURL(a.href)};
 }
-
-function REPAIR_THRESHOLD_LABEL(){ return "Automatic recovery after repeated failures; cooldown protected."; }
 
 async function loadTelemetry(){
   try { state.telemetry=await get("/api/vm/telemetry"); } catch(error) { state.telemetry={status:"failed",healthy:false,last_error:error.message}; }
