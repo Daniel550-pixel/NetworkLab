@@ -61,6 +61,7 @@ The launcher starts `app/server.py`, which serves the frontend and local telemet
 - Services
 - Diagnostics
 - Evidence
+- VM storage & OS media
 
 The topology visualization is rendered with native SVG. There are no external JavaScript dependencies.
 
@@ -84,5 +85,14 @@ No production-network assumptions are encoded in the repository.
 ## Status
 
 **Localhost web application: IMPLEMENTED**
+
+**VirtualBox VM infrastructure: IMPLEMENTED**
+
+- NetworkLab-Lab host-only network
+- Three role-based lab VMs
+- 20 GB VDI storage per VM
+- Explicit local ISO attachment/ejection
+- DVD-first boot preparation for OS installation
+- No automatic OS downloads or external media selection
 
 The web layer is now independent of Streamlit and runs as a local Python HTTP application on `127.0.0.1`.
