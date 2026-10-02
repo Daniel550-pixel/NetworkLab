@@ -91,7 +91,7 @@ def get_vm_topology() -> dict[str, Any]:
             **vm,
             "exists": True,
             "state": fields.get("VMState", "unknown"),
-            "network": NETWORK_NAME if fields.get("nic1", "").lower() in {"hostonly", "bridged", "natnetwork"} else "not-attached",
+            "network": NETWORK_NAME if fields.get("nic1", "").lower() == "hostonly" else "not-attached",
             "nic1": fields.get("nic1", ""),
             "host_only_adapter": fields.get("hostonlyadapter1", ""),
         })
