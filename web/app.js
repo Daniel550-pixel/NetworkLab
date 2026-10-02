@@ -1,4 +1,4 @@
-const state = { data:null, health:null, evidence:null, view:"command" };
+const state = { data:null, health:null, evidence:null, virtualNetwork:null, view:"command" };
 
 const meta = {
   command:["Command Center","Operational view of the local software network laboratory."],
@@ -15,6 +15,13 @@ const $ = id => document.getElementById(id);
 const arr = value => Array.isArray(value) ? value : [];
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[c]));
 const badge = (value, cls="") => '<span class="badge '+cls+'">'+esc(value)+'</span>';
+
+async function post(path){
+  const response = await fetch(path,{method:"POST",cache:"no-store"});
+  const payload = await response.json();
+  if(!response.ok) throw new Error(payload.error || "Request failed");
+  return payload;
+}
 
 async function get(path){
   const response = await fetch(path,{cache:"no-store"});
@@ -59,6 +66,17 @@ function topology(){
     '</svg></div>';
 }
 
+function virtualNetworkCard(){
+  const n=state.virtualNetwork||{};
+  const exists=!!n.exists;
+  return '<div class="kv"><b>Segment</b><span>'+esc(n.name||"NetworkLab-Lab")+'</span></div>'+
+    '<div class="kv"><b>Subnet</b><span>'+esc(n.network||"192.168.77.0/24")+'</span></div>'+
+    '<div class="kv"><b>Host endpoint</b><span>'+esc(n.host_ip||"192.168.77.1")+'</span></div>'+
+    '<div class="kv"><b>DHCP</b><span>'+esc(n.dhcp?n.dhcp.lower+"–"+n.dhcp.upper:"192.168.77.100–192.168.77.200")+'</span></div>'+
+    '<div class="kv"><b>Status</b><span>'+badge(exists?"READY":"NOT CREATED",exists?"ok":"warn")+'</span></div>'+
+    '<button class="button primary" id="create-network">'+(exists?"Reconcile virtual network":"Create virtual network")+'</button>';
+}
+
 function render(){
   const d=state.data||{}, h=state.health||{}, e=state.evidence||{};
   const adapters=arr(d.adapters), ip=arr(d.ip), conn=arr(d.connectivity), services=arr(d.services);
@@ -93,6 +111,12 @@ function render(){
       '<div class="card"><h2>Export</h2><div class="meta">Save the current evidence payload locally.</div><button class="button primary" id="download">Download JSON</button></div></div>';
   }
   $("content").innerHTML=html;
+  const createNetwork=$("create-network");
+  if(createNetwork) createNetwork.onclick=async()=>{
+    createNetwork.disabled=true; createNetwork.textContent="BUILDING...";
+    try{ state.virtualNetwork=await post("/api/virtual-network/create"); render(); }
+    catch(error){ $("alert").textContent="VIRTUAL NETWORK ERROR: "+error.message; $("alert").classList.remove("hidden"); createNetwork.disabled=false; createNetwork.textContent="Retry"; }
+  };
   const download=$("download");
   if(download) download.onclick=()=>{const blob=new Blob([JSON.stringify(state.evidence,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="networklab-evidence.json";a.click();URL.revokeObjectURL(a.href)};
 }
@@ -100,8 +124,8 @@ function render(){
 async function load(){
   $("alert").classList.add("hidden");
   try{
-    const [data,health,evidence]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence")]);
-    state.data=data; state.health=health; state.evidence=evidence; setStatus(); render();
+    const [data,health,evidence,virtualNetwork]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network")]);
+    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; setStatus(); render();
   }catch(error){
     $("alert").textContent="LOCAL TELEMETRY ERROR: "+error.message;
     $("alert").classList.remove("hidden");
