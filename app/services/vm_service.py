@@ -96,6 +96,9 @@ def get_vm_topology() -> dict[str, Any]:
             "network": NETWORK_NAME if fields.get("nic1", "").lower() == "hostonly" else "not-attached",
             "nic1": fields.get("nic1", ""),
             "host_only_adapter": fields.get("hostonlyadapter1", ""),
+        "firmware": fields.get("firmware", "BIOS"),
+        "boot_menu_mode": fields.get("bootmenu", "messageandmenu"),
+        "nested_paging": fields.get("nestedpaging", ""),
         })
 
     return {"available": True, "network": NETWORK_NAME, "vms": vms}
