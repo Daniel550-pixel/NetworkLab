@@ -1,4 +1,4 @@
-const state = { data:null, health:null, evidence:null, virtualNetwork:null, vms:null, view:"command" };
+const state = { data:null, health:null, evidence:null, virtualNetwork:null, vms:null, storage:null, view:"command" };
 
 const meta = {
   command:["Command Center","Operational view of the local software network laboratory."],
@@ -87,7 +87,16 @@ function vmTopologyCard(){
   }).join("");
   return '<div class="card"><h2>Virtual machine topology</h2><div class="meta">Three lab nodes attached to NetworkLab-Lab</div><div style="overflow:auto"><table><thead><tr><th>VM</th><th>Role</th><th>State</th><th>Network</th><th>Actions</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5">No VM definitions returned.</td></tr>')+'</tbody></table></div><button class="button primary" id="create-vms">Create / reconcile VM topology</button></div>';
 }
-\nfunction render(){
+\nfunction storageCard(){
+  const items=arr((state.storage||{}).vms);
+  const rows=items.map(vm=>{
+    const disk=vm.disk ? "ATTACHED" : "NOT CREATED";
+    const iso=vm.iso ? "CONFIGURED" : "NOT CONFIGURED";
+    return "<tr><td>"+esc(vm.name)+"</td><td>"+esc(vm.role)+"</td><td>"+badge(disk,disk==="ATTACHED"?"ok":"warn")+"</td><td>"+badge(iso,iso==="CONFIGURED"?"ok":"warn")+"</td><td>"+esc(vm.disk_path||"")+"</td></tr>";
+  }).join("");
+  return "<div class=\"card\"><h2>VM storage</h2><div class=\"meta\">Empty local VirtualBox disks; OS media is deliberately not assumed.</div><div style=\"overflow:auto\"><table><thead><tr><th>VM</th><th>Role</th><th>Disk</th><th>ISO</th><th>Path</th></tr></thead><tbody>"+(rows||"<tr><td colspan=\"5\">No VM storage definitions returned.</td></tr>")+"</tbody></table></div><button class=\"button primary\" id=\"create-storage\">Create / reconcile 20 GB VDI storage</button></div>";
+}
+function render(){
   const d=state.data||{}, h=state.health||{}, e=state.evidence||{};
   const adapters=arr(d.adapters), ip=arr(d.ip), conn=arr(d.connectivity), services=arr(d.services);
   const view=state.view;
@@ -121,6 +130,12 @@ function vmTopologyCard(){
       '<div class="card"><h2>Export</h2><div class="meta">Save the current evidence payload locally.</div><button class="button primary" id="download">Download JSON</button></div></div>';
   }
   $("content").innerHTML=html;
+  const createStorage=$("create-storage");
+  if(createStorage) createStorage.onclick=async()=>{
+    createStorage.disabled=true; createStorage.textContent="PROVISIONING...";
+    try{ state.storage=await post("/api/vms/storage/create"); render(); }
+    catch(error){ $("alert").textContent="VM STORAGE ERROR: "+error.message; $("alert").classList.remove("hidden"); createStorage.disabled=false; createStorage.textContent="Retry"; }
+  };
   const createVMs=$("create-vms");
   if(createVMs) createVMs.onclick=async()=>{
     createVMs.disabled=true; createVMs.textContent="BUILDING...";
@@ -145,8 +160,8 @@ function vmTopologyCard(){
 async function load(){
   $("alert").classList.add("hidden");
   try{
-    const [data,health,evidence,virtualNetwork,vms]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms")]);
-    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; setStatus(); render();
+    const [data,health,evidence,virtualNetwork,vms,storage]=await Promise.all([get("/api/state"),get("/api/health"),get("/api/evidence"),get("/api/virtual-network"),get("/api/vms"),get("/api/vms/storage")]);
+    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; state.storage=storage; setStatus(); render();
   }catch(error){
     $("alert").textContent="LOCAL TELEMETRY ERROR: "+error.message;
     $("alert").classList.remove("hidden");
