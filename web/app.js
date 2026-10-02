@@ -84,7 +84,7 @@ function vmTopologyCard(){
   const rows=items.map(vm=>{
     const stateText=vm.exists?String(vm.state||"unknown").toUpperCase():"NOT CREATED";
     const cls=vm.exists && stateText==="RUNNING"?"ok":vm.exists?"warn":"";
-    const actions=vm.exists ? '<button class="button" data-vm-action="start" data-vm="'+esc(vm.name)+'">Start</button><button class="button" data-vm-action="stop" data-vm="'+esc(vm.name)+'">Stop</button>' : '';
+    const actions=vm.exists ? '<button class="button" data-vm-action="start" data-vm="'+esc(vm.name)+'">Start</button><button class="button" data-vm-action="stop" data-vm="'+esc(vm.name)+'">Stop</button><button class="button" data-vm-runtime="'+esc(vm.name)+'">Runtime</button>' : '';
     return '<tr><td>'+esc(vm.name)+'</td><td>'+esc(vm.role)+'</td><td>'+badge(stateText,cls)+'</td><td>'+esc(vm.network||"")+'</td><td>'+actions+'</td></tr>';
   }).join("");
   return '<div class="card"><h2>Virtual machine topology</h2><div class="meta">Three lab nodes attached to NetworkLab-Lab</div><div style="overflow:auto"><table><thead><tr><th>VM</th><th>Role</th><th>State</th><th>Network</th><th>Actions</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5">No VM definitions returned.</td></tr>')+'</tbody></table></div><button class="button primary" id="create-vms">Create / reconcile VM topology</button></div>';
@@ -161,6 +161,18 @@ function render(){
     try{ state.vms=await post("/api/vms/create"); render(); }
     catch(error){ $("alert").textContent="VM TOPOLOGY ERROR: "+error.message; $("alert").classList.remove("hidden"); createVMs.disabled=false; createVMs.textContent="Retry"; }
   };
+  document.querySelectorAll("[data-vm-runtime]").forEach(button=>button.onclick=async()=>{
+    const name=button.dataset.vmRuntime;
+    try{
+      const runtime=await get("/api/vms/"+encodeURIComponent(name)+"/runtime");
+      const boot=runtime.boot_order.join(" > ").toUpperCase();
+      $("alert").textContent=name+" | STATE: "+runtime.state.toUpperCase()+" | BOOT: "+boot+" | NIC: "+runtime.nic1;
+      $("alert").classList.remove("hidden");
+    }catch(error){
+      $("alert").textContent="VM RUNTIME ERROR: "+error.message;
+      $("alert").classList.remove("hidden");
+    }
+  });
   document.querySelectorAll("[data-vm-action]").forEach(button=>button.onclick=async()=>{
     button.disabled=true;
     try{ state.vms=await post("/api/vms/"+encodeURIComponent(button.dataset.vm)+"/"+button.dataset.vmAction); render(); }
