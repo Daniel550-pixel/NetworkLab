@@ -146,3 +146,5 @@ footer{margin-top:20px}
 .page-intro{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:15px;padding:2px 2px 3px}
 .page-intro h2{font-size:19px;margin:6px 0 4px;letter-spacing:-.02em}.page-intro p{margin:0;color:var(--muted);font-size:10px;line-height:1.5}.card-toolbar{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:12px}.card-toolbar h2{margin:0 0 4px}.topology-card{padding:16px}.topology-card .topology{margin-top:4px}
 @media(max-width:650px){.page-intro{align-items:flex-start;flex-direction:column}.card-toolbar{flex-direction:column}}
+
+.diagnostic-list{display:grid;gap:1px;border:1px solid var(--border);border-radius:10px;overflow:hidden}.diagnostic-row{display:grid;grid-template-columns:36px 1fr auto;align-items:center;gap:12px;padding:12px 14px;background:var(--panel)}.diagnostic-row b{display:block;font-size:11px}.diagnostic-row small{display:block;color:var(--muted);margin-top:3px;font-size:9px;text-transform:uppercase;letter-spacing:.06em}@media(max-width:650px){.diagnostic-row{grid-template-columns:30px 1fr}.diagnostic-row>.badge{grid-column:2}}
