@@ -1,7 +1,7 @@
 const state = { data:null, health:null, evidence:null, virtualNetwork:null, vms:null, storage:null, readiness:null, architecture:null, connectivity:null, lab:null, verification:null, view:"command" };
 
 const meta = {
-  command:["Command Center","Operational view of the local software network laboratory."],
+  command:["Dashboard","Operational view of the local software network laboratory."],
   topology:["Topology","Logical representation of the observed local network environment."],
   interfaces:["Interfaces","Windows network adapter inventory and state."],
   addressing:["Addressing","Observed IP configuration and addressing data."],
@@ -10,11 +10,11 @@ const meta = {
   diagnostics:["Diagnostics","Health signals and diagnostic output from the laboratory."],
   evidence:["Evidence","Structured evidence output suitable for stage documentation."],
   "vm-lab":["VM Lab","VirtualBox runtime, storage and boot-state control for the isolated stage laboratory."],
-  telemetry:["Self-Healing Telemetry","Continuous VirtualBox health monitoring, incident detection and controlled recovery."],
+  telemetry:["Telemetry","Continuous VirtualBox health monitoring, incident detection and controlled recovery."],
   architecture:["Architecture","Consolidated control plane, runtime, verification, recovery and evidence architecture."],
   "lab-control":["Lab Control","Provision the host-side lab, inspect roles, and verify the complete build state."],
   "guest-build":["Guest Build","OS-agnostic guest contracts and service validation boundaries for MGMT, INFRA and CLIENT."],
-  "evidence-capture":["Evidence Capture","Capture a complete lab snapshot after provisioning and guest validation."]
+  "evidence-capture":["Evidence","Capture a complete lab snapshot after provisioning and guest validation."]
 };
 
 const $ = id => document.getElementById(id);
