@@ -158,6 +158,7 @@ function render(){
   } else if(view==="evidence"){
     html='<div class="grid two"><div class="card"><h2>Evidence package</h2><div class="meta">Current structured evidence returned by the local evidence service</div><pre>'+esc(JSON.stringify(e,null,2))+'</pre></div>'+
       '<div class="card"><h2>Export</h2><div class="meta">Save the current evidence payload locally.</div><button class="button primary" id="download">Download JSON</button></div></div>';
+    html='<div class="page-intro"><div><div class="eyebrow">OPERATIONS</div><h2>Evidence</h2><p>Structured evidence capture and export for the current lab state.</p></div><span class="section-note">LIVE STATE</span></div>'+html;
   } else if(view==="lab-control"){
     const lab=state.lab||{};
     const def=lab.definition||{};
@@ -167,6 +168,7 @@ function render(){
       [['Lab',def.lab_id||"—"],['Network',lab.network?.ready?"READY":"ATTENTION"],['VMs',String((lab.topology?.vms||[]).filter(x=>x.exists).length)+"/3"],['Storage',String((lab.storage?.vms||[]).filter(x=>x.disk).length)+"/3"]].map(x=>'<div class="metric"><label>'+esc(x[0])+'</label><strong>'+esc(x[1])+'</strong></div>').join("")+
       '</div><div class="grid two" style="margin-top:15px"><div class="card"><div class="eyebrow">HOST BUILD</div><h2>Lab provisioning</h2><div class="meta">Creates only the host-side network, VM topology and storage. OS media remains manual.</div><div class="vm-actions"><button class="button primary" id="prepare-lab">Prepare lab</button><button class="button" id="verify-lab">Verify lab</button></div><pre id="lab-result">'+esc(JSON.stringify(lab.readiness||{},null,2))+'</pre></div><div class="card"><div class="eyebrow">ROLE MAP</div><h2>Guest architecture</h2><table><thead><tr><th>VM</th><th>Role</th><th>Purpose</th><th>Recommended IP</th></tr></thead><tbody>'+roles.map(x=>'<tr><td>'+esc(x.hostname)+'</td><td>'+esc(x.role)+'</td><td>'+esc(x.purpose)+'</td><td>'+esc(x.recommended_ip)+'</td></tr>').join("")+'</tbody></table></div></div>'+
       '<div class="card" style="margin-top:15px"><div class="eyebrow">VERIFICATION GATES</div><h2>Build status</h2><table><thead><tr><th>Gate</th><th>Status</th></tr></thead><tbody>'+checks.map(x=>'<tr><td>'+esc(x.label)+'</td><td>'+badge(x.passed?"PASS":"ATTENTION",x.passed?"ok":"warn")+'</td></tr>').join("")+'</tbody></table></div>';
+    html='<div class="page-intro"><div><div class="eyebrow">LAB OPERATIONS</div><h2>Lab Control</h2><p>Provisioning, readiness and verification control for the NetworkLab host build.</p></div><span class="section-note">LIVE STATE</span></div>'+html;
   } else if(view==="guest-build"){
     const contracts=arr((state.guestContracts||{}).contracts);
     const validation=state.guestValidation||{};
@@ -174,6 +176,7 @@ function render(){
     html='<div class="card"><div class="eyebrow">GUEST CONTRACTS</div><h2>OS-agnostic role definitions</h2><div class="meta">The host prepares the VM boundary; guest OS installation remains explicit and manual.</div><table><thead><tr><th>Role</th><th>VM</th><th>IP</th><th>Services</th><th>Validation</th></tr></thead><tbody>'+contracts.map(x=>'<tr><td>'+esc(x.role)+'</td><td>'+esc(x.vm)+'</td><td>'+esc(x.recommended_ip)+'</td><td>'+esc(x.services.join(", "))+'</td><td>'+esc(x.validation.join(", "))+'</td></tr>').join("")+'</tbody></table></div>'+
     '<div class="card" style="margin-top:15px"><div class="eyebrow">HOST-ASSISTED VALIDATION</div><h2>Guest endpoint probes</h2><div class="meta">ICMP and selected TCP probes are observational; guest-to-guest checks require installed/configured guests.</div><table><thead><tr><th>Role</th><th>IP</th><th>ICMP</th><th>DNS</th></tr></thead><tbody>'+endpointRows+'</tbody></table><button class="button primary" id="refresh-guest">Run guest validation</button></div>'+
     '<div class="card" style="margin-top:15px"><div class="eyebrow">BOUNDARY</div><h2>Manual guest configuration</h2><pre>'+esc(JSON.stringify({os_selection:"manual",next:["Install selected OS ISO","Apply role contract","Configure services","Run validation","Capture evidence"]},null,2))+'</pre></div>';
+    html='<div class="page-intro"><div><div class="eyebrow">GUEST CONFIGURATION</div><h2>Guest Build</h2><p>Role contracts and host-assisted validation for the guest layer.</p></div><span class="section-note">LIVE STATE</span></div>'+html;
   } else if(view==="evidence-capture"){
     html='<div class="card"><div class="eyebrow">EVIDENCE PIPELINE</div><h2>Capture complete laboratory snapshot</h2><div class="meta">Stores verification, guest contracts, connectivity and VirtualBox telemetry as a timestamped JSON artifact.</div><button class="button primary" id="capture-evidence">Capture evidence</button><pre id="capture-result">Ready.</pre></div>';
   } else if(view==="architecture"){
@@ -187,6 +190,7 @@ function render(){
       "</div><div class=\"card\" style=\"margin-top:15px\"><div class=\"eyebrow\">SYSTEM ARCHITECTURE</div><h2>NetworkLab control plane</h2><div class=\"meta\">"+esc(a.principle||"observe -> decide -> safely execute -> verify -> record")+"</div><table><thead><tr><th>Layer</th><th>Status</th><th>Purpose</th></tr></thead><tbody>"+(layerRows||"<tr><td colspan=\"3\">No architecture state returned.</td></tr>")+"</tbody></table></div>"+
       "<div class=\"card\" style=\"margin-top:15px\"><div class=\"eyebrow\">EXECUTION PIPELINE</div><h2>Operational sequence</h2><div class=\"lifecycle\">"+pipeline+"</div><div class=\"vm-actions\"><button class=\"button primary\" id=\"run-audit\">Run full architecture audit</button></div></div>"+
       "<div class=\"grid two\" style=\"margin-top:15px\"><div class=\"card\"><div class=\"eyebrow\">CONNECTIVITY GATE</div><h2>Read-only reachability</h2><div class=\"kv\"><b>Status</b><span>"+badge(conn.reachable?"PASS":"ATTENTION",conn.reachable?"ok":"warn")+"</span></div><pre>"+esc(JSON.stringify(conn.targets||[],null,2))+"</pre></div><div class=\"card\"><div class=\"eyebrow\">VM RECOVERY</div><h2>Autonomous boundary</h2><pre>"+esc(JSON.stringify(a.telemetry||{},null,2))+"</pre></div></div>";
+    html='<div class="page-intro"><div><div class="eyebrow">SYSTEM DESIGN</div><h2>Architecture</h2><p>Layered control-plane view of NetworkLab and its operational pipeline.</p></div><span class="section-note">LIVE STATE</span></div>'+html;
   } else if(view==="telemetry"){
     const t=telemetry;
     const recommendation=t.recommendation||{};
@@ -216,6 +220,7 @@ function render(){
       <div class="card"><div class="eyebrow">ACTIVE INCIDENT</div><h2>Latest fault</h2><pre>${esc(JSON.stringify(failures||t.last_error||"No active error",null,2))}</pre></div>
       <div class="card"><div class="eyebrow">EVENT LEDGER</div><h2>Recovery history</h2><div style="overflow:auto"><table><thead><tr><th>Time</th><th>Event</th><th>Detail</th></tr></thead><tbody>${historyRows||"<tr><td colspan=\"3\">No events recorded.</td></tr>"}</tbody></table></div></div>
     </div>`;
+    html='<div class="page-intro"><div><div class="eyebrow">OBSERVABILITY</div><h2>Telemetry</h2><p>VirtualBox health, recovery state, incidents and process diagnostics.</p></div><span class="section-note">LIVE STATE</span></div>'+html;
   } else if(view==="vm-lab"){
     const vmItems=arr((state.vms||{}).vms);
     const storageItems=arr((state.storage||{}).vms);
@@ -249,6 +254,7 @@ function render(){
     '<div class="life-step '+(steps.find(x=>x.id==="vms")?.ready?"done":"")+'"><span>02</span><b>VM topology</b><small>'+vmItems.filter(x=>x.exists).length+'/3 registered</small></div>'+
     '<div class="life-step '+(steps.find(x=>x.id==="storage")?.ready?"done":"")+'"><span>03</span><b>Storage</b><small>'+storageItems.filter(x=>x.disk).length+'/3 disks</small></div>'+
     '<div class="life-step '+(steps.find(x=>x.id==="media")?.ready?"done":"")+'"><span>04</span><b>OS media</b><small>'+storageItems.filter(x=>x.iso).length+'/3 ISO mounts</small></div></div></div>';
+    html='<div class="page-intro"><div><div class="eyebrow">VIRTUALIZATION</div><h2>VM Lab</h2><p>Runtime state, lifecycle controls and provisioning readiness for the three lab VMs.</p></div><span class="section-note">LIVE STATE</span></div>'+html;
   }
   $("content").innerHTML=html;
   bindLabControl();
