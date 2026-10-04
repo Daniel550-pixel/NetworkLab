@@ -148,3 +148,6 @@ footer{margin-top:20px}
 @media(max-width:650px){.page-intro{align-items:flex-start;flex-direction:column}.card-toolbar{flex-direction:column}}
 
 .diagnostic-list{display:grid;gap:1px;border:1px solid var(--border);border-radius:10px;overflow:hidden}.diagnostic-row{display:grid;grid-template-columns:36px 1fr auto;align-items:center;gap:12px;padding:12px 14px;background:var(--panel)}.diagnostic-row b{display:block;font-size:11px}.diagnostic-row small{display:block;color:var(--muted);margin-top:3px;font-size:9px;text-transform:uppercase;letter-spacing:.06em}@media(max-width:650px){.diagnostic-row{grid-template-columns:30px 1fr}.diagnostic-row>.badge{grid-column:2}}
+
+/* Core operations page rhythm */
+.page-intro+.grid,.page-intro+.card{margin-top:0}.page-intro~.card,.page-intro~.grid{margin-bottom:0}.page-intro .section-note{white-space:nowrap}.page-intro h2{font-weight:650}.page-intro p{max-width:720px}
