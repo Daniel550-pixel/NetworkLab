@@ -143,11 +143,18 @@ function render(){
     const running=services.filter(x=>String(x.status||"").toLowerCase()==="running").length;
     html='<div class="page-intro"><div><div class="eyebrow">HOST SERVICES</div><h2>Services</h2><p>Infrastructure service state reported by the local Windows host.</p></div><span class="section-note">'+running+'/'+services.length+' RUNNING</span></div><div class="grid three"><div class="metric"><label>Services</label><strong>'+services.length+'</strong></div><div class="metric"><label>Running</label><strong class="ok">'+running+'</strong></div><div class="metric"><label>Attention</label><strong class="'+(services.length===running?"ok":"warn")+'">'+(services.length-running)+'</strong></div></div><div class="card" style="margin-top:15px"><div class="card-toolbar"><div><h2>Service inventory</h2><div class="meta">Read-only Windows service telemetry.</div></div></div>'+table(services,[{label:"Name",key:"name"},{label:"Status",value:x=>x.status||""},{label:"Start mode",value:x=>x.start_type||x.startMode||""},{label:"Details",value:x=>x.display_name||x.description||""}])+'</div>';
   } else if(view==="diagnostics"){
-    html='<div class="grid three">'+
-      '<div class="metric"><label>Connectivity</label><strong class="'+(h.connectivity_ok?"ok":"bad")+'">'+(h.connectivity_ok?"PASS":"FAIL")+'</strong></div>'+
-      '<div class="metric"><label>Services</label><strong class="'+(h.services_ok?"ok":"warn")+'">'+(h.services_ok?"HEALTHY":"ATTENTION")+'</strong></div>'+
-      '<div class="metric"><label>Telemetry</label><strong class="ok">LIVE</strong></div></div>'+
-      '<div class="card" style="margin-top:15px"><h2>Health payload</h2><div class="meta">Raw diagnostic result from PowerShell</div><pre>'+esc(JSON.stringify(h,null,2))+'</pre></div>';
+    const checks=[
+      ["Connectivity",!!h.connectivity_ok,h.connectivity_ok?"PASS":"FAIL"],
+      ["Services",!!h.services_ok,h.services_ok?"HEALTHY":"ATTENTION"],
+      ["VirtualBox telemetry",!!telemetry.healthy,telemetry.healthy?"HEALTHY":"ATTENTION"],
+      ["Lab readiness",!!state.readiness?.ready,state.readiness?.ready?"READY":"PENDING"],
+      ["Verification",state.verification?.verified===true,state.verification?.verified?"VERIFIED":"PENDING"]
+    ];
+    const pass=checks.filter(x=>x[1]).length;
+    html='<div class="page-intro"><div><div class="eyebrow">SYSTEM OPERATIONS</div><h2>Diagnostics</h2><p>Single-screen health assessment across the host, virtualization, readiness and verification layers.</p></div><span class="section-note">'+pass+'/'+checks.length+' GATES PASS</span></div>'+
+      '<div class="grid four"><div class="metric"><label>Control gates</label><strong>'+pass+'/'+checks.length+'</strong></div><div class="metric"><label>Connectivity</label><strong class="'+(h.connectivity_ok?"ok":"bad")+'">'+(h.connectivity_ok?"PASS":"FAIL")+'</strong></div><div class="metric"><label>Telemetry</label><strong class="'+(telemetry.healthy?"ok":"warn")+'">'+(telemetry.healthy?"HEALTHY":"ATTENTION")+'</strong></div><div class="metric"><label>Verification</label><strong class="'+(state.verification?.verified?"ok":"warn")+'">'+(state.verification?.verified?"VERIFIED":"PENDING")+'</strong></div></div>'+
+      '<div class="card" style="margin-top:15px"><div class="card-toolbar"><div><h2>Diagnostic gates</h2><div class="meta">Read-only summary of the current operational control plane.</div></div>'+badge(pass===checks.length?"ALL CLEAR":"ATTENTION",pass===checks.length?"ok":"warn")+'</div><div class="diagnostic-list">'+checks.map((x,i)=>'<div class="diagnostic-row"><span class="state-icon">0'+(i+1)+'</span><div><b>'+esc(x[0])+'</b><small>'+esc(x[2])+'</small></div>'+badge(x[2],x[1]?"ok":"warn")+'</div>').join("")+'</div></div>'+
+      '<div class="card" style="margin-top:15px"><div class="card-toolbar"><div><h2>Health payload</h2><div class="meta">Raw diagnostic result from the local host health service.</div></div><span class="section-note">READ ONLY</span></div><pre>'+esc(JSON.stringify(h,null,2))+'</pre></div>';
   } else if(view==="evidence"){
     html='<div class="grid two"><div class="card"><h2>Evidence package</h2><div class="meta">Current structured evidence returned by the local evidence service</div><pre>'+esc(JSON.stringify(e,null,2))+'</pre></div>'+
       '<div class="card"><h2>Export</h2><div class="meta">Save the current evidence payload locally.</div><button class="button primary" id="download">Download JSON</button></div></div>';
