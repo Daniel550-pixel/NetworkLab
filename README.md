@@ -101,6 +101,7 @@ The web layer is now independent of Streamlit and runs as a local Python HTTP ap
 
 - [Netwerktopologie (HTML)](docs/network-topology.html) — inline-SVG-netwerktekening, adresseringsplan en verificatiecommando's.
 - [Bewijsmatrix B1-K2-W1/W2](docs/b1-k2-w1-w2-evidence.md) — koppeling tussen werkprocessen, bewijsstukken, controles en openstaande punten.
+- [Verificatieformulier (invulbaar)](docs/verification-record-template.md) — registreer echte host-, VM-, IP-, connectiviteits- en veiligheidscontroles.
 - [Incident simulation and monitoring](docs/incident-simulation.md) — incident lifecycle, PowerShell commands, validation evidence, limitations, and next improvements.
 - [Generated documentation portal](docs/_site/index.html) — browsable HTML views of repository documentation and source files (open locally or browse the folder in GitHub).
 
