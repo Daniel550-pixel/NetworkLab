@@ -1,0 +1,38 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Monitoring en diagnostiek | NetworkLab</title><style>*{box-sizing:border-box}body{margin:0;background:#f4f6fa;color:#172033;font:16px/1.65 system-ui,sans-serif}header{background:#101c32;color:#fff;padding:18px max(22px,calc((100vw - 1050px)/2));display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}header a{color:#d7e6ff}button{padding:8px 12px;border-radius:8px;border:1px solid #b9c7da;cursor:pointer}main{max-width:1050px;margin:28px auto;padding:clamp(20px,4vw,48px);background:white;border:1px solid #dce2eb;border-radius:14px}h1{font-size:2.1rem}h2{margin-top:2em;border-bottom:1px solid #dce2eb}a{color:#185abd}code,pre{font-family:Consolas,monospace}code{background:#eef2f8;padding:.12em .3em;border-radius:4px}pre{background:#111827;color:#e5edf9;padding:18px;border-radius:10px;overflow:auto}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{border:1px solid #dce2eb;padding:9px;text-align:left;vertical-align:top}th{background:#edf2f9}#sourcePanel{display:none;max-width:1050px;margin:0 auto 25px}textarea{width:100%;min-height:65vh;font:13px Consolas,monospace}@media print{header,#sourcePanel{display:none}main{margin:0;border:0}}@media(max-width:650px){main{margin:10px;padding:20px}}</style></head><body><header><div><strong>NETWORKLAB</strong><br><a href="README.html">Documentatie-index</a></div><div><button onclick="print()">Afdrukken / PDF</button> <button id="edit">HTML-bron bewerken</button> <button id="download">HTML downloaden</button></div></header><main id="document"><h1>Monitoring en diagnostiek</h1>
+<h2>Doel</h2>
+<p>Monitoring verzamelt waargenomen netwerk- en systeeminformatie zodat de beheerder de toestand kan beoordelen en resultaten kan vastleggen. Een melding of gesimuleerde incidentstatus is niet hetzelfde als een bevestigde netwerkstoring.</p>
+<h2>Te controleren onderdelen</h2>
+<div class="table-wrap"><table><thead><tr><th>Onderdeel</th><th>Waarneming</th><th>Voorbeeldcontrole</th></tr></thead><tbody>
+<tr><td>Netwerkinterfaces</td><td>Naam, status, IPv4-configuratie</td><td>Get-NetAdapter, Get-NetIPConfiguration</td></tr>
+<tr><td>IP-configuratie</td><td>Adres, prefix, gateway, DNS</td><td>Get-NetIPConfiguration</td></tr>
+<tr><td>Connectiviteit</td><td>Bereikbaarheid van expliciet doel</td><td>Test-Connection of passende TCP-test</td></tr>
+<tr><td>Services</td><td>Status van relevante Windows-services</td><td>Projectscript voor service-inspectie</td></tr>
+<tr><td>Processen</td><td>Processen en resources</td><td>Projectscript voor procesinspectie</td></tr>
+<tr><td>VirtualBox</td><td>VM's, host-only adapters, DHCP</td><td>VBoxManage list vms/hostonlyifs/dhcpservers</td></tr>
+<tr><td>Gast-OS</td><td>Hostname, IP-adres, route</td><td>hostname, ip -brief address, ip route</td></tr>
+<tr><td>Applicatie</td><td>Serverrespons en UI/API</td><td>Browser en lokale endpoint-controle</td></tr>
+</tbody></table></div>
+<h2>Uitvoeren</h2>
+<p>Voer vanuit de repositoryroot uit, nadat je hebt gecontroleerd dat de bestanden bestaan:</p>
+<p>./powershell/diagnostics/Test-NetworkLabConfiguration.ps1 ./powershell/diagnostics/Invoke-NetworkLabDiagnostics.ps1 ./powershell/manage/Get-NetworkLabHealth.ps1 python ./python/monitoring/run_monitor.py</p>
+<h2>Werkwijze bij afwijkingen</h2>
+<ol>
+<li>Noteer tijdstip, component en verwachte toestand.</li>
+<li>Herhaal de observatie om een tijdelijke fout uit te sluiten.</li>
+<li>Controleer interface- en adresconfiguratie.</li>
+<li>Test een tweede relevante laag, bijvoorbeeld een TCP-service als ICMP geblokkeerd is.</li>
+<li>Vergelijk met de laatst bekende goede toestand.</li>
+<li>Noteer de oorzaak alleen als waarnemingen die ondersteunen; anders noteer je “oorzaak onbekend”.</li>
+<li>Voer na herstel dezelfde test opnieuw uit.</li>
+</ol>
+<h2>Teststatussen</h2>
+<ul>
+<li><strong>Geslaagd:</strong> de waargenomen toestand voldoet aan het vooraf vastgelegde criterium.</li>
+<li><strong>Mislukt:</strong> de waargenomen toestand voldoet niet aan het criterium.</li>
+<li><strong>Geblokkeerd:</strong> de test kon niet veilig of technisch worden uitgevoerd.</li>
+<li><strong>Niet uitgevoerd:</strong> er is nog geen meting gedaan.</li>
+</ul>
+<p>Gebruik “openstaand” of “niet gemeten” zolang er geen werkelijke uitvoer is. Vul geen fictieve resultaten of IP-adressen in.</p>
+<h2>Rapportage</h2>
+<p>Een bruikbaar rapport bevat datum/tijd, omgeving, script/commando, component, verwacht resultaat, werkelijk resultaat, status, foutmelding, log- of screenshotreferentie, conclusie en vervolgactie.</p>
+<p>De monitoring- en rapportagescripts staan onder python/monitoring/, python/diagnostics/ en python/reporting/. Zie <a href="evidence.html">Stage-bewijs</a> en <a href="test-plan.html">Testplan</a>.</p></main><section id="sourcePanel"><h2>HTML-bron</h2><p>Bewerk de HTML-bron en download het bestand. Commit de wijziging naar GitHub om deze blijvend te maken.</p><textarea id="source"></textarea><button id="preview">Voorbeeld bijwerken</button><button id="save">Bewerkte HTML downloaden</button></section><script>const panel=document.getElementById('sourcePanel'),src=document.getElementById('source');function dl(t,n){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([t],{type:'text/html'}));a.href=u;a.download=n;a.click();URL.revokeObjectURL(u)}document.getElementById('edit').onclick=()=>{panel.style.display=panel.style.display==='block'?'none':'block';if(!src.value)src.value='<!doctype html>\\n'+document.documentElement.outerHTML};document.getElementById('download').onclick=()=>dl('<!doctype html>\\n'+document.documentElement.outerHTML,location.pathname.split('/').pop());document.getElementById('preview').onclick=()=>{let d=new DOMParser().parseFromString(src.value,'text/html');document.getElementById('document').innerHTML=d.querySelector('main')?.innerHTML||d.body.innerHTML};document.getElementById('save').onclick=()=>dl(src.value,'networklab-document-edited.html');</script></body></html>
