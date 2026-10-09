@@ -1,0 +1,6 @@
+{
+  "status": "normal",
+  "scenario": "connectivity-loss",
+  "target": "simulated-network-node",
+  "updated_at": "not-yet-run"
+}
