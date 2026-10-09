@@ -1,0 +1,44 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Operationeel beheer van NetworkLab | NetworkLab</title><style>:root{color-scheme:light;--bg:#f4f6fa;--paper:#fff;--ink:#172033;--line:#dce2eb;--accent:#185abd;--code:#eef2f8}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,sans-serif}header{background:#101c32;color:#fff;padding:18px max(22px,calc((100vw - 1050px)/2));display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}header a{color:#d7e6ff}button{padding:8px 12px;border-radius:8px;border:1px solid #b9c7da;cursor:pointer}main{max-width:1050px;margin:28px auto;padding:clamp(20px,4vw,48px);background:#fff;border:1px solid var(--line);border-radius:14px}h1{font-size:2.1rem}h2{margin-top:2em;border-bottom:1px solid var(--line)}a{color:var(--accent)}code,pre{font-family:Consolas,monospace}code{background:var(--code);padding:.12em .3em;border-radius:4px}pre{background:#111827;color:#e5edf9;padding:18px;border-radius:10px;overflow:auto}pre code{background:none;color:inherit}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{border:1px solid var(--line);padding:9px;text-align:left;vertical-align:top}th{background:#edf2f9}#sourcePanel{display:none;max-width:1050px;margin:0 auto 25px}textarea{width:100%;min-height:65vh;font:13px Consolas,monospace}@media print{header,#sourcePanel{display:none}main{margin:0;border:0}}@media(max-width:650px){main{margin:10px;padding:20px}}</style></head><body><header><div><strong>NETWORKLAB</strong><br><a href="README.html">Documentatie-index</a></div><div><button onclick="print()">Afdrukken / PDF</button> <button id="edit">HTML-bron bewerken</button> <button id="download">HTML downloaden</button></div></header><main id="document"><h1>Operationeel beheer van NetworkLab</h1>
+<h2>Routinebeheer</h2>
+<ol>
+<li>Controleer de repositorystatus en documentatieversie.</li>
+<li>Start de webapp alleen wanneer deze nodig is.</li>
+<li>Controleer netwerk- en infrastructuurstatus voordat je wijzigingen uitvoert.</li>
+<li>Voer tests uitsluitend binnen de geïsoleerde lab-scope uit.</li>
+<li>Bewaar logs en bewijs met datum, context en resultaat.</li>
+<li>Registreer fouten en wijzigingen zodat de uitvoering reproduceerbaar is.</li>
+</ol>
+<h2>Status inspecteren</h2>
+<p>Voer uit vanuit de repositoryroot en controleer eerst of de scripts aanwezig zijn in de huidige checkout:</p>
+<p>git status --short --branch ./powershell/configure/Get-NetworkLabState.ps1 ./powershell/configure/Get-NetworkConfiguration.ps1 ./powershell/manage/Get-NetworkLabServices.ps1 ./powershell/manage/Get-NetworkLabProcesses.ps1 ./powershell/manage/Get-NetworkLabHealth.ps1</p>
+<p>Als een opdracht faalt, noteer de volledige foutmelding en het gebruikte pad.</p>
+<h2>Beheer van VirtualBox-lab</h2>
+<p>Gebruik de NetworkLab-webapp om de actuele virtuele netwerk- en VM-status te bekijken. Controleer VM-naam, netwerkadapter, opslag en ISO-koppeling vóór start- of opslagacties. Gebruik geen verwijdercommando's voor VM's, schijven of snapshots zonder expliciete controle van het doel.</p>
+<h2>Onderhoud</h2>
+<ul>
+<li>Werk documentatie bij wanneer configuratie of procedures veranderen.</li>
+<li>Test scripts na wijzigingen.</li>
+<li>Houd Windows-, Python-, PowerShell- en VirtualBox-versies bij.</li>
+<li>Controleer dat bewijs geen geheimen of onnodige persoonsgegevens bevat.</li>
+<li>Verwijder oude logs pas nadat is vastgesteld dat ze niet meer nodig zijn.</li>
+</ul>
+<h2>Wijzigingsregistratie</h2>
+<div class="table-wrap"><table><thead><tr><th>Veld</th><th>In te vullen</th></tr></thead><tbody>
+<tr><td>Datum/tijd</td><td>Lokale datum en tijd</td></tr>
+<tr><td>Aanleiding</td><td>Waarom de wijziging nodig was</td></tr>
+<tr><td>Component</td><td>Script, configuratie, VM of netwerk</td></tr>
+<tr><td>Voor/na</td><td>Waargenomen toestand vóór en na</td></tr>
+<tr><td>Test</td><td>Uitgevoerde validatie</td></tr>
+<tr><td>Resultaat</td><td>Geslaagd, mislukt of geblokkeerd</td></tr>
+<tr><td>Terugvalplan</td><td>Hoe de vorige toestand wordt hersteld</td></tr>
+</tbody></table></div>
+<h2>Incidentprocedure</h2>
+<ol>
+<li>Stop verdere wijzigingen.</li>
+<li>Verzamel foutmelding en actuele status.</li>
+<li>Bepaal of de oorzaak bij webapp, host, VirtualBox, gast-OS of netwerk ligt.</li>
+<li>Voer één gecontroleerde diagnostische stap tegelijk uit.</li>
+<li>Herstel alleen de component die aantoonbaar de oorzaak is.</li>
+<li>Herhaal de oorspronkelijke test en registreer de uitkomst.</li>
+</ol>
+<p>Zie <a href="runbook.html">Runbook</a>, <a href="monitoring.html">Monitoring</a> en <a href="troubleshooting.html">Troubleshooting</a>.</p></main><section id="sourcePanel"><h2>HTML-bron</h2><p>Bewerk de HTML-bron en download het bestand. Commit de wijziging naar GitHub om deze blijvend te maken.</p><textarea id="source"></textarea><button id="preview">Voorbeeld bijwerken</button><button id="save">Bewerkte HTML downloaden</button></section><script>const panel=document.getElementById('sourcePanel'),src=document.getElementById('source');function dl(t,n){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([t],{type:'text/html'}));a.href=u;a.download=n;a.click();URL.revokeObjectURL(u)}document.getElementById('edit').onclick=()=>{panel.style.display=panel.style.display==='block'?'none':'block';if(!src.value)src.value='<!doctype html>\\n'+document.documentElement.outerHTML};document.getElementById('download').onclick=()=>dl('<!doctype html>\\n'+document.documentElement.outerHTML,location.pathname.split('/').pop());document.getElementById('preview').onclick=()=>{let d=new DOMParser().parseFromString(src.value,'text/html');document.getElementById('document').innerHTML=d.querySelector('main')?.innerHTML||d.body.innerHTML};document.getElementById('save').onclick=()=>dl(src.value,'networklab-document-edited.html');</script></body></html>
