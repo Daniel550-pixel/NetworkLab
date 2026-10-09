@@ -36,6 +36,12 @@ For the actual stage lab, record the topology, interface used, intended configur
 - `tests/connectivity/Test-Connectivity.ps1` — connectivity validation.
 - `tests/infrastructure/Test-Infrastructure.ps1` — infrastructure-service validation.
 
+## Network topology diagram
+
+- [`docs/network-topology.html`](network-topology.html) — HTML/SVG topology diagram showing the Windows host, local web application, VirtualBox host-only adapter, DHCP server and three role-based VMs.
+- The diagram records configured addressing (`192.168.77.0/24`, host `192.168.77.1`, DHCP server `192.168.77.2`, pool `192.168.77.100–192.168.77.200`).
+- VM IP addresses and end-to-end connectivity are explicitly marked as pending until measured. The diagram is a documentation artefact, not proof that the guest operating systems are installed or reachable.
+
 ## Evidence standard
 
 Each recorded evidence item should identify:
