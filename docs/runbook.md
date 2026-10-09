@@ -1,50 +1,78 @@
 # NetworkLab Runbook
 
-## 1. Initialize
+## Doel en veilige volgorde
 
-Run from PowerShell in the repository root:
+Dit runbook is de korte operationele checklist. Begin met read-only controles en voer geen netwerkconfiguratie uit wanneer de lab-scope niet duidelijk is. Controleer in de huidige checkout of een genoemd script bestaat voordat je het uitvoert.
 
-```powershell
-./powershell/install/Initialize-NetworkLab.ps1
-```
+## 1. Repository en omgeving
 
-The command verifies the Windows networking cmdlets and reports Python availability. It does not modify the system.
+    git status --short --branch
+    python --version
+    $PSVersionTable.PSVersion
 
-## 2. Inspect configuration
+Bekijk eerst de lokale wijzigingen. Bewaar eigen werk voordat je de repository synchroniseert.
 
-```powershell
-./powershell/configure/Get-NetworkLabState.ps1
-./powershell/configure/Get-NetworkConfiguration.ps1
-```
+## 2. Initialiseren en inspecteren
 
-## 3. Validate the current network
+    ./powershell/install/Initialize-NetworkLab.ps1
+    ./powershell/configure/Get-NetworkLabState.ps1
+    ./powershell/configure/Get-NetworkConfiguration.ps1
 
-```powershell
-./powershell/diagnostics/Test-NetworkLabConfiguration.ps1
-./tests/network/Test-NetworkConfiguration.ps1
-./tests/connectivity/Test-Connectivity.ps1
-```
+De initialisatie hoort vereisten te controleren; inspectiescripts verzamelen status. Controleer de actuele scriptinhoud wanneer onduidelijk is of een actie read-only is.
 
-## 4. Inspect infrastructure
+## 3. Netwerk- en infrastructuurvalidatie
 
-```powershell
-./powershell/manage/Get-NetworkLabServices.ps1
-./powershell/manage/Get-NetworkLabProcesses.ps1
-./powershell/manage/Get-NetworkLabHealth.ps1
-```
+    ./powershell/diagnostics/Test-NetworkLabConfiguration.ps1
+    ./tests/network/Test-NetworkConfiguration.ps1
+    ./tests/connectivity/Test-Connectivity.ps1
+    ./powershell/manage/Get-NetworkLabServices.ps1
+    ./powershell/manage/Get-NetworkLabProcesses.ps1
+    ./powershell/manage/Get-NetworkLabHealth.ps1
 
-## 5. Run Python monitoring
+Registreer verwachte én werkelijke uitkomsten. Een foutmelding is een resultaat dat moet worden onderzocht, niet iets dat uit het rapport moet worden weggelaten.
 
-```powershell
-python ./python/monitoring/run_monitor.py
-```
+## 4. Webapplicatie
 
-## 6. Generate a report
+Start de webapp volgens de actuele README vanuit de repositoryroot. De gedocumenteerde startmethode is:
 
-```powershell
-'[]' | python ./python/reporting/generate_report.py
-```
+    .\Run-NetworkLab.ps1
 
-## 7. Configuration changes
+Open http://127.0.0.1:8501. Controleer de terminaluitvoer en stop de server met Ctrl+C. Stel de beheerinterface niet bloot aan een openbaar netwerk.
 
-`Set-NetworkLabBaseline.ps1` is guarded by the lab configuration safety switch and requires an explicit interface. Do not enable configuration changes until the actual stage-lab topology, IP plan and DNS plan have been documented.
+## 5. VirtualBox-lab controleren
+
+    $VBoxManage = 'C:\Program Files\Oracle\VirtualBox\VBoxManage.exe'
+    if (Test-Path $VBoxManage) {
+        & $VBoxManage list vms
+        & $VBoxManage list hostonlyifs
+        & $VBoxManage list dhcpservers
+    } else {
+        Write-Warning 'VBoxManage.exe niet gevonden op het verwachte pad.'
+    }
+
+Controleer de VM-namen, host-only adapter, DHCP-instellingen, virtuele schijven en ISO-koppelingen. Gebruik [VM-installatiehandleiding](vm-installation-guide.md) voordat je gast-OS-installaties uitvoert.
+
+## 6. Python-monitoring en rapportage
+
+    python ./python/monitoring/run_monitor.py
+    '[]' | python ./python/reporting/generate_report.py
+
+Controleer de actuele scriptinterface en invoervereisten vóór uitvoering. Een lege lijst kan alleen een syntactische voorbeeldinvoer zijn en is geen echte meetdata. Gebruik voor een bewijsrapport de werkelijk verzamelde resultaten.
+
+## 7. Configuratiewijzigingen
+
+De baseline-configuratie is afgeschermd door veiligheidsinstellingen. Schakel die niet in voordat de echte labtopologie, interface en IP-plan zijn gecontroleerd en goedgekeurd. Leg de beginsituatie vast, wijzig één component tegelijk en test daarna opnieuw.
+
+## 8. Bewijs vastleggen
+
+Gebruik [Testplan](test-plan.md) en [HTML-test- en bewijsregister](test-and-evidence-register.html). Noteer datum/tijd, doel, opdracht, verwacht resultaat, werkelijk resultaat, status, foutmelding en bewijsreferentie. Laat tests openstaand zolang ze niet zijn uitgevoerd.
+
+## Gerelateerde documentatie
+
+- [Documentatie-index](README.md)
+- [Architectuur](architecture.md)
+- [Configuratie](configuration.md)
+- [Monitoring](monitoring.md)
+- [Troubleshooting](troubleshooting.md)
+- [Beveiliging en gegevensbeheer](security-and-data-handling.md)
+- [Stagecompetenties en bewijs](stage-competency-mapping.md)
