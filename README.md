@@ -2,56 +2,46 @@
 
 ## Stage Project — Network & Infrastructure Management
 
-NetworkLab is a controlled, reproducible local laboratory for demonstrating:
+NetworkLab is een gecontroleerd lokaal lab voor het installeren, configureren, beheren en monitoren van netwerk- en infrastructuuronderdelen.
 
-1. **Installatie en configuratie van netwerk- en infrastructuuronderdelen**
-2. **Beheer en monitoring van netwerk- en infrastructuuronderdelen**
+De documentatie en projectbestanden ondersteunen twee in het project gebruikte stagewerkprocessen:
+1. **B1-K2-W1 — Installeert en configureert netwerk- en infrastructuuronderdelen**
+2. **B1-K2-W2 — Beheert en monitort netwerk- en infrastructuuronderdelen**
+
+Controleer de officiële beoordelingscriteria met de school of stagebegeleider. Scripts en documentatie zijn geen vervanging voor aantoonbaar uitgevoerde werkzaamheden.
 
 ## Technology Stack
 
-| Technology | Purpose |
+| Technologie | Doel |
 |---|---|
-| GitHub | Version control, implementation, documentation and evidence |
-| Python | Local HTTP server, monitoring, diagnostics and reporting |
-| HTML/CSS/JavaScript | Localhost web application and laboratory UI |
-| PowerShell | Network inspection, configuration safeguards and diagnostics |
-| JSON | Lab configuration and evidence format |
-| GitHub Actions | Automated validation |
+| GitHub | Versiebeheer, implementatie, documentatie en bewijs |
+| Python | Lokale HTTP-server, monitoring, diagnostiek en rapportage |
+| HTML/CSS/JavaScript | Lokale webinterface |
+| PowerShell | Windows-netwerkinspectie, veiligheidscontroles en diagnostiek |
+| JSON | Labconfiguratie en gestructureerde gegevens |
+| VirtualBox | Geïsoleerde virtuele netwerk- en VM-omgeving |
+| GitHub Actions | Geautomatiseerde validatie volgens de workflows |
 
-## Local Web Application
+## Lokale webapplicatie
 
-The NetworkLab interface is now a **pure localhost web application**.
+De NetworkLab-interface is een localhost-webapplicatie.
 
-- No Streamlit runtime is required.
-- No external frontend CDN or remote UI service is required.
-- The Python standard library provides the local HTTP server.
-- The browser connects only to `127.0.0.1`.
-- Network telemetry is exposed through local `/api/*` endpoints.
-- The UI is served from the repository's `web/` directory.
+- Geen Streamlit-runtime vereist.
+- Geen externe frontend-CDN vereist volgens het projectontwerp.
+- De Python-standaardbibliotheek levert de lokale HTTP-server.
+- De browserinterface is bedoeld voor 127.0.0.1.
+- De UI-bestanden staan in web/.
+- De server-entrypoint is app/server.py.
 
-### Start
+### Starten
 
-From the repository root in PowerShell:
+Voer vanuit de repositoryroot in PowerShell uit:
 
-```powershell
-.\Run-NetworkLab.ps1
-```
+    .\Run-NetworkLab.ps1
 
-Then open:
+Open vervolgens http://127.0.0.1:8501. Gebruik een aangepaste poort alleen als de huidige launcher die optie ondersteunt. Als de launcher ontbreekt, controleer dan eerst de actuele repositorybestanden.
 
-```
-http://127.0.0.1:8501
-```
-
-Optional custom port:
-
-```powershell
-.\Run-NetworkLab.ps1 -Port 8510
-```
-
-The launcher starts `app/server.py`, which serves the frontend and local telemetry API.
-
-## Web Application Sections
+## Webapplicatieonderdelen
 
 - Command Center
 - Topology
@@ -63,40 +53,68 @@ The launcher starts `app/server.py`, which serves the frontend and local telemet
 - Evidence
 - VM storage & OS media
 
-The topology visualization is rendered with native SVG. There are no external JavaScript dependencies.
+De applicatieweergave en de echte host-/VM-status moeten met de onderliggende observaties worden vergeleken.
 
-## Safety Model
+## Netwerktopologie en VM-lab
 
-Network-changing operations remain disabled by default in `config/lab-config.json`. The baseline configuration workflow refuses to run unless the laboratory safety controls are explicitly enabled and an interface is supplied.
+De gedocumenteerde VirtualBox host-only topologie gebruikt de volgende doelwaarden:
 
-No production-network assumptions are encoded in the repository.
+| Onderdeel | Gedocumenteerde waarde |
+|---|---|
+| Netwerknaam | NetworkLab-Lab |
+| Subnet | 192.168.77.0/24 |
+| Hostadres | 192.168.77.1 |
+| DHCP-server | 192.168.77.2 |
+| DHCP-pool | 192.168.77.100–192.168.77.200 |
+| VM's | NetworkLab-VM01-MGMT, NetworkLab-VM02-INFRA, NetworkLab-VM03-CLIENT |
+| Virtuele schijf | 20 GB VDI per VM, volgens de projectdocumentatie |
 
-## Network Topology and VM Installation Documentation
+Dit zijn gedocumenteerde doelwaarden. Controleer ze tegen de actuele VirtualBox-configuratie. Gast-IP-adressen en end-to-end-connectiviteit moeten na installatie worden gemeten; vul geen niet-waargenomen waarden in.
 
-The documented host-only topology, IPv4 addressing plan, component roles and pending connectivity tests are available in [`docs/network-topology.html`](docs/network-topology.html). The page uses inline HTML/CSS/SVG and does not require an external library or CDN. Addresses for the guest VMs remain marked as pending until they are read from the running guests and verified by connectivity tests. The step-by-step Ubuntu Server installation, DHCP validation, host/guest and guest/guest connectivity checks, and evidence checklist are in [`docs/vm-installation-guide.md`](docs/vm-installation-guide.md).
+## Veiligheidsmodel
 
-## Execution Order
+- Netwerkwijzigingen blijven standaard uitgeschakeld in config/lab-config.json.
+- Configuratieacties vereisen een expliciete lab-scope.
+- Begin met read-only inspectie.
+- Gebruik geen fysieke LAN-bridge of productieconfiguratie als impliciete aanname.
+- Commit geen wachtwoorden, tokens of privésleutels.
+- Een gesimuleerde incidentstatus is geen bewijs van een echte storing.
 
-1. Initialize and validate the environment.
-2. Start the local NetworkLab web application.
-3. Inspect the current network state.
-4. Define and document the actual stage-lab topology.
-5. Enable guarded configuration only when that topology is known.
-6. Validate network and infrastructure state.
-7. Run monitoring and reporting.
-8. Preserve results as stage evidence.
+## Documentatie
 
-## Status
+De volledige documentatie-index staat in [docs/README.md](docs/README.md).
 
-**Localhost web application: IMPLEMENTED**
+Belangrijkste documenten:
+- [Architectuur en componenten](docs/architecture.md)
+- [Installatiehandleiding](docs/installation.md)
+- [Configuratiehandleiding](docs/configuration.md)
+- [HTML/SVG-netwerktopologie](docs/network-topology.html)
+- [Virtueel netwerk](docs/virtual-network.md)
+- [VM-installatiehandleiding](docs/vm-installation-guide.md)
+- [VM-opslag en ISO-media](docs/vm-storage.md)
+- [Runbook](docs/runbook.md)
+- [Monitoring en diagnostiek](docs/monitoring.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Beveiliging en gegevensbeheer](docs/security-and-data-handling.md)
+- [Testplan](docs/test-plan.md)
+- [HTML-test- en bewijsregister](docs/test-and-evidence-register.html)
+- [Koppeling stagecompetenties aan bewijs](docs/stage-competency-mapping.md)
+- [Bestaand stagebewijsregister](docs/evidence.md)
+- [Begrippenlijst](docs/glossary.md)
 
-**VirtualBox VM infrastructure: IMPLEMENTED**
+## Uitvoeringsvolgorde
 
-- NetworkLab-Lab host-only network
-- Three role-based lab VMs
-- 20 GB VDI storage per VM
-- Explicit local ISO attachment/ejection
-- DVD-first boot preparation for OS installation
-- No automatic OS downloads or external media selection
+1. Controleer de repository en lokale vereisten.
+2. Start de lokale NetworkLab-webapp.
+3. Inspecteer de actuele host- en VirtualBox-status.
+4. Vergelijk de werkelijke omgeving met de topologie.
+5. Voer alleen goedgekeurde configuratiestappen uit binnen de lab-scope.
+6. Valideer adressering en connectiviteit.
+7. Voer monitoring en rapportage uit.
+8. Bewaar resultaten en bewijs.
+9. Werk documentatie bij op basis van de waarnemingen.
 
-The web layer is now independent of Streamlit and runs as a local Python HTTP application on `127.0.0.1`.
+## Teststatus en beperkingen
+
+De handleidingen en registratieformulieren zijn documentatie en uitvoeringshulpmiddelen. Ze bewijzen niet dat een gast-OS is geïnstalleerd, DHCP werkt of VM's onderling bereikbaar zijn. De tests in [docs/test-plan.md](docs/test-plan.md) beginnen op **Openstaand** en mogen pas na daadwerkelijke uitvoering worden bijgewerkt.
+
