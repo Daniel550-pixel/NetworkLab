@@ -1,0 +1,41 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>docs\REMAINING_SYSTEM_BUILD.md - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>docs\REMAINING_SYSTEM_BUILD.md</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../docs/REMAINING_SYSTEM_BUILD.md">Open origineel bestand</a></header>
+<main>
+<h1>NetworkLab Remaining System Build</h1>
+<h2>Implemented</h2>
+<p>The host-side system now exposes an OS-agnostic guest build contract for all three lab roles:</p>
+<ul>
+<li>MGMT &#226;€” management and diagnostics</li>
+<li>INFRA &#226;€” DNS, DHCP and lab services</li>
+<li>CLIENT &#226;€” client networking and validation</li>
+</ul>
+<p>The build deliberately stops at the guest boundary until an OS ISO is manually selected and installed.</p>
+<h2>Execution chain</h2>
+<p>1. Prepare host-side network, VM topology and storage. 2. Select and attach the OS ISO manually. 3. Install the guest OS. 4. Apply the role contract. 5. Configure guest services. 6. Run host-assisted endpoint validation. 7. Run guest-to-guest validation from inside the guests. 8. Capture the evidence package.</p>
+<h2>New runtime surfaces</h2>
+<ul>
+<li>GET /api/guest/contracts</li>
+<li>GET /api/guest/validation</li>
+<li>POST /api/evidence/capture</li>
+</ul>
+<p>Evidence is written to logs/evidence/ as timestamped JSON.</p>
+<h2>Safety boundary</h2>
+<p>NetworkLab does not automatically download OS media, guess an OS, or alter guest-operating-system configuration before installation. Guest automation can be added behind the role contract once the selected guest OS and management mechanism are known.</p>
+</main>
+</body>
+</html>

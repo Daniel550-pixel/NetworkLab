@@ -11,15 +11,34 @@
     <aside class="sidebar">
       <div class="brand"><span class="brand-mark">N</span><div><strong>NETWORKLAB</strong><small>LOCAL LABORATORY</small></div></div>
       <nav id="nav">
-        <button class="nav-item active" data-view="command"><span>01</span>Command Center</button>
-        <button class="nav-item" data-view="topology"><span>02</span>Topology</button>
-        <button class="nav-item" data-view="interfaces"><span>03</span>Interfaces</button>
-        <button class="nav-item" data-view="addressing"><span>04</span>Addressing</button>
-        <button class="nav-item" data-view="connectivity"><span>05</span>Connectivity</button>
-        <button class="nav-item" data-view="services"><span>06</span>Services</button>
-        <button class="nav-item" data-view="diagnostics"><span>07</span>Diagnostics</button>
-        <button class="nav-item" data-view="evidence"><span>08</span>Evidence</button>
-        <button class="nav-item" data-view="vm-lab"><span>09</span>VM Lab</button>
+        <div class="nav-group">
+          <div class="nav-label">CONTROL</div>
+          <button class="nav-item active" data-view="command"><span>01</span>Dashboard</button>
+          <button class="nav-item" data-view="lab-control"><span>02</span>Lab Control</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-label">VIRTUALIZATION</div>
+          <button class="nav-item" data-view="vm-lab"><span>03</span>VM Lab</button>
+          <button class="nav-item" data-view="guest-build"><span>04</span>Guest Build</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-label">NETWORK</div>
+          <button class="nav-item" data-view="topology"><span>05</span>Topology</button>
+          <button class="nav-item" data-view="connectivity"><span>06</span>Connectivity</button>
+          <button class="nav-item" data-view="interfaces"><span>07</span>Interfaces</button>
+          <button class="nav-item" data-view="addressing"><span>08</span>Addressing</button>
+          <button class="nav-item" data-view="services"><span>09</span>Services</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-label">OPERATIONS</div>
+          <button class="nav-item" data-view="telemetry"><span>10</span>Telemetry</button>
+          <button class="nav-item" data-view="diagnostics"><span>11</span>Diagnostics</button>
+          <button class="nav-item" data-view="evidence-capture"><span>12</span>Evidence</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-label">SYSTEM</div>
+          <button class="nav-item" data-view="architecture"><span>13</span>Architecture</button>
+        </div>
       </nav>
       <div class="scope">
         <div class="eyebrow">Execution boundary</div>
@@ -37,16 +56,17 @@
           <p id="view-subtitle">Operational view of the local software network laboratory.</p>
         </div>
         <div class="top-actions">
+          <span class="live-state"><i></i> LOCAL SYSTEM</span>
           <span id="last-updated">Awaiting telemetry</span>
           <button id="refresh" class="button primary">Refresh</button>
         </div>
       </header>
 
       <section class="status-strip">
-        <div><small>LABORATORY</small><strong id="lab-status">—</strong></div>
-        <div><small>CONNECTIVITY</small><strong id="connectivity-status">—</strong></div>
-        <div><small>SERVICES</small><strong id="services-status">—</strong></div>
-        <div><small>INTERFACES</small><strong id="interface-count">—</strong></div>
+        <div><small>LABORATORY</small><strong id="lab-status">—</strong><span class="status-detail">Host environment</span></div>
+        <div><small>CONNECTIVITY</small><strong id="connectivity-status">—</strong><span class="status-detail">Reachability gate</span></div>
+        <div><small>SERVICES</small><strong id="services-status">—</strong><span class="status-detail">Local services</span></div>
+        <div><small>INTERFACES</small><strong id="interface-count">—</strong><span class="status-detail">Observed adapters</span></div>
       </section>
 
       <div id="alert" class="alert hidden"></div>

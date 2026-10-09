@@ -1,0 +1,71 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>tests\infrastructure\test_virtualbox_telemetry.py - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>tests\infrastructure\test_virtualbox_telemetry.py</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../tests/infrastructure/test_virtualbox_telemetry.py">Open origineel bestand</a></header>
+<main>
+<pre><code>from app.services.virtualbox_telemetry_service import _is_com_lock_error
+
+
+def test_com_lock_error_is_detected():
+    detail = (
+        &quot;VBoxManage.exe: error: The object is not ready &quot;
+        &quot;Details: code E_ACCESSDENIED (0x80070005), &quot;
+        &quot;component SessionMachine&quot;
+    )
+    assert _is_com_lock_error(detail)
+
+
+def test_unrelated_error_is_not_classified_as_com_lock():
+    assert not _is_com_lock_error(&quot;VBoxManage.exe: error: Unknown command&quot;)
+
+
+from app.services.virtualbox_telemetry_service import _recovery_recommendation
+
+
+def test_com_lock_recovery_recommendation_is_high_priority():
+    probe = {&quot;failures&quot;: [{&quot;error&quot;: &quot;E_ACCESSDENIED SessionMachine&quot;}]}
+    recommendation = _recovery_recommendation(probe)
+    assert recommendation[&quot;priority&quot;] == &quot;high&quot;
+    assert &quot;VBoxSVC&quot; in recommendation[&quot;action&quot;]
+
+
+def test_failed_recovery_recommendation_escalates():
+    probe = {&quot;failures&quot;: [{&quot;error&quot;: &quot;still failing&quot;}]}
+    recommendation = _recovery_recommendation(probe, {&quot;success&quot;: False})
+    assert recommendation[&quot;priority&quot;] == &quot;critical&quot;
+
+
+from app.services.virtualbox_telemetry_service import _issue_engine
+
+
+def test_issue_engine_classifies_com_session_failure():
+    probe = {&quot;failures&quot;: [{&quot;error&quot;: &quot;E_ACCESSDENIED SessionMachine&quot;}]}
+    issue = _issue_engine(probe, &quot;VBoxManage.exe&quot;)
+    assert issue[&quot;issue&quot;] == &quot;com-session-lock&quot;
+    assert issue[&quot;fixer&quot;] == &quot;restart-vboxsvc&quot;
+    assert issue[&quot;automatic&quot;] is True
+
+
+def test_issue_engine_does_not_autofix_unknown_failure():
+    probe = {&quot;failures&quot;: [{&quot;error&quot;: &quot;Unknown VirtualBox failure&quot;}]}
+    issue = _issue_engine(probe, &quot;VBoxManage.exe&quot;)
+    assert issue[&quot;issue&quot;] == &quot;unknown-virtualbox-failure&quot;
+    assert issue[&quot;automatic&quot;] is False
+    assert issue[&quot;fixer&quot;] == &quot;diagnose-only&quot;
+</code></pre>
+</main>
+</body>
+</html>

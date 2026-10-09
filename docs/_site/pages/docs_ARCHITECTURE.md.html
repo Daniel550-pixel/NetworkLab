@@ -1,0 +1,43 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>docs\ARCHITECTURE.md - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>docs\ARCHITECTURE.md</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../docs/ARCHITECTURE.md">Open origineel bestand</a></header>
+<main>
+<h1>NetworkLab Architecture</h1>
+<h2>Control flow</h2>
+<p>NetworkLab follows:</p>
+<p>**discover -&gt; observe -&gt; classify -&gt; policy-check -&gt; execute-safe-action -&gt; verify -&gt; persist-evidence -&gt; report**</p>
+<h2>Layers</h2>
+<p>1. Control Plane &#226;€” local HTTP API and web UI. 2. Virtualization &#226;€” VirtualBox network and VM lifecycle services. 3. Network &#226;€” host-only lab network and read-only connectivity verification. 4. Runtime &#226;€” VM topology, storage, ISO/media and runtime readiness. 5. Observability &#226;€” health, telemetry, process state and Windows event correlation. 6. Recovery &#226;€” issue engine with bounded autonomous remediation. 7. Verification &#226;€” readiness and connectivity gates. 8. Evidence &#226;€” persistent incident history and reproducible stage evidence.</p>
+<h2>Safety boundary</h2>
+<p>The system may automatically repair VirtualBox host state only when the action is classified as safe and no lab VM is running.</p>
+<p>The recovery engine must not:</p>
+<ul>
+<li>delete VM configuration;</li>
+<li>delete VDI files;</li>
+<li>delete lock files blindly;</li>
+<li>modify production networking;</li>
+<li>terminate running VM processes;</li>
+<li>reboot Windows automatically.</li>
+</ul>
+<p>Unknown or unsafe failures are diagnosed and escalated.</p>
+<h2>Stage separation</h2>
+<p>NetworkLab remains software-only and isolated from production networking. VirtualBox uses the dedicated NetworkLab-Lab host-only network.</p>
+<h2>Operational state</h2>
+<p>The /api/architecture endpoint provides a consolidated architecture snapshot. /api/connectivity provides read-only reachability validation.</p>
+</main>
+</body>
+</html>

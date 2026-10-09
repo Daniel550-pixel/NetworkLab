@@ -1,0 +1,72 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>app\core\powershell.py - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>app\core\powershell.py</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../app/core/powershell.py">Open origineel bestand</a></header>
+<main>
+<pre><code>from __future__ import annotations
+
+import json
+import subprocess
+
+from app.core.config import ROOT
+
+
+def run_powershell_script(script: str, *arguments: str) -&gt; str:
+    path = ROOT / script
+    if not path.exists():
+        raise FileNotFoundError(f&quot;PowerShell script not found: {path}&quot;)
+
+    command = [
+        &quot;powershell.exe&quot;,
+        &quot;-NoProfile&quot;,
+        &quot;-ExecutionPolicy&quot;,
+        &quot;Bypass&quot;,
+        &quot;-File&quot;,
+        str(path),
+        *arguments,
+    ]
+
+    completed = subprocess.run(
+        command,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        encoding=&quot;utf-8&quot;,
+        errors=&quot;replace&quot;,
+        timeout=30,
+    )
+
+    if completed.returncode != 0:
+        detail = completed.stderr.strip() or completed.stdout.strip()
+        raise RuntimeError(
+            f&quot;PowerShell script failed ({completed.returncode}): {detail}&quot;
+        )
+
+    return completed.stdout.strip()
+
+
+def run_powershell_json(script: str, *arguments: str) -&gt; object:
+    output = run_powershell_script(script, *arguments)
+    try:
+        return json.loads(output)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(
+            f&quot;Expected JSON from {script}, received: {output[:1000]}&quot;
+        ) from exc
+</code></pre>
+</main>
+</body>
+</html>

@@ -1,0 +1,69 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>app\services\lab_lifecycle_service.py - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>app\services\lab_lifecycle_service.py</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../app/services/lab_lifecycle_service.py">Open origineel bestand</a></header>
+<main>
+<pre><code>from __future__ import annotations
+
+from typing import Any
+
+from app.services.lab_definition import LAB_ID, LAB_PHASES, VM_ROLES
+from app.services.virtualization_service import create_virtual_network, get_virtual_network
+from app.services.vm_service import create_vm_topology, get_vm_topology
+from app.services.storage_service import create_vm_storage, get_vm_storage
+from app.services.readiness_service import get_lab_readiness
+
+def get_lab_definition() -&gt; dict[str, Any]:
+    return {
+        &quot;lab_id&quot;: LAB_ID,
+        &quot;network&quot;: {
+            &quot;name&quot;: LAB_ID,
+            &quot;cidr&quot;: &quot;192.168.77.0/24&quot;,
+            &quot;host_ip&quot;: &quot;192.168.77.1&quot;,
+            &quot;dhcp&quot;: {&quot;ip&quot;: &quot;192.168.77.2&quot;, &quot;range&quot;: [&quot;192.168.77.100&quot;, &quot;192.168.77.200&quot;]},
+            &quot;internet_access&quot;: False,
+        },
+        &quot;roles&quot;: VM_ROLES,
+        &quot;phases&quot;: LAB_PHASES,
+    }
+
+def prepare_lab() -&gt; dict[str, Any]:
+    phases: list[dict[str, Any]] = []
+    try:
+        network = create_virtual_network()
+        phases.append({&quot;id&quot;: &quot;network&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;result&quot;: network})
+        topology = create_vm_topology()
+        phases.append({&quot;id&quot;: &quot;topology&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;result&quot;: topology})
+        storage = create_vm_storage()
+        phases.append({&quot;id&quot;: &quot;storage&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;result&quot;: storage})
+    except Exception as exc:
+        phases.append({&quot;id&quot;: &quot;current&quot;, &quot;status&quot;: &quot;failed&quot;, &quot;error&quot;: str(exc)})
+        return {&quot;success&quot;: False, &quot;lab&quot;: get_lab_definition(), &quot;phases&quot;: phases, &quot;readiness&quot;: get_lab_readiness()}
+
+    return {&quot;success&quot;: True, &quot;lab&quot;: get_lab_definition(), &quot;phases&quot;: phases, &quot;readiness&quot;: get_lab_readiness()}
+
+def get_lab_state() -&gt; dict[str, Any]:
+    return {
+        &quot;definition&quot;: get_lab_definition(),
+        &quot;network&quot;: get_virtual_network(),
+        &quot;topology&quot;: get_vm_topology(),
+        &quot;storage&quot;: get_vm_storage(),
+        &quot;readiness&quot;: get_lab_readiness(),
+    }
+</code></pre>
+</main>
+</body>
+</html>

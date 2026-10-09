@@ -1,0 +1,66 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>config\lab-config.json - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>config\lab-config.json</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../config/lab-config.json">Open origineel bestand</a></header>
+<main>
+<pre><code>{
+  &quot;project&quot;: &quot;NetworkLab&quot;,
+  &quot;environment&quot;: &quot;stage-lab&quot;,
+  &quot;scope&quot;: {
+    &quot;model&quot;: &quot;software-only&quot;,
+    &quot;physical_hardware_required&quot;: false,
+    &quot;production_network_allowed&quot;: false
+  },
+  &quot;monitoring&quot;: {
+    &quot;interval_seconds&quot;: 30,
+    &quot;connectivity_targets&quot;: [
+      &quot;127.0.0.1&quot;
+    ],
+    &quot;services&quot;: [
+      &quot;Dnscache&quot;,
+      &quot;Dhcp&quot;,
+      &quot;NlaSvc&quot;
+    ]
+  },
+  &quot;network&quot;: {
+    &quot;interfaces&quot;: [],
+    &quot;dns_servers&quot;: [],
+    &quot;virtual&quot;: {
+      &quot;provider&quot;: &quot;VirtualBox&quot;,
+      &quot;name&quot;: &quot;NetworkLab-Lab&quot;,
+      &quot;mode&quot;: &quot;host-only&quot;,
+      &quot;subnet&quot;: &quot;192.168.77.0/24&quot;,
+      &quot;host_ip&quot;: &quot;192.168.77.1&quot;,
+      &quot;dhcp&quot;: {
+        &quot;ip&quot;: &quot;192.168.77.2&quot;,
+        &quot;range&quot;: [
+          &quot;192.168.77.100&quot;,
+          &quot;192.168.77.200&quot;
+        ]
+      },
+      &quot;internet_access&quot;: false,
+      &quot;physical_bridge&quot;: false
+    }
+  },
+  &quot;safety&quot;: {
+    &quot;configuration_enabled&quot;: false,
+    &quot;require_lab_scope&quot;: true
+  }
+}
+</code></pre>
+</main>
+</body>
+</html>
