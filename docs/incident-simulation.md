@@ -9,6 +9,7 @@ This module demonstrates a controlled incident lifecycle for the NetworkLab stag
 | Component | Responsibility |
 |---|---|
 | `config/simulation/incident-state.json` | Stores the current simulated incident state |
+| `config/simulation/monitoring-cursor.json` | Runtime cursor used by the feed to remember the last observed status; created automatically |
 | `tests/incidents/Invoke-NetworkLabIncidentSimulation.ps1` | Advances the incident through lifecycle actions |
 | `powershell/manage/Start-NetworkLabMonitoringFeed.ps1` | Polls the state file and detects a transition to `fault_injected` |
 | `logs/incident-simulation.jsonl` | Records lifecycle actions |
@@ -49,7 +50,7 @@ For a bounded test run, use a one-second interval and one iteration:
 .\powershell\manage\Start-NetworkLabMonitoringFeed.ps1 -IntervalSeconds 1 -Iterations 1
 ```
 
-The feed writes a detection event when it observes `fault_injected` after a different previous state. It is a file-based demonstration, not a live network probe. It currently does not independently detect packet loss, interface failure, or other real network conditions. It also does not emit a detection event for every possible lifecycle state transition.
+The feed writes a detection event when it observes `fault_injected` after a different previous state. It stores its last observed status in `config/simulation/monitoring-cursor.json`; remove that runtime cursor only when you intentionally want to reset the feed's detection history. It is a file-based demonstration, not a live network probe. It currently does not independently detect packet loss, interface failure, or other real network conditions. It also does not emit a detection event for every possible lifecycle state transition.
 
 Stop an unbounded run with **Ctrl+C**.
 
