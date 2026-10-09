@@ -1,0 +1,50 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Testplan NetworkLab | NetworkLab</title><style>*{box-sizing:border-box}body{margin:0;background:#f4f6fa;color:#172033;font:16px/1.65 system-ui,sans-serif}header{background:#101c32;color:white;padding:18px max(22px,calc((100vw - 1050px)/2));display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}header a{color:#d7e6ff}button{padding:8px 12px;border-radius:8px;border:1px solid #b9c7da;cursor:pointer}main{max-width:1050px;margin:28px auto;padding:clamp(20px,4vw,48px);background:white;border:1px solid #dce2eb;border-radius:14px}h1{font-size:2.1rem}h2{margin-top:2em;border-bottom:1px solid #dce2eb}a{color:#185abd}code,pre{font-family:Consolas,monospace}code{background:#eef2f8;padding:.12em .3em;border-radius:4px}pre{background:#111827;color:#e5edf9;padding:18px;border-radius:10px;overflow:auto}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{border:1px solid #dce2eb;padding:9px;text-align:left;vertical-align:top}th{background:#edf2f9}#sourcePanel{display:none;max-width:1050px;margin:0 auto 25px}textarea{width:100%;min-height:65vh;font:13px Consolas,monospace}@media print{header,#sourcePanel{display:none}main{margin:0;border:0}}@media(max-width:650px){main{margin:10px;padding:20px}}</style></head><body><header><div><strong>NETWORKLAB</strong><br><a href="README.html">Documentatie-index</a></div><div><button onclick="print()">Afdrukken / PDF</button> <button id="edit">HTML-bron bewerken</button> <button id="download">HTML downloaden</button></div></header><main id="document"><h1>Testplan NetworkLab</h1>
+<h2>Doel</h2>
+<p>Dit plan beschrijft hoe de webapp, hostinspectie, VirtualBox-lab en connectiviteit gecontroleerd kunnen worden. Voer tests in volgorde uit en noteer de echte resultaten. De aanwezigheid van een script is niet hetzelfde als een geslaagde test.</p>
+<h2>Statuswaarden</h2>
+<ul>
+<li>Openstaand — nog niet uitgevoerd.</li>
+<li>Geslaagd — uitgevoerd en voldoet aan het criterium.</li>
+<li>Mislukt — uitgevoerd en voldoet niet aan het criterium.</li>
+<li>Geblokkeerd — niet uitgevoerd door een technische of veiligheidsbeperking.</li>
+</ul>
+<h2>Testgevallen</h2>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>Test</th><th>Procedure</th><th>Acceptatiecriterium</th><th>Beginstatus</th></tr></thead><tbody>
+<tr><td>NL-01</td><td>Repositorycontrole</td><td>git status en controle van benodigde bestanden</td><td>Werkmap bekend; wijzigingen geïdentificeerd</td><td>Openstaand</td></tr>
+<tr><td>NL-02</td><td>Webapp start</td><td>Start volgens README en open localhost</td><td>Server start zonder traceback; UI laadt</td><td>Openstaand</td></tr>
+<tr><td>NL-03</td><td>Lokale grens</td><td>Controleer serveradres en poort</td><td>UI gebonden aan localhost zoals bedoeld</td><td>Openstaand</td></tr>
+<tr><td>NL-04</td><td>Configuratieveiligheid</td><td>Lees config/lab-config.json</td><td>Wijzigingen standaard uitgeschakeld</td><td>Openstaand</td></tr>
+<tr><td>NL-05</td><td>PowerShell-inspectie</td><td>Voer read-only status- en adapterchecks uit</td><td>Uitvoer beschikbaar zonder onverwachte wijziging</td><td>Openstaand</td></tr>
+<tr><td>NL-06</td><td>VirtualBox-installatie</td><td>VBoxManage --version</td><td>Versie wordt gerapporteerd</td><td>Openstaand</td></tr>
+<tr><td>NL-07</td><td>Host-only netwerk</td><td>Inspecteer hostonlyifs en DHCP</td><td>Naam, subnet, hostadres en pool komen overeen</td><td>Openstaand</td></tr>
+<tr><td>NL-08</td><td>VM-inventaris</td><td>VBoxManage list vms</td><td>Drie bedoelde VM's zijn aanwezig</td><td>Openstaand</td></tr>
+<tr><td>NL-09</td><td>VM-start</td><td>Start elke VM via de afgesproken bediening</td><td>VM start vanaf de bedoelde virtuele schijf</td><td>Openstaand</td></tr>
+<tr><td>NL-10</td><td>Gast-DHCP</td><td>Controleer ip -brief address in elke gast</td><td>Uniek adres in afgesproken pool</td><td>Openstaand</td></tr>
+<tr><td>NL-11</td><td>Host naar gast</td><td>Test werkelijk gast-IP vanaf Windows</td><td>Bereikbaarheid aantoonbaar; ICMP-resultaat correct geïnterpreteerd</td><td>Openstaand</td></tr>
+<tr><td>NL-12</td><td>Gast naar gast</td><td>Test twee gasten in beide richtingen waar passend</td><td>Resultaat en eventuele firewallbeperking vastgelegd</td><td>Openstaand</td></tr>
+<tr><td>NL-13</td><td>Rapportage</td><td>Voer monitoring/rapportage uit met werkelijke invoer</td><td>Rapport bevat bron, tijd en waargenomen resultaat</td><td>Openstaand</td></tr>
+<tr><td>NL-14</td><td>Regressie</td><td>Herhaal relevante checks na wijziging</td><td>Geen onbedoelde regressie</td><td>Openstaand</td></tr>
+</tbody></table></div>
+<h2>Uitvoeringsformulier</h2>
+<p>Voor elke test leg je vast:</p>
+<ul>
+<li>test-ID;</li>
+<li>datum en lokale tijd;</li>
+<li>Windows-, Python-, PowerShell- en VirtualBox-versie indien relevant;</li>
+<li>commando of procedure;</li>
+<li>verwacht resultaat;</li>
+<li>werkelijk resultaat en volledige foutmelding;</li>
+<li>status;</li>
+<li>bewijsbestandsnaam;</li>
+<li>conclusie en vervolgactie.</li>
+</ul>
+<h2>Testveiligheid</h2>
+<ul>
+<li>Begin met read-only controles.</li>
+<li>Voer configuratiewijzigingen alleen binnen de lab-scope uit.</li>
+<li>Gebruik geen echte credentials in voorbeelden of bewijs.</li>
+<li>Verwijder geen VM, adapter, schijf of configuratie om een test te laten slagen.</li>
+<li>Als de test risico oplevert of scope onduidelijk is, markeer als Geblokkeerd.</li>
+</ul>
+<h2>Resultaten</h2>
+<p>De beginstatus van alle bovenstaande tests is Openstaand. Werk deze tabel of het <a href="test-and-evidence-register.html">HTML-test- en bewijsregister</a> pas bij nadat de test werkelijk is uitgevoerd.</p></main><section id="sourcePanel"><h2>HTML-bron</h2><p>Bewerk de HTML-bron en download het bestand. Commit de wijziging naar GitHub om deze blijvend te maken.</p><textarea id="source"></textarea><button id="preview">Voorbeeld bijwerken</button><button id="save">Bewerkte HTML downloaden</button></section><script>const p=document.getElementById('sourcePanel'),s=document.getElementById('source');function dl(t,n){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([t],{type:'text/html'}));a.href=u;a.download=n;a.click();URL.revokeObjectURL(u)}document.getElementById('edit').onclick=()=>{p.style.display=p.style.display==='block'?'none':'block';if(!s.value)s.value='<!doctype html>\\n'+document.documentElement.outerHTML};document.getElementById('download').onclick=()=>dl('<!doctype html>\\n'+document.documentElement.outerHTML,location.pathname.split('/').pop());document.getElementById('preview').onclick=()=>{let d=new DOMParser().parseFromString(s.value,'text/html');document.getElementById('document').innerHTML=d.querySelector('main')?.innerHTML||d.body.innerHTML};document.getElementById('save').onclick=()=>dl(s.value,'networklab-document-edited.html');</script></body></html>
