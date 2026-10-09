@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="nl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>.github\workflows\validate.yml - NetworkLab</title>
+<title>.github/workflows/validate.yml - NetworkLab</title>
 <style>
 body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
 header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
@@ -13,14 +13,13 @@ code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
 </head>
 <body>
 <header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
-<h1>.github\workflows\validate.yml</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
-<a href="../../../../.github/workflows/validate.yml">Open origineel bestand</a></header>
-<main>
-<pre><code>name: NetworkLab Validation
+<h1>.github/workflows/validate.yml</h1><p>Automatisch gegenereerde codeweergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../../.github/workflows/validate.yml">Open origineel bestand</a></header>
+<main><pre><code>name: NetworkLab Validation
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/vm-readiness]
   pull_request:
     branches: [main]
 
@@ -31,13 +30,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: &#39;3.x&#39;
-      - name: Compile Python modules
-        run: python -m compileall -q python
+          python-version: '3.x'
+      - name: Install test runner
+        run: python -m pip install --upgrade pytest
+      - name: Compile application, monitoring, and test modules
+        run: python -m compileall -q app python tests
+      - name: Run infrastructure unit tests
+        run: python -m pytest tests/infrastructure -q
       - name: Run monitoring runner
         run: python python/monitoring/run_monitor.py
       - name: Run report generator
-        run: printf &#39;%s&#39; &#39;[]&#39; | python python/reporting/generate_report.py
+        run: printf '%s' '[]' | python python/reporting/generate_report.py
 
   powershell-validation:
     runs-on: windows-latest
@@ -52,15 +55,17 @@ jobs:
             $parseErrors = $null
             [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$parseErrors) | Out-Null
             if ($parseErrors.Count -gt 0) {
-              $errors += &quot;[$($_.FullName)] $($parseErrors | Out-String)&quot;
+              $errors += "[$($_.FullName)] $($parseErrors | Out-String)"
             }
           }
           if ($errors.Count -gt 0) {
             $errors | ForEach-Object { Write-Error $_ }
             exit 1
           }
-          Write-Host &#39;PowerShell syntax validation passed.&#39;
-</code></pre>
-</main>
+          Write-Host 'PowerShell syntax validation passed.'
+      - name: Test incident simulation lifecycle and monitoring
+        shell: pwsh
+        run: ./tests/incidents/Test-NetworkLabIncidentSimulation.ps1
+</code></pre></main>
 </body>
 </html>
