@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="NetworkLab technische documentatie">
+<title>NetworkLab documentatie-index | NetworkLab</title>
+<style>
+:root{color-scheme:light;--bg:#f4f6fa;--paper:#fff;--ink:#172033;--muted:#596579;--line:#dce2eb;--accent:#185abd;--code:#eef2f8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{background:#101c32;color:white;padding:18px max(22px,calc((100vw - 1050px)/2));display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+header a{color:#d7e6ff}header strong{letter-spacing:.04em}.tools{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;border:1px solid #b9c7da;background:#fff;color:#172033;border-radius:8px;padding:8px 12px;cursor:pointer}button:hover{background:#eaf1fc}
+main{max-width:1050px;margin:28px auto;padding:clamp(20px,4vw,48px);background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px #14213a0c}
+h1,h2,h3,h4{line-height:1.25;scroll-margin-top:20px}h1{font-size:2.1rem;margin-top:0}h2{font-size:1.5rem;margin-top:2.2em;border-bottom:1px solid var(--line);padding-bottom:.35em}h3{font-size:1.2rem;margin-top:1.7em}
+p,li{max-width:90ch}a{color:var(--accent);text-underline-offset:3px}code,pre{font-family:Consolas,"Cascadia Code",monospace}code{background:var(--code);padding:.12em .3em;border-radius:4px;overflow-wrap:anywhere}pre{background:#111827;color:#e5edf9;padding:18px;border-radius:10px;overflow:auto;line-height:1.5}pre code{background:none;color:inherit;padding:0;white-space:pre}
+blockquote{margin:1.5em 0;padding:12px 18px;border-left:4px solid var(--accent);background:#f0f5ff}.table-wrap{overflow-x:auto;margin:1em 0}table{border-collapse:collapse;width:100%;font-size:.95rem}th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}th{background:#edf2f9}tr:nth-child(even) td{background:#fafbfd}
+footer{max-width:1050px;margin:0 auto 30px;padding:0 20px;color:var(--muted);font-size:.88rem}
+#sourcePanel{display:none;max-width:1050px;margin:0 auto 28px;padding:0 20px}#sourceEditor{width:100%;min-height:65vh;font:13px/1.5 Consolas,monospace;padding:14px;border:1px solid var(--line);border-radius:8px}
+@media(max-width:650px){header{align-items:flex-start}main{margin:12px;border-radius:10px;padding:20px}h1{font-size:1.7rem}table{font-size:.86rem}}
+@media print{body{background:white}header,.tools,#sourcePanel{display:none!important}main{max-width:none;margin:0;padding:0;border:0;box-shadow:none}a{color:inherit;text-decoration:none}pre{white-space:pre-wrap;overflow-wrap:anywhere}footer{display:none}h2,h3{break-after:avoid}}
+</style>
+</head>
+<body>
+<header><div><strong>NETWORKLAB</strong><br><a href="README.html">Documentatie-index</a></div><div class="tools"><button type="button" onclick="window.print()">Afdrukken / PDF</button><button type="button" id="editButton">HTML-bron bekijken/bewerken</button><button type="button" id="downloadButton">HTML downloaden</button></div></header>
+<main id="document"><h1>NetworkLab documentatie-index</h1>
+<p>Deze map bevat de technische handleidingen, topologie en stagebewijsdocumentatie.</p>
+<h2>Start hier</h2>
+<ol>
+<li><a href="../README.html">Projectoverzicht en startinstructies</a></li>
+<li><a href="installation.html">Installatiehandleiding</a></li>
+<li><a href="architecture.html">Architectuur en componenten</a></li>
+<li><a href="network-topology.html">Netwerktopologie (HTML/SVG)</a></li>
+<li><a href="virtual-network.html">Virtueel netwerk</a></li>
+<li><a href="configuration.html">Configuratiehandleiding</a></li>
+<li><a href="runbook.html">Operationeel runbook</a></li>
+</ol>
+<h2>Technische documentatie</h2>
+<div class="table-wrap"><table><thead><tr><th>Onderwerp</th><th>Document</th></tr></thead><tbody>
+<tr><td>Architectuur en gegevensstromen</td><td><a href="architecture.html">architecture.md</a></td></tr>
+<tr><td>Installatie en eerste start</td><td><a href="installation.html">installation.md</a></td></tr>
+<tr><td>Configuratie en veiligheidscontroles</td><td><a href="configuration.html">configuration.md</a></td></tr>
+<tr><td>VM-installatie met Ubuntu Server</td><td><a href="vm-installation-guide.html">vm-installation-guide.md</a></td></tr>
+<tr><td>Virtuele schijven en ISO-media</td><td><a href="vm-storage.html">vm-storage.md</a></td></tr>
+<tr><td>Netwerksegment en adressen</td><td><a href="virtual-network.html">virtual-network.md</a></td></tr>
+<tr><td>Monitoring en diagnostiek</td><td><a href="monitoring.html">monitoring.md</a></td></tr>
+<tr><td>Dagelijks beheer</td><td><a href="management.html">management.md</a></td></tr>
+<tr><td>Runbook</td><td><a href="runbook.html">runbook.md</a></td></tr>
+<tr><td>Probleemoplossing</td><td><a href="troubleshooting.html">troubleshooting.md</a></td></tr>
+<tr><td>Beveiliging en gegevensbeheer</td><td><a href="security-and-data-handling.html">security-and-data-handling.md</a></td></tr>
+</tbody></table></div>
+<h2>Testen en stagebewijs</h2>
+<div class="table-wrap"><table><thead><tr><th>Onderwerp</th><th>Document</th></tr></thead><tbody>
+<tr><td>Testplan en acceptatiecriteria</td><td><a href="test-plan.html">test-plan.md</a></td></tr>
+<tr><td>Interactief test- en bewijsregister</td><td><a href="test-and-evidence-register.html">test-and-evidence-register.html</a></td></tr>
+<tr><td>Stagecompetenties en bewijs</td><td><a href="stage-competency-mapping.html">stage-competency-mapping.md</a></td></tr>
+<tr><td>Bestaand bewijsregister</td><td><a href="evidence.html">evidence.md</a></td></tr>
+<tr><td>Begrippenlijst</td><td><a href="glossary.html">glossary.md</a></td></tr>
+</tbody></table></div>
+<h2>Statusconventie</h2>
+<p>Documentatie beschrijft de bedoelde werkwijze en bekende configuratie. Alleen werkelijk uitgevoerde controles mogen als geslaagd worden geregistreerd. Gebruik:</p>
+<ul>
+<li><strong>Geslaagd</strong> — de controle is uitgevoerd en voldoet aan het criterium.</li>
+<li><strong>Mislukt</strong> — de controle is uitgevoerd en voldoet niet aan het criterium.</li>
+<li><strong>Geblokkeerd</strong> — uitvoering was niet mogelijk of niet veilig.</li>
+<li><strong>Openstaand/niet gemeten</strong> — er is nog geen waarneming.</li>
+</ul>
+<p>Een geplande configuratie, diagram of aanwezig script bewijst op zichzelf niet dat de omgeving werkt.</p></main>
+<section id="sourcePanel"><h2>HTML-bron</h2><p>Bewerk de bron hieronder en kies “Voorbeeld bijwerken” om de wijziging lokaal te bekijken. Download daarna de HTML en commit het bestand naar GitHub om de wijziging blijvend te maken.</p><textarea id="sourceEditor" spellcheck="false"></textarea><div class="tools"><button type="button" id="previewButton">Voorbeeld bijwerken</button><button type="button" id="downloadEditedButton">Bewerkte HTML downloaden</button></div></section>
+<footer>NetworkLab-documentatie · Bewaar wijzigingen in de GitHub-repository om ze blijvend te maken.</footer>
+<script>
+const sourcePanel=document.getElementById('sourcePanel'),editor=document.getElementById('sourceEditor');
+document.getElementById('editButton').addEventListener('click',()=>{sourcePanel.style.display=sourcePanel.style.display==='block'?'none':'block';if(!editor.value)editor.value='<!doctype html>\n'+document.documentElement.outerHTML;sourcePanel.scrollIntoView({behavior:'smooth'});});
+function download(text,name){const a=document.createElement('a');const url=URL.createObjectURL(new Blob([text],{type:'text/html;charset=utf-8'}));a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
+document.getElementById('downloadButton').addEventListener('click',()=>download('<!doctype html>\n'+document.documentElement.outerHTML,location.pathname.split('/').pop()||'networklab-document.html'));
+document.getElementById('previewButton').addEventListener('click',()=>{try{const d=new DOMParser().parseFromString(editor.value,'text/html');if(d.querySelector('parsererror'))throw Error('HTML kon niet worden gelezen');document.getElementById('document').innerHTML=d.body.querySelector('main')?.innerHTML||d.body.innerHTML;}catch(e){alert('HTML-fout: '+e.message);}});
+document.getElementById('downloadEditedButton').addEventListener('click',()=>download(editor.value,'networklab-document-edited.html'));
+</script>
+</body></html>
