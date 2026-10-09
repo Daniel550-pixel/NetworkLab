@@ -11,6 +11,7 @@ This module demonstrates a controlled incident lifecycle for the NetworkLab stag
 | `config/simulation/incident-state.json` | Stores the current simulated incident state |
 | `config/simulation/monitoring-cursor.json` | Runtime cursor used by the feed to remember the last observed status; created automatically |
 | `tests/incidents/Invoke-NetworkLabIncidentSimulation.ps1` | Advances the incident through lifecycle actions |
+| `tests/incidents/Test-NetworkLabIncidentSimulation.ps1` | Automated integration test for lifecycle order, event logging, monitoring detection, recovery, and invalid action order |
 | `powershell/manage/Start-NetworkLabMonitoringFeed.ps1` | Polls the state file and detects a transition to `fault_injected` |
 | `logs/incident-simulation.jsonl` | Records lifecycle actions |
 | `logs/monitoring-detection.jsonl` | Records detections emitted by the monitoring feed |
@@ -34,7 +35,7 @@ Run each action from the repository root in PowerShell:
 .\tests\incidents\Invoke-NetworkLabIncidentSimulation.ps1 -Action Verify
 ```
 
-The lifecycle script validates the required state before `Detect`, `Recover`, and `Verify`. An action that is called out of sequence stops with an error.
+The lifecycle script validates the required state before every action. An action that is called out of sequence stops with an error.
 
 ## Monitoring feed
 
@@ -50,29 +51,24 @@ For a bounded test run, use a one-second interval and one iteration:
 .\powershell\manage\Start-NetworkLabMonitoringFeed.ps1 -IntervalSeconds 1 -Iterations 1
 ```
 
-The feed writes a detection event when it observes `fault_injected` after a different previous state. It stores its last observed status in `config/simulation/monitoring-cursor.json`; remove that runtime cursor only when you intentionally want to reset the feed's detection history. It is a file-based demonstration, not a live network probe. It currently does not independently detect packet loss, interface failure, or other real network conditions. It also does not emit a detection event for every possible lifecycle state transition.
+The feed writes a detection event when it observes `fault_injected` after a different previous state. It stores its last observed status in `config/simulation/monitoring-cursor.json`; reset that runtime cursor only when you intentionally want to reset the feed's detection history. It is a file-based demonstration, not a live network probe. It does not independently detect packet loss, interface failure, or other real network conditions, and it does not emit an event for every lifecycle state transition.
 
-Stop an unbounded run with **Ctrl+C**.
+With the default `-Iterations 0`, the feed continues until stopped with **Ctrl+C**. Use a positive iteration count for a bounded run.
 
-## Verification evidence
+## Automated validation
 
-Manual PowerShell verification was completed on 9 October 2026:
+The GitHub Actions workflow validates Python syntax, runs the infrastructure unit tests, executes the read-only monitoring runner and report generator, validates PowerShell syntax, and runs the incident simulation integration test. Check the [NetworkLab Validation workflow](https://github.com/Daniel550-pixel/NetworkLab/actions/workflows/validate.yml) for the result associated with the latest commit.
 
-- The four lifecycle actions completed in order.
-- The stored state matched each expected intermediate state and returned to `normal` after `Verify`.
-- The expected lifecycle event types were found in `incident-simulation.jsonl`.
-- The monitoring feed observed `fault_injected` and wrote a `DETECTED` JSONL event with `simulation: true`, scenario `connectivity-loss`, and target `simulated-network-node`.
-- The checks used backups and restored the original state and log files after the tests.
+The incident integration test temporarily backs up the state, cursor, and related logs, runs the lifecycle and monitoring flow, asserts expected events and final state, and restores the original files in a `finally` block. This protects pre-existing local test data if the test exits normally or throws an error.
 
-These are manual test results from the local environment, not evidence of an automated CI test suite.
+Manual verification was also performed locally on 9 October 2026. That manual run is separate from the automated CI result; neither simulation proves that real network connectivity monitoring or recovery is implemented.
 
-## Limitations and next improvements
+## Remaining test coverage
 
-- Add automated tests for invalid action order and malformed/missing state files.
-- Add dedicated tests for the monitoring feed, including normal state, incident transition, and repeated polling.
+- Add tests for malformed and missing state files.
+- Add dedicated monitoring tests for missing state, malformed cursor, normal state, and repeated polling.
 - Consider whether monitoring should detect additional state transitions and avoid duplicate events.
 - Keep simulation logs separate from real infrastructure telemetry.
-- Do not use this simulation as proof that real connectivity monitoring or recovery has been implemented.
 
 ## Relevance to the stage assignment
 
