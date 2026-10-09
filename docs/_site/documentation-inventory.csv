@@ -87,7 +87,7 @@
 "tests\network\Test-NetworkConfiguration.ps1",".ps1","HTML-codeweergave gemaakt; origineel behouden","pages/tests_network_Test-NetworkConfiguration.ps1.html"
 "web\app.css",".css","HTML-codeweergave gemaakt; origineel behouden","pages/web_app.css.html"
 "web\app.js",".js","HTML-codeweergave gemaakt; origineel behouden","pages/web_app.js.html"
-"web\index.html",".html","Bestaande HTML - rechtstreeks gelinkt","../web/index.html"
+"web\index.html",".html","Bestaande HTML - rechtstreeks gelinkt","../../web/index.html"
 "docs\\incident-simulation.md",".md","Documentatiebron toegevoegd; handmatig gedocumenteerd",""
 "docs\\network-topology.html",".html","Handmatige HTML-netwerktekening met inline SVG","../network-topology.html"
 "docs\\b1-k2-w1-w2-evidence.md",".md","Bewijsmatrix toegevoegd; controleer officiële beoordelingsrubric",""
