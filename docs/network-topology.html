@@ -42,7 +42,7 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--in
 <path class="wire" d="M520 248 V280"/>
 <rect class="network" x="65" y="280" width="910" height="72" rx="14"/>
 <text class="label" x="520" y="309" text-anchor="middle">VirtualBox-netwerk: NetworkLab-Lab</text>
-<text class="sub" x="520" y="332" text-anchor="middle">Subnet: 192.168.77.0/24 · DHCP-pool vastgelegd: 192.168.77.100–192.168.77.200</text>
+<text class="sub" x="520" y="332" text-anchor="middle">Subnet: 192.168.77.0/24 · DHCP-server (config): 192.168.77.2 · pool: 192.168.77.100–192.168.77.200</text>
 <path class="wire" d="M520 352 V380 H190 V405 M520 380 V405 M520 380 H850 V405"/>
 <rect class="node node-green" x="75" y="405" width="230" height="110" rx="12"/>
 <text class="label" x="190" y="435" text-anchor="middle">VM01 · Management</text><text class="sub" x="190" y="458" text-anchor="middle">Beheerrol</text><text class="sub" x="190" y="481" text-anchor="middle">Gast-IP: verifiëren</text>
@@ -61,6 +61,7 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--in
 <tr><td>Labnetwerk</td><td><code>NetworkLab-Lab</code></td><td>Naam vergelijken met VirtualBox Host Network Manager.</td></tr>
 <tr><td>IPv4-subnet</td><td><code>192.168.77.0/24</code></td><td>Subnetmasker moet <code>255.255.255.0</code> zijn.</td></tr>
 <tr><td>Host-only hostadres</td><td><code>192.168.77.1</code></td><td>Controleren met <code>ipconfig</code> op Windows.</td></tr>
+<tr><td>DHCP-serveradres (configuratie)</td><td><code>192.168.77.2</code></td><td>Waarde uit <code>config/lab-config.json</code>; controleer of de VirtualBox-DHCP-server dit adres werkelijk gebruikt.</td></tr>
 <tr><td>DHCP-pool</td><td><code>192.168.77.100–192.168.77.200</code></td><td>Controleren of DHCP is ingeschakeld en de pool overeenkomt.</td></tr>
 <tr><td>Gastadressen</td><td>Nog te verifiëren</td><td>Per VM vastleggen met <code>ipconfig</code> (Windows) of <code>ip addr</code> (Linux).</td></tr>
 <tr><td>Default gateway / DNS</td><td>Niet ingevuld in deze tekening</td><td>Alleen opnemen nadat de werkelijke configuratie is gecontroleerd.</td></tr>
