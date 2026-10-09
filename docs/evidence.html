@@ -1,0 +1,54 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Stage Evidence | NetworkLab</title><style>:root{color-scheme:light;--bg:#f4f6fa;--paper:#fff;--ink:#172033;--line:#dce2eb;--accent:#185abd;--code:#eef2f8}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,sans-serif}header{background:#101c32;color:#fff;padding:18px max(22px,calc((100vw - 1050px)/2));display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}header a{color:#d7e6ff}button{padding:8px 12px;border-radius:8px;border:1px solid #b9c7da;cursor:pointer}main{max-width:1050px;margin:28px auto;padding:clamp(20px,4vw,48px);background:#fff;border:1px solid var(--line);border-radius:14px}h1{font-size:2.1rem}h2{margin-top:2em;border-bottom:1px solid var(--line)}a{color:var(--accent)}code,pre{font-family:Consolas,monospace}code{background:var(--code);padding:.12em .3em;border-radius:4px}pre{background:#111827;color:#e5edf9;padding:18px;border-radius:10px;overflow:auto}pre code{background:none;color:inherit}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{border:1px solid var(--line);padding:9px;text-align:left;vertical-align:top}th{background:#edf2f9}#sourcePanel{display:none;max-width:1050px;margin:0 auto 25px}textarea{width:100%;min-height:65vh;font:13px Consolas,monospace}@media print{header,#sourcePanel{display:none}main{margin:0;border:0}}@media(max-width:650px){main{margin:10px;padding:20px}}</style></head><body><header><div><strong>NETWORKLAB</strong><br><a href="README.html">Documentatie-index</a></div><div><button onclick="print()">Afdrukken / PDF</button> <button id="edit">HTML-bron bewerken</button> <button id="download">HTML downloaden</button></div></header><main id="document"><h1>Stage Evidence</h1>
+<p>This document maps the implementation to the two required stage competencies.</p>
+<h2>Competency 1</h2>
+<p><strong>Installeert en configureert netwerk- en infrastructuuronderdelen</strong></p>
+<h3>Evidence available</h3>
+<ul>
+<li><code>powershell/install/Initialize-NetworkLab.ps1</code> — validates the lab execution environment without changing the host.</li>
+<li><code>powershell/configure/Get-NetworkConfiguration.ps1</code> — captures adapter, IPv4, gateway and DNS state.</li>
+<li><code>powershell/configure/Set-NetworkLabBaseline.ps1</code> — guarded configuration workflow requiring explicit lab scope and interface selection.</li>
+<li><code>powershell/diagnostics/Test-NetworkLabConfiguration.ps1</code> — validates adapter, IPv4 and gateway state.</li>
+<li><code>tests/network/Test-NetworkConfiguration.ps1</code> — executable network-state validation.</li>
+</ul>
+<h3>Required recorded evidence</h3>
+<p>For the actual stage lab, record the topology, interface used, intended configuration, command executed, expected state, observed state and validation result.</p>
+<h2>Competency 2</h2>
+<p><strong>Beheert en monitort netwerk- en infrastructuuronderdelen</strong></p>
+<h3>Evidence available</h3>
+<ul>
+<li><code>powershell/manage/Get-NetworkLabServices.ps1</code> — service inspection.</li>
+<li><code>powershell/manage/Get-NetworkLabProcesses.ps1</code> — process/resource inspection.</li>
+<li><code>powershell/manage/Get-NetworkLabHealth.ps1</code> — consolidated infrastructure health check.</li>
+<li><code>powershell/diagnostics/Invoke-NetworkLabDiagnostics.ps1</code> — consolidated diagnostics.</li>
+<li><code>python/monitoring/run_monitor.py</code> — configuration-driven monitoring.</li>
+<li><code>python/monitoring/system_monitor.py</code> — system-state collection.</li>
+<li><code>python/diagnostics/network_diagnostics.py</code> — TCP diagnostics.</li>
+<li><code>python/reporting/generate_report.py</code> — monitoring result reporting.</li>
+<li><code>python/reporting/write_report.py</code> — timestamped evidence report output.</li>
+<li><code>tests/connectivity/Test-Connectivity.ps1</code> — connectivity validation.</li>
+<li><code>tests/infrastructure/Test-Infrastructure.ps1</code> — infrastructure-service validation.</li>
+</ul>
+<h2>Network topology diagram</h2>
+<ul>
+<li><a href="network-topology.html"><code>docs/network-topology.html</code></a> — HTML/SVG topology diagram showing the Windows host, local web application, VirtualBox host-only adapter, DHCP server and three role-based VMs.</li>
+<li>The diagram records configured addressing (<code>192.168.77.0/24</code>, host <code>192.168.77.1</code>, DHCP server <code>192.168.77.2</code>, pool <code>192.168.77.100–192.168.77.200</code>).</li>
+<li>VM IP addresses and end-to-end connectivity are explicitly marked as pending until measured. The diagram is a documentation artefact, not proof that the guest operating systems are installed or reachable.</li>
+</ul>
+<h2>VM installation and connectivity evidence</h2>
+<p>Follow <a href="vm-installation-guide.html"><code>vm-installation-guide.md</code></a> to install Ubuntu Server on the three VirtualBox guests and record observed DHCP addresses and connectivity results. The guide's registration table starts as <strong>Openstaand</strong>; update it only after performing the tests and saving the actual output/screenshots. Do not treat the planned topology as proof of working connectivity.</p>
+<h2>Evidence standard</h2>
+<p>Each recorded evidence item should identify:</p>
+<ul>
+<li>objective</li>
+<li>environment</li>
+<li>topology/component</li>
+<li>procedure</li>
+<li>command or script used</li>
+<li>expected result</li>
+<li>actual result</li>
+<li>conclusion</li>
+<li>timestamp</li>
+<li>supporting log or screenshot when appropriate</li>
+</ul>
+<h2>Validation</h2>
+<p>GitHub Actions validates Python compilation/execution and PowerShell syntax on pushes and pull requests to <code>main</code>.</p></main><section id="sourcePanel"><h2>HTML-bron</h2><p>Bewerk de HTML-bron en download het bestand. Commit de wijziging naar GitHub om deze blijvend te maken.</p><textarea id="source"></textarea><button id="preview">Voorbeeld bijwerken</button><button id="save">Bewerkte HTML downloaden</button></section><script>const panel=document.getElementById('sourcePanel'),src=document.getElementById('source');function dl(t,n){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([t],{type:'text/html'}));a.href=u;a.download=n;a.click();URL.revokeObjectURL(u)}document.getElementById('edit').onclick=()=>{panel.style.display=panel.style.display==='block'?'none':'block';if(!src.value)src.value='<!doctype html>\\n'+document.documentElement.outerHTML};document.getElementById('download').onclick=()=>dl('<!doctype html>\\n'+document.documentElement.outerHTML,location.pathname.split('/').pop());document.getElementById('preview').onclick=()=>{let d=new DOMParser().parseFromString(src.value,'text/html');document.getElementById('document').innerHTML=d.querySelector('main')?.innerHTML||d.body.innerHTML};document.getElementById('save').onclick=()=>dl(src.value,'networklab-document-edited.html');</script></body></html>
