@@ -82,25 +82,25 @@ Dit zijn gedocumenteerde doelwaarden. Controleer ze tegen de actuele VirtualBox-
 
 ## Documentatie
 
-De volledige documentatie-index staat in [docs/README.md](docs/README.md).
+De volledige documentatie-index staat in [docs/README.html](docs/README.html).
 
 Belangrijkste documenten:
-- [Architectuur en componenten](docs/architecture.md)
-- [Installatiehandleiding](docs/installation.md)
-- [Configuratiehandleiding](docs/configuration.md)
+- [Architectuur en componenten](docs/architecture.html)
+- [Installatiehandleiding](docs/installation.html)
+- [Configuratiehandleiding](docs/configuration.html)
 - [HTML/SVG-netwerktopologie](docs/network-topology.html)
-- [Virtueel netwerk](docs/virtual-network.md)
-- [VM-installatiehandleiding](docs/vm-installation-guide.md)
-- [VM-opslag en ISO-media](docs/vm-storage.md)
-- [Runbook](docs/runbook.md)
-- [Monitoring en diagnostiek](docs/monitoring.md)
-- [Troubleshooting](docs/troubleshooting.md)
-- [Beveiliging en gegevensbeheer](docs/security-and-data-handling.md)
-- [Testplan](docs/test-plan.md)
+- [Virtueel netwerk](docs/virtual-network.html)
+- [VM-installatiehandleiding](docs/vm-installation-guide.html)
+- [VM-opslag en ISO-media](docs/vm-storage.html)
+- [Runbook](docs/runbook.html)
+- [Monitoring en diagnostiek](docs/monitoring.html)
+- [Troubleshooting](docs/troubleshooting.html)
+- [Beveiliging en gegevensbeheer](docs/security-and-data-handling.html)
+- [Testplan](docs/test-plan.html)
 - [HTML-test- en bewijsregister](docs/test-and-evidence-register.html)
-- [Koppeling stagecompetenties aan bewijs](docs/stage-competency-mapping.md)
-- [Bestaand stagebewijsregister](docs/evidence.md)
-- [Begrippenlijst](docs/glossary.md)
+- [Koppeling stagecompetenties aan bewijs](docs/stage-competency-mapping.html)
+- [Bestaand stagebewijsregister](docs/evidence.html)
+- [Begrippenlijst](docs/glossary.html)
 
 ## Uitvoeringsvolgorde
 
@@ -116,5 +116,5 @@ Belangrijkste documenten:
 
 ## Teststatus en beperkingen
 
-De handleidingen en registratieformulieren zijn documentatie en uitvoeringshulpmiddelen. Ze bewijzen niet dat een gast-OS is geïnstalleerd, DHCP werkt of VM's onderling bereikbaar zijn. De tests in [docs/test-plan.md](docs/test-plan.md) beginnen op **Openstaand** en mogen pas na daadwerkelijke uitvoering worden bijgewerkt.
+De handleidingen en registratieformulieren zijn documentatie en uitvoeringshulpmiddelen. Ze bewijzen niet dat een gast-OS is geïnstalleerd, DHCP werkt of VM's onderling bereikbaar zijn. De tests in [docs/test-plan.html](docs/test-plan.html) beginnen op **Openstaand** en mogen pas na daadwerkelijke uitvoering worden bijgewerkt.
 
