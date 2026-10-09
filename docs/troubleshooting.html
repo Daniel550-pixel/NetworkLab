@@ -1,0 +1,53 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Troubleshooting-playbook | NetworkLab</title><style>*{box-sizing:border-box}body{margin:0;background:#f4f6fa;color:#172033;font:16px/1.65 system-ui,sans-serif}header{background:#101c32;color:white;padding:18px max(22px,calc((100vw - 1050px)/2));display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}header a{color:#d7e6ff}button{padding:8px 12px;border-radius:8px;border:1px solid #b9c7da;cursor:pointer}main{max-width:1050px;margin:28px auto;padding:clamp(20px,4vw,48px);background:white;border:1px solid #dce2eb;border-radius:14px}h1{font-size:2.1rem}h2{margin-top:2em;border-bottom:1px solid #dce2eb}a{color:#185abd}code,pre{font-family:Consolas,monospace}code{background:#eef2f8;padding:.12em .3em;border-radius:4px}pre{background:#111827;color:#e5edf9;padding:18px;border-radius:10px;overflow:auto}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{border:1px solid #dce2eb;padding:9px;text-align:left;vertical-align:top}th{background:#edf2f9}#sourcePanel{display:none;max-width:1050px;margin:0 auto 25px}textarea{width:100%;min-height:65vh;font:13px Consolas,monospace}@media print{header,#sourcePanel{display:none}main{margin:0;border:0}}@media(max-width:650px){main{margin:10px;padding:20px}}</style></head><body><header><div><strong>NETWORKLAB</strong><br><a href="README.html">Documentatie-index</a></div><div><button onclick="print()">Afdrukken / PDF</button> <button id="edit">HTML-bron bewerken</button> <button id="download">HTML downloaden</button></div></header><main id="document"><h1>Troubleshooting-playbook</h1>
+<h2>Algemene werkwijze</h2>
+<ol>
+<li>Noteer wat je verwachtte en wat werkelijk gebeurde.</li>
+<li>Bewaar de volledige foutmelding, tijdstip en gebruikte opdracht.</li>
+<li>Verander maar één variabele tegelijk.</li>
+<li>Begin met read-only controles.</li>
+<li>Herhaal de oorspronkelijke test na herstel.</li>
+<li>Registreer ook mislukte of geblokkeerde pogingen.</li>
+</ol>
+<h2>Webapp start niet</h2>
+<p>Controleer repositorylocatie, launcher en Python:</p>
+<p>Get-Location Test-Path .\Run-NetworkLab.ps1 python --version Test-Path .\app\server.py</p>
+<p>Als de launcher bestaat, voer die uit vanuit de repositoryroot. Lees de volledige terminaluitvoer. Verzin geen alternatieve entrypoint als de huidige README die niet ondersteunt.</p>
+<h2>Poort 8501 is bezet</h2>
+<p>Bekijk eerst welk proces de poort gebruikt:</p>
+<p>Get-NetTCPConnection -LocalPort 8501 -State Listen -ErrorAction SilentlyContinue</p>
+<p>Koppel het proces-ID aan een proces:</p>
+<p>Get-Process -Id &lt;PID&gt;</p>
+<p>Vervang &lt;PID&gt; alleen door het werkelijk waargenomen proces-ID. Beëindig het proces niet voordat je weet welke toepassing het is. Als de repository een alternatieve poort ondersteunt, gebruik de gedocumenteerde optie.</p>
+<h2>Webapp bereikbaar, maar gegevens ontbreken</h2>
+<ul>
+<li>Controleer de terminaluitvoer van de server.</li>
+<li>Controleer of de relevante API-route bestaat in de huidige code.</li>
+<li>Controleer of de gebruikte VirtualBox-installatie gevonden wordt.</li>
+<li>Vergelijk de UI met de read-only uitvoer van de onderliggende inspectie.</li>
+<li>Noteer onderscheid tussen “geen gegevens”, “controle mislukt” en “component niet aanwezig”.</li>
+</ul>
+<h2>VBoxManage niet gevonden</h2>
+<p>$VBoxManage = 'C:\Program Files\Oracle\VirtualBox\VBoxManage.exe' Test-Path $VBoxManage if (Test-Path $VBoxManage) { &amp; $VBoxManage --version }</p>
+<p>Als het pad niet bestaat, zoek via de geïnstalleerde VirtualBox-app of de Windows-installatiegegevens. Wijzig PATH niet blind en gebruik geen onbekend uitvoerbaar bestand.</p>
+<h2>Host-only adapter of DHCP ontbreekt</h2>
+<p>&amp; $VBoxManage list hostonlyifs &amp; $VBoxManage list dhcpservers &amp; $VBoxManage list vms</p>
+<p>Controleer naam, IPv4-adres, subnet, DHCP-pool en VM-adapter. Verwijder geen adapters om een duplicaat op te lossen voordat je hebt vastgesteld welke adapter bij NetworkLab hoort.</p>
+<h2>VM krijgt geen DHCP-adres</h2>
+<p>In de gastconsole:</p>
+<p>ip -brief address ip route</p>
+<p>Controleer vervolgens de VirtualBox-adaptermodus, de kabelstatus en DHCP-configuratie. Noteer de fout; vul niet zelf een willekeurig IP-adres in. Voer geen statische configuratie uit zonder dat dit in de labopdracht is afgesproken.</p>
+<h2>Ping mislukt</h2>
+<p>Een mislukte ping bewijst niet automatisch dat de VM uitstaat. Controleer:</p>
+<ul>
+<li>of de VM actief is en een IP-adres heeft;</li>
+<li>of bron en doel in het bedoelde subnet zitten;</li>
+<li>of de route correct is;</li>
+<li>of ICMP door de gastfirewall wordt geblokkeerd;</li>
+<li>of een toepasselijke TCP-service een alternatieve test kan bieden.</li>
+</ul>
+<p>Schakel een firewall niet standaard uit.</p>
+<h2>Git synchronisatieprobleem</h2>
+<p>git status --short --branch git remote -v</p>
+<p>Bewaar lokale wijzigingen voordat je opnieuw synchroniseert. Gebruik geen reset --hard of force push als standaardoplossing.</p>
+<h2>Wanneer escaleren</h2>
+<p>Stop en documenteer de situatie als de scope onduidelijk is, een actie data kan verwijderen, een fysieke interface geraakt kan worden, of de fout alleen te reproduceren is door beveiliging uit te schakelen.</p></main><section id="sourcePanel"><h2>HTML-bron</h2><p>Bewerk de HTML-bron en download het bestand. Commit de wijziging naar GitHub om deze blijvend te maken.</p><textarea id="source"></textarea><button id="preview">Voorbeeld bijwerken</button><button id="save">Bewerkte HTML downloaden</button></section><script>const p=document.getElementById('sourcePanel'),s=document.getElementById('source');function dl(t,n){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([t],{type:'text/html'}));a.href=u;a.download=n;a.click();URL.revokeObjectURL(u)}document.getElementById('edit').onclick=()=>{p.style.display=p.style.display==='block'?'none':'block';if(!s.value)s.value='<!doctype html>\\n'+document.documentElement.outerHTML};document.getElementById('download').onclick=()=>dl('<!doctype html>\\n'+document.documentElement.outerHTML,location.pathname.split('/').pop());document.getElementById('preview').onclick=()=>{let d=new DOMParser().parseFromString(s.value,'text/html');document.getElementById('document').innerHTML=d.querySelector('main')?.innerHTML||d.body.innerHTML};document.getElementById('save').onclick=()=>dl(s.value,'networklab-document-edited.html');</script></body></html>
