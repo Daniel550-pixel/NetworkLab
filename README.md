@@ -71,9 +71,9 @@ Network-changing operations remain disabled by default in `config/lab-config.jso
 
 No production-network assumptions are encoded in the repository.
 
-## Network Topology Documentation
+## Network Topology and VM Installation Documentation
 
-The documented host-only topology, IPv4 addressing plan, component roles and pending connectivity tests are available in [`docs/network-topology.html`](docs/network-topology.html). The page uses inline HTML/CSS/SVG and does not require an external library or CDN. Addresses for the guest VMs remain marked as pending until they are read from the running guests and verified by connectivity tests.
+The documented host-only topology, IPv4 addressing plan, component roles and pending connectivity tests are available in [`docs/network-topology.html`](docs/network-topology.html). The page uses inline HTML/CSS/SVG and does not require an external library or CDN. Addresses for the guest VMs remain marked as pending until they are read from the running guests and verified by connectivity tests. The step-by-step Ubuntu Server installation, DHCP validation, host/guest and guest/guest connectivity checks, and evidence checklist are in [`docs/vm-installation-guide.md`](docs/vm-installation-guide.md).
 
 ## Execution Order
 
