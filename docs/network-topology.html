@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NetworkLab — Netwerktopologie</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#111c2f;--line:#334865;--text:#e8eef8;--muted:#9fb0c9;--blue:#58a6ff;--green:#55d6a5;--amber:#f4bd60}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#09101d,#101c30);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1200px;margin:auto;padding:32px 20px 56px}h1{font-size:clamp(2rem,4vw,3rem);margin:0 0 8px}h2{margin-top:32px}p,.muted{color:var(--muted)}.tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:.8rem;color:var(--green)}
+.diagram{border:1px solid var(--line);background:#0d1728;border-radius:18px;padding:12px;overflow-x:auto}.diagram svg{display:block;width:100%;min-width:700px;height:auto}.legend{display:flex;gap:16px;flex-wrap:wrap;margin:14px 4px;color:var(--muted);font-size:.9rem}.key{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;background:var(--blue)}.key.green{background:var(--green)}.key.amber{background:var(--amber)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}.card h3{margin:0 0 8px}.card p{margin:5px 0}.pill{font: .85rem ui-monospace,SFMono-Regular,Consolas,monospace;color:#dce8ff;background:#1b2b43;padding:3px 7px;border-radius:6px;display:inline-block}.note{border-left:3px solid var(--amber);padding:10px 14px;background:#191f2b;color:var(--muted);border-radius:0 8px 8px 0}table{width:100%;border-collapse:collapse;margin-top:12px;background:var(--panel);border-radius:12px;overflow:hidden}th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line)}th{color:#cfe0fa}code{color:#d9e7ff}footer{margin-top:32px;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+<span class="tag">PROJECTDOCUMENTATIE · NETWORKLAB</span>
+<h1>Netwerktopologie</h1>
+<p>Documentatie van de geïsoleerde VirtualBox-testomgeving. De tekening beschrijft de beoogde verbindingen; IP-adressen van de gastmachines moeten na installatie in de praktijk worden vastgesteld.</p>
+<section class="diagram" aria-label="HTML SVG-netwerktekening">
+<svg viewBox="0 0 1000 640" role="img" aria-labelledby="svgtitle svgdesc">
+<title id="svgtitle">NetworkLab host-only netwerktopologie</title><desc id="svgdesc">Windows-host met lokale webapplicatie en VirtualBox host-only adapter verbonden met een host-only netwerk. DHCP en drie Ubuntu virtuele machines zijn op dit netwerk aangesloten.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#58a6ff"/></marker><marker id="arrowg" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#55d6a5"/></marker></defs>
+<rect x="20" y="20" width="960" height="600" rx="22" fill="#0a1424" stroke="#334865" stroke-dasharray="7 7"/>
+<text x="48" y="55" fill="#9fb0c9" font-size="15" font-weight="600">WINDOWS-HOST · FYSIEKE HOST</text>
+<rect x="55" y="82" width="360" height="130" rx="14" fill="#14243a" stroke="#58a6ff" stroke-width="2"/>
+<text x="78" y="115" fill="#e8eef8" font-size="20" font-weight="700">Windows 11</text>
+<text x="78" y="145" fill="#b7c8e0" font-size="15">NetworkLab webapp</text><text x="78" y="169" fill="#b7c8e0" font-size="14">127.0.0.1:8501 (lokaal)</text>
+<rect x="455" y="82" width="300" height="130" rx="14" fill="#14243a" stroke="#55d6a5" stroke-width="2"/>
+<text x="478" y="115" fill="#e8eef8" font-size="20" font-weight="700">VirtualBox</text><text x="478" y="145" fill="#b7c8e0" font-size="15">Host-only Adapter #4</text><text x="478" y="174" fill="#55d6a5" font-size="17" font-weight="700">192.168.77.1/24</text>
+<path d="M415 147 H455" stroke="#58a6ff" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M605 212 V260" stroke="#58a6ff" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="275" y="260" width="450" height="100" rx="16" fill="#122d31" stroke="#55d6a5" stroke-width="2"/>
+<text x="500" y="293" text-anchor="middle" fill="#e8eef8" font-size="21" font-weight="700">NetworkLab-Lab</text>
+<text x="500" y="321" text-anchor="middle" fill="#55d6a5" font-size="18">192.168.77.0/24 · Host-only</text>
+<text x="500" y="343" text-anchor="middle" fill="#b7c8e0" font-size="13">Geïsoleerd labnetwerk</text>
+<rect x="55" y="280" width="175" height="64" rx="10" fill="#302719" stroke="#f4bd60" stroke-width="1.5"/>
+<text x="142" y="305" text-anchor="middle" fill="#f4bd60" font-size="15" font-weight="700">VirtualBox DHCP</text><text x="142" y="327" text-anchor="middle" fill="#e8eef8" font-size="14">192.168.77.2</text>
+<path d="M230 312 H275" stroke="#f4bd60" stroke-width="2" stroke-dasharray="5 4"/>
+<path d="M500 360 V393 H165 V423 M500 393 V423 M500 393 H835 V423" fill="none" stroke="#58a6ff" stroke-width="3"/>
+<path d="M165 410 V423 M500 410 V423 M835 410 V423" stroke="#58a6ff" stroke-width="3" marker-end="url(#arrow)"/>
+<g><rect x="45" y="423" width="240" height="142" rx="14" fill="#14243a" stroke="#58a6ff" stroke-width="2"/><text x="165" y="456" text-anchor="middle" fill="#e8eef8" font-size="17" font-weight="700">VM01-MGMT</text><text x="165" y="483" text-anchor="middle" fill="#b7c8e0" font-size="14">Beheer</text><text x="165" y="510" text-anchor="middle" fill="#55d6a5" font-size="15">Ubuntu Server*</text><text x="165" y="540" text-anchor="middle" fill="#9fb0c9" font-size="13">IP: nog vast te stellen</text></g>
+<g><rect x="380" y="423" width="240" height="142" rx="14" fill="#14243a" stroke="#58a6ff" stroke-width="2"/><text x="500" y="456" text-anchor="middle" fill="#e8eef8" font-size="17" font-weight="700">VM02-INFRA</text><text x="500" y="483" text-anchor="middle" fill="#b7c8e0" font-size="14">Infrastructuurtests</text><text x="500" y="510" text-anchor="middle" fill="#55d6a5" font-size="15">Ubuntu Server*</text><text x="500" y="540" text-anchor="middle" fill="#9fb0c9" font-size="13">IP: nog vast te stellen</text></g>
+<g><rect x="715" y="423" width="240" height="142" rx="14" fill="#14243a" stroke="#58a6ff" stroke-width="2"/><text x="835" y="456" text-anchor="middle" fill="#e8eef8" font-size="17" font-weight="700">VM03-CLIENT</text><text x="835" y="483" text-anchor="middle" fill="#b7c8e0" font-size="14">Clienttests</text><text x="835" y="510" text-anchor="middle" fill="#55d6a5" font-size="15">Ubuntu Server*</text><text x="835" y="540" text-anchor="middle" fill="#9fb0c9" font-size="13">IP: nog vast te stellen</text></g>
+<text x="500" y="595" text-anchor="middle" fill="#9fb0c9" font-size="13">* Besturingssysteeminstallatie en netwerkbereikbaarheid moeten nog worden gevalideerd.</text>
+</svg>
+</section>
+<div class="legend"><span><i class="key"></i>Verbinding / netwerkpad</span><span><i class="key green"></i>Host-only lab</span><span><i class="key amber"></i>DHCP-service</span></div>
+<h2>1. Adresseringsplan</h2>
+<table><thead><tr><th>Component</th><th>Adres / bereik</th><th>Status</th></tr></thead><tbody>
+<tr><td>Subnet</td><td><code>192.168.77.0/24</code></td><td>Geconfigureerd</td></tr>
+<tr><td>Windows-hostadapter</td><td><code>192.168.77.1</code></td><td>Gecontroleerd</td></tr>
+<tr><td>VirtualBox DHCP-server</td><td><code>192.168.77.2</code></td><td>Ingesteld</td></tr>
+<tr><td>DHCP-pool</td><td><code>192.168.77.100–192.168.77.200</code></td><td>Ingesteld; lease-toekenning nog testen</td></tr>
+<tr><td>VM01, VM02, VM03</td><td>DHCP-adres binnen de pool verwacht</td><td>Na OS-installatie vaststellen</td></tr>
+</tbody></table>
+<h2>2. Verkeersstromen en controles</h2>
+<div class="grid">
+<div class="card"><h3>Host → VM</h3><p>Test de bereikbaarheid van elk gast-IP-adres vanaf Windows, bijvoorbeeld met <code>ping</code>. ICMP kan door de gastfirewall worden geblokkeerd; interpreteer dat resultaat samen met een aanvullende servicetest.</p></div>
+<div class="card"><h3>VM → VM</h3><p>Test communicatie tussen de drie VM's nadat IP-adressen zijn vastgesteld. Leg bron, bestemming, opdracht en uitvoer vast.</p></div>
+<div class="card"><h3>DHCP</h3><p>Controleer in Ubuntu met <code>ip addr</code> en <code>ip route</code> welk adres en welke route daadwerkelijk zijn toegekend.</p></div>
+<div class="card"><h3>Monitoring</h3><p>Bewaar de uitvoer en tijdstempel. De softwarematige incidentensimulatie is geen bewijs van echte VM-connectiviteit.</p></div>
+</div>
+<h2>3. Veilige scope</h2>
+<p class="note">Deze topologie is bedoeld voor een geïsoleerde oefenomgeving. De tekening beschrijft de configuratie zoals die is voorbereid; niet alle verbindingen zijn al praktijktest-bevestigd. Er wordt geen fysieke netwerkbridge verondersteld en de incidentensimulatie verandert alleen de gesimuleerde projectstatus.</p>
+<h2>4. Testregistratie</h2>
+<table><thead><tr><th>Test</th><th>Verwacht</th><th>Resultaat</th></tr></thead><tbody>
+<tr><td>DHCP-leases op drie VM's</td><td>Uniek adres per VM binnen pool</td><td>Openstaand</td></tr>
+<tr><td>Windows-host → elke VM</td><td>Bereikbaarheid aantoonbaar</td><td>Openstaand</td></tr>
+<tr><td>VM01 ↔ VM02</td><td>Verbinding aantoonbaar</td><td>Openstaand</td></tr>
+<tr><td>VM02 ↔ VM03</td><td>Verbinding aantoonbaar</td><td>Openstaand</td></tr>
+<tr><td>Incidentensimulatie</td><td>Detectie, herstel, verificatie, terug naar normal</td><td>Uitgevoerd in simulatie</td></tr>
+</tbody></table>
+<footer>NetworkLab · Projectdocumentatie voor installatie/configuratie en beheer/monitoring · Werkdocument; werkelijke IP-adressen en testresultaten invullen na validatie.</footer>
+</main>
+</body>
+</html>
