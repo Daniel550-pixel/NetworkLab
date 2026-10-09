@@ -42,3 +42,6 @@ jobs:
             exit 1
           }
           Write-Host 'PowerShell syntax validation passed.'
+      - name: Test incident simulation lifecycle and monitoring
+        shell: pwsh
+        run: ./tests/incidents/Test-NetworkLabIncidentSimulation.ps1
