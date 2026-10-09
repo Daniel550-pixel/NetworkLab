@@ -1,0 +1,85 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>VM-installatiehandleiding — NetworkLab | NetworkLab</title><style>*{box-sizing:border-box}body{margin:0;background:#f4f6fa;color:#172033;font:16px/1.65 system-ui,sans-serif}header{background:#101c32;color:white;padding:18px max(22px,calc((100vw - 1050px)/2));display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}header a{color:#d7e6ff}button{padding:8px 12px;border-radius:8px;border:1px solid #b9c7da;cursor:pointer}main{max-width:1050px;margin:28px auto;padding:clamp(20px,4vw,48px);background:white;border:1px solid #dce2eb;border-radius:14px}h1{font-size:2.1rem}h2{margin-top:2em;border-bottom:1px solid #dce2eb}a{color:#185abd}code,pre{font-family:Consolas,monospace}code{background:#eef2f8;padding:.12em .3em;border-radius:4px}pre{background:#111827;color:#e5edf9;padding:18px;border-radius:10px;overflow:auto}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{border:1px solid #dce2eb;padding:9px;text-align:left;vertical-align:top}th{background:#edf2f9}#sourcePanel{display:none;max-width:1050px;margin:0 auto 25px}textarea{width:100%;min-height:65vh;font:13px Consolas,monospace}@media print{header,#sourcePanel{display:none}main{margin:0;border:0}}@media(max-width:650px){main{margin:10px;padding:20px}}</style></head><body><header><div><strong>NETWORKLAB</strong><br><a href="README.html">Documentatie-index</a></div><div><button onclick="print()">Afdrukken / PDF</button> <button id="edit">HTML-bron bewerken</button> <button id="download">HTML downloaden</button></div></header><main id="document"><h1>VM-installatiehandleiding — NetworkLab</h1>
+<h2>Doel</h2>
+<p>Deze handleiding beschrijft hoe de drie NetworkLab-gastmachines met Ubuntu Server worden geïnstalleerd en daarna gecontroleerd. Voer de stappen uit op de Windows-host met VirtualBox 7.2.6.</p>
+<p>&gt; <strong>Status:</strong> dit is een uitvoeringshandleiding. Markeer een stap pas als afgerond nadat je het resultaat zelf hebt waargenomen en bewijs hebt opgeslagen.</p>
+<h2>1. Voorcontrole op Windows</h2>
+<p>Open PowerShell en voer uit:</p>
+<pre><code>$VBoxManage = &quot;C:\Program Files\Oracle\VirtualBox\VBoxManage.exe&quot;
+if (-not (Test-Path $VBoxManage)) { throw &quot;VBoxManage.exe niet gevonden: $VBoxManage&quot; }
+
+&amp; $VBoxManage list vms
+&amp; $VBoxManage list hostonlyifs
+&amp; $VBoxManage list dhcpservers</code></pre>
+<p>Controleer dat deze VM's bestaan:</p>
+<ul>
+<li><code>NetworkLab-VM01-MGMT</code></li>
+<li><code>NetworkLab-VM02-INFRA</code></li>
+<li><code>NetworkLab-VM03-CLIENT</code></li>
+</ul>
+<p>Controleer voor alle drie dat netwerkadapter 1 is gekoppeld aan de bedoelde host-only adapter (Adapter #4) en dat de kabel is aangesloten. Verander geen fysieke netwerkadapter.</p>
+<h2>2. Installeer Ubuntu Server op VM01</h2>
+<p>ISO-bestand dat voor dit lab is vastgelegd:</p>
+<p><code>C:\Users\Daan Salden\Downloads\ubuntu-24.04.5-live-server-amd64.iso</code></p>
+<ol>
+<li>Zet alleen <code>NetworkLab-VM01-MGMT</code> aan via de VirtualBox-GUI.</li>
+<li>Kies <strong>Try or Install Ubuntu Server</strong> en start de installatie.</li>
+<li>Selecteer taal en toetsenbordindeling.</li>
+<li>Gebruik de standaard Ubuntu Server-installatie.</li>
+<li>Laat IPv4 op DHCP staan. Noteer eventuele netwerkfoutmeldingen; verzin geen IP-adres.</li>
+<li>Laat de proxy leeg tenzij de stageomgeving expliciet een proxy vereist.</li>
+<li>Selecteer de virtuele schijf van 20 GB als installatiedoel en bevestig dat alleen de virtuele schijf wordt gewijzigd.</li>
+<li>Maak een eigen labgebruikersaccount aan. Gebruik geen echte wachtwoorden in de documentatie of screenshots.</li>
+<li>Schakel <strong>Install OpenSSH server</strong> in als die optie beschikbaar is.</li>
+<li>Voltooi de installatie en kies <strong>Reboot</strong>.</li>
+<li>Als de VM opnieuw in de installer start, zet de VM uit en verwijder alleen de ISO uit de virtuele dvd-drive via <strong>Settings → Storage</strong>. Start daarna opnieuw op.</li>
+</ol>
+<h2>3. Controle in de Ubuntu-gast</h2>
+<p>Meld aan in de VM-console en voer uit:</p>
+<pre><code>hostname
+ip -brief address
+ip route
+ping -c 3 192.168.77.1</code></pre>
+<p>Leg de werkelijke uitvoer vast. De VM hoort een IPv4-adres uit de ingestelde DHCP-pool <code>192.168.77.100–192.168.77.200</code> te ontvangen. Als er geen adres is, registreer dat als een mislukte test en onderzoek de DHCP-/adapterconfiguratie.</p>
+<p>Voer vanaf Windows, met het werkelijk waargenomen IP-adres, uit:</p>
+<pre><code>Test-Connection -ComputerName &quot;&lt;WERKELIJK_VM_IP&gt;&quot; -Count 4</code></pre>
+<p>Vervang de placeholder voordat je de opdracht uitvoert. Een mislukte ping alleen bewijst niet dat de VM uitstaat; controleer ook de VM-console en eventueel een relevante TCP-service.</p>
+<h2>4. Herhaal voor VM02 en VM03</h2>
+<p>Herhaal hoofdstuk 2 en 3 voor:</p>
+<div class="table-wrap"><table><thead><tr><th>VM</th><th>Rol</th><th>Hostnamevoorstel</th></tr></thead><tbody>
+<tr><td><code>NetworkLab-VM02-INFRA</code></td><td>Infrastructuurtests</td><td><code>networklab-infra</code></td></tr>
+<tr><td><code>NetworkLab-VM03-CLIENT</code></td><td>Clienttests</td><td><code>networklab-client</code></td></tr>
+</tbody></table></div>
+<p>Gebruik per VM de eigen virtuele schijf. Controleer vóór de installatie dat je de juiste VM hebt geopend.</p>
+<h2>5. Test VM-naar-VM-connectiviteit</h2>
+<p>Nadat alle drie VM's zijn geïnstalleerd en hun IP-adressen zijn vastgelegd:</p>
+<ol>
+<li>Noteer de drie IP-adressen en de tijd waarop ze zijn waargenomen.</li>
+<li>Test vanaf VM01 de twee andere VM-adressen met <code>ping -c 3 &lt;IP&gt;</code>.</li>
+<li>Herhaal ten minste één test in omgekeerde richting.</li>
+<li>Noteer bron, bestemming, opdracht, verwachte uitkomst, werkelijk resultaat en eventuele foutmelding.</li>
+<li>Als ICMP geblokkeerd is, controleer de firewall en test indien passend een echte TCP-service; schakel de firewall niet zomaar uit.</li>
+</ol>
+<h2>6. Bewijs vastleggen</h2>
+<p>Bewaar per VM minimaal:</p>
+<ul>
+<li>Screenshot van de VM-naam in VirtualBox.</li>
+<li>Screenshot van een succesvolle login/console na installatie.</li>
+<li>Uitvoer van <code>hostname</code>, <code>ip -brief address</code> en <code>ip route</code>.</li>
+<li>Resultaat van de host-naar-VM-test.</li>
+<li>Resultaat van de VM-naar-VM-test.</li>
+<li>Datum/tijd en conclusie.</li>
+</ul>
+<p>Redigeer gebruikersnamen of andere gevoelige gegevens indien nodig. Bewaar geen wachtwoorden, tokens of private sleutels in Git.</p>
+<h2>7. Registratietabel</h2>
+<p>Vul pas in na uitvoering:</p>
+<div class="table-wrap"><table><thead><tr><th>Controle</th><th>Verwacht resultaat</th><th>Werkelijk resultaat</th><th>Status</th></tr></thead><tbody>
+<tr><td>VM01 Ubuntu start</td><td>OS start vanaf virtuele schijf</td><td>Nog niet gemeten</td><td>Openstaand</td></tr>
+<tr><td>VM01 DHCP</td><td>IPv4 uit de DHCP-pool</td><td>Nog niet gemeten</td><td>Openstaand</td></tr>
+<tr><td>VM02 Ubuntu + DHCP</td><td>OS start en krijgt IPv4</td><td>Nog niet gemeten</td><td>Openstaand</td></tr>
+<tr><td>VM03 Ubuntu + DHCP</td><td>OS start en krijgt IPv4</td><td>Nog niet gemeten</td><td>Openstaand</td></tr>
+<tr><td>Windows → VM01/02/03</td><td>Bereikbaarheid aantoonbaar</td><td>Nog niet gemeten</td><td>Openstaand</td></tr>
+<tr><td>VM01 ↔ VM02</td><td>Communicatie aantoonbaar</td><td>Nog niet gemeten</td><td>Openstaand</td></tr>
+<tr><td>VM02 ↔ VM03</td><td>Communicatie aantoonbaar</td><td>Nog niet gemeten</td><td>Openstaand</td></tr>
+</tbody></table></div>
+<h2>Afbakening</h2>
+<p>Dit lab gebruikt een VirtualBox host-only netwerk en is bedoeld voor gecontroleerde tests. De aanwezigheid van deze handleiding of een topologietekening is geen bewijs dat een OS-installatie, DHCP-lease of verbinding succesvol is. Registreer alleen resultaten die daadwerkelijk zijn gemeten.</p></main><section id="sourcePanel"><h2>HTML-bron</h2><p>Bewerk de HTML-bron en download het bestand. Commit de wijziging naar GitHub om deze blijvend te maken.</p><textarea id="source"></textarea><button id="preview">Voorbeeld bijwerken</button><button id="save">Bewerkte HTML downloaden</button></section><script>const p=document.getElementById('sourcePanel'),s=document.getElementById('source');function dl(t,n){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([t],{type:'text/html'}));a.href=u;a.download=n;a.click();URL.revokeObjectURL(u)}document.getElementById('edit').onclick=()=>{p.style.display=p.style.display==='block'?'none':'block';if(!s.value)s.value='<!doctype html>\\n'+document.documentElement.outerHTML};document.getElementById('download').onclick=()=>dl('<!doctype html>\\n'+document.documentElement.outerHTML,location.pathname.split('/').pop());document.getElementById('preview').onclick=()=>{let d=new DOMParser().parseFromString(s.value,'text/html');document.getElementById('document').innerHTML=d.querySelector('main')?.innerHTML||d.body.innerHTML};document.getElementById('save').onclick=()=>dl(s.value,'networklab-document-edited.html');</script></body></html>
