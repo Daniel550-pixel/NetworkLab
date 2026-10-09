@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NetworkLab — Test- en bewijsregister</title>
+<style>
+:root{color-scheme:light;--ink:#172033;--muted:#5b6577;--line:#d7deea;--panel:#f5f7fb;--blue:#155eef;--amber:#8a4b08}
+*{box-sizing:border-box}body{margin:0;background:#eef2f8;color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1100px;margin:auto;padding:28px 18px 60px}header,.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px}
+h1{margin:0 0 8px;font-size:clamp(2rem,4vw,2.8rem)}h2{font-size:1.3rem;margin:0 0 12px}p{margin:8px 0}.muted{color:var(--muted)}.tag{display:inline-block;border:1px solid #b8c9e8;border-radius:999px;padding:3px 9px;color:#174ea6;font-size:.8rem}
+table{width:100%;border-collapse:collapse;background:#fff}th,td{border:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}th{background:var(--panel)}input,select,textarea{font:inherit;width:100%;padding:8px;border:1px solid #b9c4d5;border-radius:6px;background:#fff;color:var(--ink)}textarea{min-height:66px;resize:vertical}.scroll{overflow-x:auto}.checklist{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}.check{background:var(--panel);padding:12px;border-radius:8px}.check input{width:auto;margin-right:8px}button{padding:10px 14px;border:0;border-radius:8px;background:var(--blue);color:#fff;font-weight:650;cursor:pointer}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.note{border-left:4px solid #e0a126;background:#fff8e8;padding:12px 14px;border-radius:0 8px 8px 0;color:#60400d}
+@media print{body{background:#fff}main{max-width:none;padding:0}header,.card{break-inside:avoid;border-color:#aaa}button,.actions{display:none}input,select,textarea{border:0;padding:2px} }
+</style>
+</head>
+<body><main>
+<header>
+<span class="tag">NETWORKLAB · STAGEBEWIJS</span>
+<h1>Test- en bewijsregister</h1>
+<p class="muted">Gebruik dit register om waargenomen resultaten van de NetworkLab-labomgeving vast te leggen. Vul geen verwachte resultaten in als gemeten resultaten.</p>
+<p><strong>Project:</strong> NetworkLab — netwerk- en infrastructuurbeheer</p>
+<p><strong>Uitvoerder:</strong> <input aria-label="Naam uitvoerder" placeholder="Naam"></p>
+<p><strong>Datum:</strong> <input type="date" aria-label="Datum uitvoering"></p>
+</header>
+<section class="card"><h2>1. Voorcontrole</h2>
+<div class="note">Voer controles uit op de Windows-host. Gebruik alleen de bedoelde VirtualBox-labinterface. Pas geen fysieke netwerkadapter of productienetwerk aan.</div>
+<div class="checklist">
+<label class="check"><input type="checkbox">VBoxManage.exe gevonden op de verwachte locatie</label>
+<label class="check"><input type="checkbox">Drie beoogde NetworkLab-VM's zichtbaar</label>
+<label class="check"><input type="checkbox">NetworkLab-Lab host-only-netwerk gecontroleerd</label>
+<label class="check"><input type="checkbox">DHCP-server en pool gecontroleerd</label>
+<label class="check"><input type="checkbox">Lokale webapp opent op 127.0.0.1:8501</label>
+<label class="check"><input type="checkbox">Geen geheimen of wachtwoorden opgenomen in bewijs</label>
+</div></section>
+<section class="card"><h2>2. Adresseringsregister</h2><div class="scroll"><table><thead><tr><th>Component</th><th>Verwacht / ingesteld</th><th>Werkelijk waargenomen adres</th><th>Opmerking</th></tr></thead><tbody>
+<tr><td>Windows host-only adapter</td><td>192.168.77.1/24</td><td><input placeholder="Invullen na controle"></td><td><input placeholder="Bijv. bevestigd / afwijking"></td></tr>
+<tr><td>VirtualBox DHCP</td><td>192.168.77.2; pool 192.168.77.100–200</td><td><input placeholder="Invullen na controle"></td><td><input placeholder="DHCP-status"></td></tr>
+<tr><td>NetworkLab-VM01-MGMT</td><td>DHCP-adres verwacht</td><td><input placeholder="Werkelijk gast-IP"></td><td><input placeholder="Hostname / status"></td></tr>
+<tr><td>NetworkLab-VM02-INFRA</td><td>DHCP-adres verwacht</td><td><input placeholder="Werkelijk gast-IP"></td><td><input placeholder="Hostname / status"></td></tr>
+<tr><td>NetworkLab-VM03-CLIENT</td><td>DHCP-adres verwacht</td><td><input placeholder="Werkelijk gast-IP"></td><td><input placeholder="Hostname / status"></td></tr>
+</tbody></table></div></section>
+<section class="card"><h2>3. Testresultaten</h2><div class="scroll"><table><thead><tr><th>Test</th><th>Verwachte uitkomst</th><th>Werkelijke uitvoer / bevinding</th><th>Status</th><th>Bewijsbestand</th></tr></thead><tbody>
+<tr><td>VM01 start vanaf virtuele schijf</td><td>Ubuntu start en login is mogelijk</td><td><textarea aria-label="VM01 startresultaat"></textarea></td><td><select aria-label="VM01 startstatus"><option>Niet getest</option><option>Geslaagd</option><option>Mislukt</option><option>Geblokkeerd</option></select></td><td><input placeholder="Bestandsnaam"></td></tr>
+<tr><td>VM01 DHCP</td><td>IPv4 binnen ingestelde pool</td><td><textarea aria-label="VM01 DHCP-resultaat"></textarea></td><td><select aria-label="VM01 DHCP-status"><option>Niet getest</option><option>Geslaagd</option><option>Mislukt</option><option>Geblokkeerd</option></select></td><td><input placeholder="Bestandsnaam"></td></tr>
+<tr><td>VM02 start + DHCP</td><td>Ubuntu start; IPv4 binnen pool</td><td><textarea aria-label="VM02-resultaat"></textarea></td><td><select aria-label="VM02-status"><option>Niet getest</option><option>Geslaagd</option><option>Mislukt</option><option>Geblokkeerd</option></select></td><td><input placeholder="Bestandsnaam"></td></tr>
+<tr><td>VM03 start + DHCP</td><td>Ubuntu start; IPv4 binnen pool</td><td><textarea aria-label="VM03-resultaat"></textarea></td><td><select aria-label="VM03-status"><option>Niet getest</option><option>Geslaagd</option><option>Mislukt</option><option>Geblokkeerd</option></select></td><td><input placeholder="Bestandsnaam"></td></tr>
+<tr><td>Windows → VM01/VM02/VM03</td><td>Bereikbaarheid aangetoond</td><td><textarea aria-label="Host naar VM resultaat"></textarea></td><td><select aria-label="Host naar VM status"><option>Niet getest</option><option>Geslaagd</option><option>Mislukt</option><option>Geblokkeerd</option></select></td><td><input placeholder="Bestandsnaam"></td></tr>
+<tr><td>VM01 ↔ VM02</td><td>Verbinding in beide richtingen getest</td><td><textarea aria-label="VM01 VM02 resultaat"></textarea></td><td><select aria-label="VM01 VM02 status"><option>Niet getest</option><option>Geslaagd</option><option>Mislukt</option><option>Geblokkeerd</option></select></td><td><input placeholder="Bestandsnaam"></td></tr>
+<tr><td>VM02 ↔ VM03</td><td>Verbinding in beide richtingen getest</td><td><textarea aria-label="VM02 VM03 resultaat"></textarea></td><td><select aria-label="VM02 VM03 status"><option>Niet getest</option><option>Geslaagd</option><option>Mislukt</option><option>Geblokkeerd</option></select></td><td><input placeholder="Bestandsnaam"></td></tr>
+<tr><td>Monitoring / diagnose</td><td>Waarneming, oorzaak en conclusie vastgelegd</td><td><textarea aria-label="Monitoring resultaat"></textarea></td><td><select aria-label="Monitoring status"><option>Niet getest</option><option>Geslaagd</option><option>Mislukt</option><option>Geblokkeerd</option></select></td><td><input placeholder="Bestandsnaam"></td></tr>
+</tbody></table></div></section>
+<section class="card"><h2>4. Bewijschecklist</h2><div class="checklist">
+<label class="check"><input type="checkbox">VirtualBox-VM-overzicht</label><label class="check"><input type="checkbox">Host-only-adapterconfiguratie</label><label class="check"><input type="checkbox">DHCP-configuratie of lease-informatie</label><label class="check"><input type="checkbox">Per VM: hostname en ip -brief address</label><label class="check"><input type="checkbox">Per VM: ip route</label><label class="check"><input type="checkbox">Host-naar-VM-testresultaten</label><label class="check"><input type="checkbox">VM-naar-VM-testresultaten</label><label class="check"><input type="checkbox">Schermafbeeldingen zonder wachtwoorden</label>
+</div></section>
+<section class="card"><h2>5. Analyse en conclusie</h2><p><strong>Wat is uitgevoerd?</strong></p><textarea aria-label="Uitgevoerde werkzaamheden" placeholder="Beschrijf alleen uitgevoerde werkzaamheden."></textarea><p><strong>Afwijkingen en diagnose</strong></p><textarea aria-label="Afwijkingen" placeholder="Beschrijf foutmelding, vermoedelijke oorzaak en gecontroleerde oplossing."></textarea><p><strong>Conclusie / vervolgactie</strong></p><textarea aria-label="Conclusie" placeholder="Welke onderdelen zijn aantoonbaar geslaagd en wat staat nog open?"></textarea></section>
+<div class="actions"><button onclick="window.print()">Afdrukken / opslaan als PDF</button><button onclick="document.querySelectorAll('input,textarea').forEach(e=>{if(e.type!=='checkbox'&&e.type!=='date')e.value='';else if(e.type==='checkbox')e.checked=false});document.querySelectorAll('select').forEach(e=>e.selectedIndex=0)">Formulier leegmaken</button></div>
+<footer class="muted">NetworkLab · Werkdocument voor testuitvoering en stagebewijs. De ingevulde waarden worden niet automatisch naar een server verzonden of opgeslagen.</footer>
+</main></body></html>
