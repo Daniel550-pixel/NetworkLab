@@ -96,3 +96,9 @@ No production-network assumptions are encoded in the repository.
 - No automatic OS downloads or external media selection
 
 The web layer is now independent of Streamlit and runs as a local Python HTTP application on `127.0.0.1`.
+
+## Project documentation
+
+- [Incident simulation and monitoring](docs/incident-simulation.md) — incident lifecycle, PowerShell commands, validation evidence, limitations, and next improvements.
+- [Generated documentation portal](docs/_site/index.html) — browsable HTML views of repository documentation and source files (open locally or browse the folder in GitHub).
+
