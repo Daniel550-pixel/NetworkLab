@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="nl">
 <head>
 <meta charset="utf-8">
@@ -13,69 +13,115 @@ code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
 </head>
 <body>
 <header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
-<h1>README.md</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<h1>README.md</h1><p>Automatisch gegenereerde codeweergave. Bewerk het originele bestand via de link hieronder.</p>
 <a href="../../../README.md">Open origineel bestand</a></header>
-<main>
-<h1>NetworkLab</h1>
-<h2>Stage Project &#226;€” Network &amp; Infrastructure Management</h2>
-<p>NetworkLab is a controlled, reproducible local laboratory for demonstrating:</p>
-<p>1. **Installatie en configuratie van netwerk- en infrastructuuronderdelen** 2. **Beheer en monitoring van netwerk- en infrastructuuronderdelen**</p>
-<h2>Technology Stack</h2>
-<p>| Technology | Purpose | |---|---| | GitHub | Version control, implementation, documentation and evidence | | Python | Local HTTP server, monitoring, diagnostics and reporting | | HTML/CSS/JavaScript | Localhost web application and laboratory UI | | PowerShell | Network inspection, configuration safeguards and diagnostics | | JSON | Lab configuration and evidence format | | GitHub Actions | Automated validation |</p>
-<h2>Local Web Application</h2>
-<p>The NetworkLab interface is now a **pure localhost web application**.</p>
-<ul>
-<li>No Streamlit runtime is required.</li>
-<li>No external frontend CDN or remote UI service is required.</li>
-<li>The Python standard library provides the local HTTP server.</li>
-<li>The browser connects only to `127.0.0.1`.</li>
-<li>Network telemetry is exposed through local `/api/*` endpoints.</li>
-<li>The UI is served from the repository&#39;s `web/` directory.</li>
-</ul>
-<h3>Start</h3>
-<p>From the repository root in PowerShell:</p>
-<pre><code>
+<main><pre><code># NetworkLab
+
+## Stage Project — Network &amp; Infrastructure Management
+
+NetworkLab is a controlled, reproducible local laboratory for demonstrating:
+
+1. **Installatie en configuratie van netwerk- en infrastructuuronderdelen**
+2. **Beheer en monitoring van netwerk- en infrastructuuronderdelen**
+
+## Technology Stack
+
+| Technology | Purpose |
+|---|---|
+| GitHub | Version control, implementation, documentation and evidence |
+| Python | Local HTTP server, monitoring, diagnostics and reporting |
+| HTML/CSS/JavaScript | Localhost web application and laboratory UI |
+| PowerShell | Network inspection, configuration safeguards and diagnostics |
+| JSON | Lab configuration and evidence format |
+| GitHub Actions | Automated validation |
+
+## Local Web Application
+
+The NetworkLab interface is now a **pure localhost web application**.
+
+- No Streamlit runtime is required.
+- No external frontend CDN or remote UI service is required.
+- The Python standard library provides the local HTTP server.
+- The browser connects only to `127.0.0.1`.
+- Network telemetry is exposed through local `/api/*` endpoints.
+- The UI is served from the repository's `web/` directory.
+
+### Start
+
+From the repository root in PowerShell:
+
+```powershell
 .\Run-NetworkLab.ps1
-</code></pre>
-<p>Then open:</p>
-<pre><code>
+```
+
+Then open:
+
+```
 http://127.0.0.1:8501
-</code></pre>
-<p>Optional custom port:</p>
-<pre><code>
+```
+
+Optional custom port:
+
+```powershell
 .\Run-NetworkLab.ps1 -Port 8510
-</code></pre>
-<p>The launcher starts `app/server.py`, which serves the frontend and local telemetry API.</p>
-<h2>Web Application Sections</h2>
-<ul>
-<li>Command Center</li>
-<li>Topology</li>
-<li>Interfaces</li>
-<li>Addressing</li>
-<li>Connectivity</li>
-<li>Services</li>
-<li>Diagnostics</li>
-<li>Evidence</li>
-<li>VM storage &amp; OS media</li>
-</ul>
-<p>The topology visualization is rendered with native SVG. There are no external JavaScript dependencies.</p>
-<h2>Safety Model</h2>
-<p>Network-changing operations remain disabled by default in `config/lab-config.json`. The baseline configuration workflow refuses to run unless the laboratory safety controls are explicitly enabled and an interface is supplied.</p>
-<p>No production-network assumptions are encoded in the repository.</p>
-<h2>Execution Order</h2>
-<p>1. Initialize and validate the environment. 2. Start the local NetworkLab web application. 3. Inspect the current network state. 4. Define and document the actual stage-lab topology. 5. Enable guarded configuration only when that topology is known. 6. Validate network and infrastructure state. 7. Run monitoring and reporting. 8. Preserve results as stage evidence.</p>
-<h2>Status</h2>
-<p>**Localhost web application: IMPLEMENTED**</p>
-<p>**VirtualBox VM infrastructure: IMPLEMENTED**</p>
-<ul>
-<li>NetworkLab-Lab host-only network</li>
-<li>Three role-based lab VMs</li>
-<li>20 GB VDI storage per VM</li>
-<li>Explicit local ISO attachment/ejection</li>
-<li>DVD-first boot preparation for OS installation</li>
-<li>No automatic OS downloads or external media selection</li>
-</ul>
-<p>The web layer is now independent of Streamlit and runs as a local Python HTTP application on `127.0.0.1`.</p>
-</main>
+```
+
+The launcher starts `app/server.py`, which serves the frontend and local telemetry API.
+
+## Web Application Sections
+
+- Command Center
+- Topology
+- Interfaces
+- Addressing
+- Connectivity
+- Services
+- Diagnostics
+- Evidence
+- VM storage &amp; OS media
+
+The topology visualization is rendered with native SVG. There are no external JavaScript dependencies.
+
+## Safety Model
+
+Network-changing operations remain disabled by default in `config/lab-config.json`. The baseline configuration workflow refuses to run unless the laboratory safety controls are explicitly enabled and an interface is supplied.
+
+No production-network assumptions are encoded in the repository.
+
+## Execution Order
+
+1. Initialize and validate the environment.
+2. Start the local NetworkLab web application.
+3. Inspect the current network state.
+4. Define and document the actual stage-lab topology.
+5. Enable guarded configuration only when that topology is known.
+6. Validate network and infrastructure state.
+7. Run monitoring and reporting.
+8. Preserve results as stage evidence.
+
+## Status
+
+**Localhost web application: IMPLEMENTED**
+
+**VirtualBox VM infrastructure: IMPLEMENTED**
+
+- NetworkLab-Lab host-only network
+- Three role-based lab VMs
+- 20 GB VDI storage per VM
+- Explicit local ISO attachment/ejection
+- DVD-first boot preparation for OS installation
+- No automatic OS downloads or external media selection
+
+The web layer is now independent of Streamlit and runs as a local Python HTTP application on `127.0.0.1`.
+
+## Project documentation
+
+- [Netwerktopologie (HTML)](docs/network-topology.html) — inline-SVG-netwerktekening, adresseringsplan en verificatiecommando's.
+- [Bewijsmatrix B1-K2-W1/W2](docs/b1-k2-w1-w2-evidence.md) — koppeling tussen werkprocessen, bewijsstukken, controles en openstaande punten.
+- [Verificatieformulier (invulbaar)](docs/verification-record-template.md) — registreer echte host-, VM-, IP-, connectiviteits- en veiligheidscontroles.
+- [Incident simulation and monitoring](docs/incident-simulation.md) — incident lifecycle, PowerShell commands, validation evidence, limitations, and next improvements.
+- [Generated documentation portal](docs/_site/index.html) — browsable HTML views of repository documentation and source files (open locally or browse the folder in GitHub).
+
+</code></pre></main>
 </body>
 </html>
