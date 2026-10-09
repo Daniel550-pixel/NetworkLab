@@ -31,19 +31,18 @@ NetworkLab is een lokale, gecontroleerde labomgeving voor het installeren/config
 | Bewijsstuk | Wat het aantoont | Wat nog vastgelegd moet worden |
 |---|---|---|
 | Incident- en monitoringdocumentatie | Een reproduceerbare gesimuleerde incidentcyclus, detectie en logging zijn beschreven. | Voeg de testuitvoer of schermafbeeldingen toe aan het bewijspakket, zonder gevoelige gegevens. |
-| `Invoke-NetworkLabIncidentSimulation.ps1` | De acties `InjectFault`, `Detect`, `Recover` en `Verify` bewaken de verwachte statusvolgorde. | Voeg geautomatiseerde tests toe voor ongeldige volgordes en ontbrekende/ongeldige statusbestanden. |
+| `Invoke-NetworkLabIncidentSimulation.ps1` en de integratietest | De incidentacties bewaken de statusvolgorde; de geautomatiseerde test controleert lifecycle, logging, detectie, herstel en afwijzing van een ongeldige volgorde. | Voeg bewijs toe van de geslaagde GitHub Actions-run en breid tests uit voor ontbrekende/ongeldige statusbestanden. |
 | `Start-NetworkLabMonitoringFeed.ps1` | De feed leest periodiek de simulatiestatus en registreert een detectie-event. | Documenteer dat de huidige feed een bestandssimulatie is, geen echte netwerkprobe. |
 | JSONL-gebeurtenislogs | Gebeurtenissen kunnen achteraf worden onderzocht. | Bewaar alleen relevante, opgeschoonde logs en noteer welke conclusie uit elk log volgt. |
 | NetworkLab-webapp | De lokale UI bevat onder andere topology, interfaces, addressing, connectivity, diagnostics en evidence-secties. | Leg per gebruikte functie vast wat je hebt gecontroleerd en wat het resultaat was. |
 
-### Uitgevoerde controles op 9 oktober 2026
+### Uitgevoerde controles
 
-- De vier incidentacties zijn in de juiste volgorde uitgevoerd.
-- De status is per actie vergeleken met de verwachte waarde en keerde na `Verify` terug naar `normal`.
-- De verwachte eventtypen zijn teruggevonden in het incidentlog.
+- De vier incidentacties zijn lokaal in de juiste volgorde uitgevoerd; de status keerde na `Verify` terug naar `normal`.
 - De monitoringfeed heeft de status `fault_injected` waargenomen en een `DETECTED`-event met `simulation: true` vastgelegd.
-- De controles waren handmatig uitgevoerd in PowerShell; dit bewijst niet dat de tests al in CI geautomatiseerd draaien.
-- De testbestanden voor status en logs zijn na de controle teruggezet.
+- De integratietest controleert lifecycle-volgorde, eventregistratie, detectie, eindstatus en afwijzing van een ongeldige actievolgorde.
+- De GitHub Actions-workflow voert deze integratietest uit op pushes naar `main` en `feature/vm-readiness`, en bij pull requests naar `main`. Controleer de run voor de commit die je als bewijs gebruikt.
+- Tests herstellen de bestanden die ze tijdelijk aanpassen. De simulatie bewijst geen werkelijke netwerkonderbreking of live monitoring.
 
 ## Werkwijze voor een bruikbaar bewijsstuk
 
