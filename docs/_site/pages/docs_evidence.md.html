@@ -1,0 +1,67 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>docs\evidence.md - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>docs\evidence.md</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../docs/evidence.md">Open origineel bestand</a></header>
+<main>
+<h1>Stage Evidence</h1>
+<p>This document maps the implementation to the two required stage competencies.</p>
+<h2>Competency 1</h2>
+<p>**Installeert en configureert netwerk- en infrastructuuronderdelen**</p>
+<h3>Evidence available</h3>
+<ul>
+<li>`powershell/install/Initialize-NetworkLab.ps1` &#226;€” validates the lab execution environment without changing the host.</li>
+<li>`powershell/configure/Get-NetworkConfiguration.ps1` &#226;€” captures adapter, IPv4, gateway and DNS state.</li>
+<li>`powershell/configure/Set-NetworkLabBaseline.ps1` &#226;€” guarded configuration workflow requiring explicit lab scope and interface selection.</li>
+<li>`powershell/diagnostics/Test-NetworkLabConfiguration.ps1` &#226;€” validates adapter, IPv4 and gateway state.</li>
+<li>`tests/network/Test-NetworkConfiguration.ps1` &#226;€” executable network-state validation.</li>
+</ul>
+<h3>Required recorded evidence</h3>
+<p>For the actual stage lab, record the topology, interface used, intended configuration, command executed, expected state, observed state and validation result.</p>
+<h2>Competency 2</h2>
+<p>**Beheert en monitort netwerk- en infrastructuuronderdelen**</p>
+<h3>Evidence available</h3>
+<ul>
+<li>`powershell/manage/Get-NetworkLabServices.ps1` &#226;€” service inspection.</li>
+<li>`powershell/manage/Get-NetworkLabProcesses.ps1` &#226;€” process/resource inspection.</li>
+<li>`powershell/manage/Get-NetworkLabHealth.ps1` &#226;€” consolidated infrastructure health check.</li>
+<li>`powershell/diagnostics/Invoke-NetworkLabDiagnostics.ps1` &#226;€” consolidated diagnostics.</li>
+<li>`python/monitoring/run_monitor.py` &#226;€” configuration-driven monitoring.</li>
+<li>`python/monitoring/system_monitor.py` &#226;€” system-state collection.</li>
+<li>`python/diagnostics/network_diagnostics.py` &#226;€” TCP diagnostics.</li>
+<li>`python/reporting/generate_report.py` &#226;€” monitoring result reporting.</li>
+<li>`python/reporting/write_report.py` &#226;€” timestamped evidence report output.</li>
+<li>`tests/connectivity/Test-Connectivity.ps1` &#226;€” connectivity validation.</li>
+<li>`tests/infrastructure/Test-Infrastructure.ps1` &#226;€” infrastructure-service validation.</li>
+</ul>
+<h2>Evidence standard</h2>
+<p>Each recorded evidence item should identify:</p>
+<ul>
+<li>objective</li>
+<li>environment</li>
+<li>topology/component</li>
+<li>procedure</li>
+<li>command or script used</li>
+<li>expected result</li>
+<li>actual result</li>
+<li>conclusion</li>
+<li>timestamp</li>
+<li>supporting log or screenshot when appropriate</li>
+</ul>
+<h2>Validation</h2>
+<p>GitHub Actions validates Python compilation/execution and PowerShell syntax on pushes and pull requests to `main`.</p>
+</main>
+</body>
+</html>

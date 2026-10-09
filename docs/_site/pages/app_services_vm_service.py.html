@@ -1,0 +1,214 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>app\services\vm_service.py - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>app\services\vm_service.py</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../app/services/vm_service.py">Open origineel bestand</a></header>
+<main>
+<pre><code>from __future__ import annotations
+
+import os
+import shutil
+import subprocess
+from pathlib import Path
+from typing import Any
+
+from app.services.virtualization_service import get_virtual_network
+
+NETWORK_NAME = &quot;NetworkLab-Lab&quot;
+VM_DEFINITIONS = [
+    {&quot;name&quot;: &quot;NetworkLab-VM01-MGMT&quot;, &quot;role&quot;: &quot;MGMT&quot;, &quot;memory&quot;: 2048, &quot;cpus&quot;: 2},
+    {&quot;name&quot;: &quot;NetworkLab-VM02-INFRA&quot;, &quot;role&quot;: &quot;INFRA&quot;, &quot;memory&quot;: 2048, &quot;cpus&quot;: 2},
+    {&quot;name&quot;: &quot;NetworkLab-VM03-CLIENT&quot;, &quot;role&quot;: &quot;CLIENT&quot;, &quot;memory&quot;: 2048, &quot;cpus&quot;: 2},
+]
+
+
+def _vboxmanage() -&gt; str | None:
+    candidates = [
+        shutil.which(&quot;VBoxManage.exe&quot;),
+        os.path.join(os.environ.get(&quot;VBOX_MSI_INSTALL_PATH&quot;, &quot;&quot;), &quot;VBoxManage.exe&quot;),
+        os.path.join(os.environ.get(&quot;ProgramFiles&quot;, &quot;&quot;), &quot;Oracle&quot;, &quot;VirtualBox&quot;, &quot;VBoxManage.exe&quot;),
+        os.path.join(os.environ.get(&quot;ProgramFiles&quot;, &quot;&quot;), &quot;VirtualBox&quot;, &quot;VBoxManage.exe&quot;),
+    ]
+    for candidate in candidates:
+        if candidate and Path(candidate).is_file():
+            return candidate
+    return None
+
+
+def _run(vbox: str, *args: str) -&gt; tuple[bool, str, str]:
+    try:
+        p = subprocess.run(
+            [vbox, *args],
+            capture_output=True,
+            text=True,
+            encoding=&quot;utf-8&quot;,
+            errors=&quot;replace&quot;,
+            timeout=60,
+            check=False,
+        )
+        return p.returncode == 0, p.stdout.strip(), p.stderr.strip()
+    except (OSError, subprocess.SubprocessError) as exc:
+        return False, &quot;&quot;, str(exc)
+
+
+def _vms(vbox: str) -&gt; list[dict[str, Any]]:
+    ok, out, err = _run(vbox, &quot;list&quot;, &quot;vms&quot;)
+    if not ok:
+        raise RuntimeError(err or out or &quot;Unable to query VirtualBox VMs.&quot;)
+
+    result = []
+    for line in out.splitlines():
+        line = line.strip()
+        if not line or not line.startswith(&#39;&quot;&#39;) or &#39;&quot; {&#39; not in line:
+            continue
+        name, _, rest = line[1:].partition(&#39;&quot; {&#39;)
+        uuid = rest.rstrip(&quot;}&quot;).strip()
+        result.append({&quot;name&quot;: name, &quot;uuid&quot;: uuid})
+    return result
+
+
+def _find_vm(vbox: str, name: str) -&gt; dict[str, Any] | None:
+    return next((vm for vm in _vms(vbox) if vm[&quot;name&quot;] == name), None)
+
+
+def get_vm_topology() -&gt; dict[str, Any]:
+    vbox = _vboxmanage()
+    if not vbox:
+        return {&quot;available&quot;: False, &quot;network&quot;: NETWORK_NAME, &quot;vms&quot;: [], &quot;error&quot;: &quot;VBoxManage.exe not found.&quot;}
+
+    vms = []
+    for definition in VM_DEFINITIONS:
+        vm = _find_vm(vbox, definition[&quot;name&quot;])
+        if not vm:
+            vms.append({**definition, &quot;exists&quot;: False, &quot;state&quot;: &quot;not-created&quot;, &quot;network&quot;: NETWORK_NAME})
+            continue
+
+        ok, show, err = _run(vbox, &quot;showvminfo&quot;, definition[&quot;name&quot;], &quot;--machinereadable&quot;)
+        if not ok:
+            vms.append({**definition, **vm, &quot;exists&quot;: True, &quot;state&quot;: &quot;unknown&quot;, &quot;network&quot;: NETWORK_NAME, &quot;error&quot;: err or show})
+            continue
+
+        fields = {}
+        for line in show.splitlines():
+            if &quot;=&quot; in line:
+                key, value = line.split(&quot;=&quot;, 1)
+                fields[key] = value.strip(&#39;&quot;&#39;)
+
+        vms.append({
+            **definition,
+            **vm,
+            &quot;exists&quot;: True,
+            &quot;state&quot;: fields.get(&quot;VMState&quot;, &quot;unknown&quot;),
+            &quot;network&quot;: NETWORK_NAME if fields.get(&quot;nic1&quot;, &quot;&quot;).lower() == &quot;hostonly&quot; else &quot;not-attached&quot;,
+            &quot;nic1&quot;: fields.get(&quot;nic1&quot;, &quot;&quot;),
+            &quot;host_only_adapter&quot;: fields.get(&quot;hostonlyadapter1&quot;, &quot;&quot;),
+        &quot;firmware&quot;: fields.get(&quot;firmware&quot;, &quot;BIOS&quot;),
+        &quot;boot_menu_mode&quot;: fields.get(&quot;bootmenu&quot;, &quot;messageandmenu&quot;),
+        &quot;nested_paging&quot;: fields.get(&quot;nestedpaging&quot;, &quot;&quot;),
+        })
+
+    return {&quot;available&quot;: True, &quot;network&quot;: NETWORK_NAME, &quot;vms&quot;: vms}
+
+
+def create_vm_topology() -&gt; dict[str, Any]:
+    vbox = _vboxmanage()
+    if not vbox:
+        raise RuntimeError(&quot;VirtualBox VBoxManage.exe was not found.&quot;)
+
+    network = get_virtual_network()
+    if not network.get(&quot;ready&quot;):
+        raise RuntimeError(&quot;NetworkLab-Lab is not ready. Provision the virtual network first.&quot;)
+    adapter = (network.get(&quot;host_only_adapter&quot;) or {}).get(&quot;Name&quot;)
+    if not adapter:
+        raise RuntimeError(&quot;NetworkLab could not resolve the VirtualBox host-only adapter.&quot;)
+
+    for definition in VM_DEFINITIONS:
+        name = definition[&quot;name&quot;]
+        if not _find_vm(vbox, name):
+            ok, out, err = _run(vbox, &quot;createvm&quot;, &quot;--name&quot;, name, &quot;--register&quot;)
+            if not ok:
+                raise RuntimeError(err or out or f&quot;Unable to create {name}.&quot;)
+
+        commands = [
+            (&quot;modifyvm&quot;, name, &quot;--memory&quot;, str(definition[&quot;memory&quot;]), &quot;--cpus&quot;, str(definition[&quot;cpus&quot;])),
+            (&quot;modifyvm&quot;, name, &quot;--nic1&quot;, &quot;hostonly&quot;, &quot;--hostonlyadapter1&quot;, adapter),
+        ]
+        for args in commands:
+            ok, out, err = _run(vbox, *args)
+            if not ok:
+                raise RuntimeError(err or out or f&quot;Unable to configure {name}.&quot;)
+
+    return get_vm_topology()
+
+
+def get_vm_runtime(name: str) -&gt; dict[str, Any]:
+    vbox = _vboxmanage()
+    if not vbox:
+        raise RuntimeError(&quot;VirtualBox VBoxManage.exe was not found.&quot;)
+    if name not in {item[&quot;name&quot;] for item in VM_DEFINITIONS}:
+        raise ValueError(&quot;Unknown NetworkLab VM.&quot;)
+    if not _find_vm(vbox, name):
+        raise RuntimeError(f&quot;{name} does not exist. Create the VM topology first.&quot;)
+
+    ok, show, err = _run(vbox, &quot;showvminfo&quot;, name, &quot;--machinereadable&quot;)
+    if not ok:
+        raise RuntimeError(err or show or f&quot;Unable to inspect {name}.&quot;)
+
+    fields: dict[str, str] = {}
+    for line in show.splitlines():
+        if &quot;=&quot; in line:
+            key, value = line.split(&quot;=&quot;, 1)
+            fields[key.strip(&#39;&quot;&#39;)] = value.strip(&#39;&quot;&#39;)
+
+    state = fields.get(&quot;VMState&quot;, &quot;unknown&quot;).lower()
+    return {
+        &quot;name&quot;: name,
+        &quot;state&quot;: state,
+        &quot;running&quot;: state == &quot;running&quot;,
+        &quot;boot_order&quot;: [fields.get(&quot;boot1&quot;, &quot;none&quot;), fields.get(&quot;boot2&quot;, &quot;none&quot;), fields.get(&quot;boot3&quot;, &quot;none&quot;), fields.get(&quot;boot4&quot;, &quot;none&quot;)],
+        &quot;memory_mb&quot;: fields.get(&quot;memory&quot;, &quot;&quot;),
+        &quot;cpus&quot;: fields.get(&quot;cpus&quot;, &quot;&quot;),
+        &quot;nic1&quot;: fields.get(&quot;nic1&quot;, &quot;&quot;),
+        &quot;host_only_adapter&quot;: fields.get(&quot;hostonlyadapter1&quot;, &quot;&quot;),
+    }
+
+
+def vm_action(name: str, action: str) -&gt; dict[str, Any]:
+    vbox = _vboxmanage()
+    if not vbox:
+        raise RuntimeError(&quot;VirtualBox VBoxManage.exe was not found.&quot;)
+    if name not in {item[&quot;name&quot;] for item in VM_DEFINITIONS}:
+        raise ValueError(&quot;Unknown NetworkLab VM.&quot;)
+
+    if not _find_vm(vbox, name):
+        raise RuntimeError(f&quot;{name} does not exist. Create the VM topology first.&quot;)
+
+    if action == &quot;start&quot;:
+        args = (&quot;startvm&quot;, name, &quot;--type&quot;, &quot;headless&quot;)
+    elif action == &quot;stop&quot;:
+        args = (&quot;controlvm&quot;, name, &quot;acpipowerbutton&quot;)
+    elif action == &quot;poweroff&quot;:
+        args = (&quot;controlvm&quot;, name, &quot;poweroff&quot;)
+    else:
+        raise ValueError(&quot;Unsupported VM action.&quot;)
+
+    ok, out, err = _run(vbox, *args)
+    if not ok:
+        raise RuntimeError(err or out or f&quot;VM action failed: {action}&quot;)
+    return get_vm_topology()
+</code></pre>
+</main>
+</body>
+</html>

@@ -1,0 +1,44 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>docs\software-lab-scope.md - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>docs\software-lab-scope.md</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../docs/software-lab-scope.md">Open origineel bestand</a></header>
+<main>
+<h1>Software-only Stage Lab Scope</h1>
+<h2>Purpose</h2>
+<p>NetworkLab is implemented as a software-only lab for demonstrating the two known stage competencies:</p>
+<ul>
+<li>**Installeert en configureert netwerk- en infrastructuuronderdelen**</li>
+<li>**Beheert en monitort netwerk- en infrastructuuronderdelen**</li>
+</ul>
+<h2>Explicit scope</h2>
+<ul>
+<li>No physical routers or switches are required.</li>
+<li>No physical cabling is required.</li>
+<li>No production-network configuration is encoded.</li>
+<li>Network state is inspected through Windows networking interfaces and PowerShell.</li>
+<li>Infrastructure state is represented by operating-system services and processes.</li>
+<li>Python provides portable monitoring and reporting.</li>
+<li>GitHub provides versioning and evidence traceability.</li>
+</ul>
+<h2>Configuration rule</h2>
+<p>The repository does not contain an assumed IP plan, VLAN plan, gateway plan, or interface mapping because those details were not specified in the available assignment information.</p>
+<p>`config/lab-config.json` therefore keeps interface-specific configuration empty and keeps configuration changes disabled by default.</p>
+<h2>Demonstration flow</h2>
+<p>1. Run `powershell/install/Initialize-NetworkLab.ps1` to validate prerequisites. 2. Run `powershell/configure/Get-NetworkLabState.ps1` to inspect network state. 3. Run `powershell/diagnostics/Invoke-NetworkLabHealthCheck.ps1` for the consolidated health check. 4. Run `powershell/manage/Get-NetworkLabEvidence.ps1` to generate evidence data. 5. Run `python python/monitoring/run_monitor.py` for the Python monitoring cycle. 6. Run `python python/reporting/generate_report.py` with monitoring JSON when a report is required.</p>
+<p>Any later assignment-specific topology can be added without changing the safety model.</p>
+</main>
+</body>
+</html>

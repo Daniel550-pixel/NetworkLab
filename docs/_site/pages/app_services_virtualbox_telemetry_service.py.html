@@ -1,0 +1,558 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>app\services\virtualbox_telemetry_service.py - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>app\services\virtualbox_telemetry_service.py</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../app/services/virtualbox_telemetry_service.py">Open origineel bestand</a></header>
+<main>
+<pre><code>from __future__ import annotations
+
+import json
+import os
+import shutil
+import subprocess
+import threading
+import time
+from collections import deque
+from datetime import datetime, timezone
+from typing import Any
+
+from app.services.virtualbox_incident_store import history as persistent_history
+from app.services.virtualbox_incident_store import path as incident_log_path
+from app.services.virtualbox_incident_store import record as persist_event
+
+MONITOR_INTERVAL_SECONDS = int(os.environ.get(&quot;NETWORKLAB_VBOX_MONITOR_INTERVAL&quot;, &quot;60&quot;))
+REPAIR_THRESHOLD = int(os.environ.get(&quot;NETWORKLAB_VBOX_REPAIR_THRESHOLD&quot;, &quot;3&quot;))
+REPAIR_COOLDOWN_SECONDS = int(os.environ.get(&quot;NETWORKLAB_VBOX_REPAIR_COOLDOWN&quot;, &quot;600&quot;))
+PROBE_TIMEOUT_SECONDS = int(os.environ.get(&quot;NETWORKLAB_VBOX_PROBE_TIMEOUT&quot;, &quot;15&quot;))
+MAX_HISTORY = int(os.environ.get(&quot;NETWORKLAB_VBOX_HISTORY&quot;, &quot;100&quot;))
+
+_lock = threading.RLock()
+_history: deque[dict[str, Any]] = deque(maxlen=MAX_HISTORY)
+_state: dict[str, Any] = {
+    &quot;status&quot;: &quot;unknown&quot;,
+    &quot;healthy&quot;: False,
+    &quot;consecutive_failures&quot;: 0,
+    &quot;last_check&quot;: None,
+    &quot;last_repair&quot;: None,
+    &quot;last_repair_result&quot;: None,
+    &quot;last_error&quot;: None,
+    &quot;monitor_running&quot;: False,
+    &quot;repair_count&quot;: 0,
+    &quot;active_incident&quot;: False,
+    &quot;active_issue&quot;: None,
+}
+
+
+def _now() -&gt; str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _record(event: str, **data: Any) -&gt; None:
+    item = {&quot;timestamp&quot;: _now(), &quot;event&quot;: event, **data}
+    _history.appendleft(item)
+    try:
+        persist_event(item)
+    except (OSError, TypeError, ValueError):
+        pass
+
+
+def _find_vboxmanage() -&gt; str | None:
+    candidates = [
+        shutil.which(&quot;VBoxManage.exe&quot;),
+        os.path.join(os.environ.get(&quot;VBOX_MSI_INSTALL_PATH&quot;, &quot;&quot;), &quot;VBoxManage.exe&quot;),
+        os.path.join(os.environ.get(&quot;ProgramFiles&quot;, &quot;&quot;), &quot;Oracle&quot;, &quot;VirtualBox&quot;, &quot;VBoxManage.exe&quot;),
+        os.path.join(os.environ.get(&quot;ProgramFiles&quot;, &quot;&quot;), &quot;VirtualBox&quot;, &quot;VBoxManage.exe&quot;),
+    ]
+    for candidate in candidates:
+        if candidate and os.path.isfile(candidate):
+            return candidate
+    return None
+
+
+def _run(vbox: str, *args: str, timeout: int = PROBE_TIMEOUT_SECONDS) -&gt; tuple[bool, str, str]:
+    try:
+        result = subprocess.run(
+            [vbox, *args],
+            capture_output=True,
+            text=True,
+            encoding=&quot;utf-8&quot;,
+            errors=&quot;replace&quot;,
+            timeout=timeout,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return False, &quot;&quot;, str(exc)
+
+    return result.returncode == 0, result.stdout.strip(), result.stderr.strip()
+
+
+def _combined_error(stdout: str, stderr: str) -&gt; str:
+    return &quot;\n&quot;.join(part for part in (stderr, stdout) if part).strip()
+
+
+def _is_com_lock_error(detail: str) -&gt; bool:
+    lowered = detail.lower()
+    markers = (
+        &quot;e_accessdenied&quot;,
+        &quot;e_unexpected&quot;,
+        &quot;the object is not ready&quot;,
+        &quot;the session is not locked&quot;,
+        &quot;session state: unlocked&quot;,
+        &quot;bandwidthcontrolwrap&quot;,
+        &quot;sessionmachine&quot;,
+        &quot;unlockmachine&quot;,
+        &quot;comget_&quot;,
+    )
+    return any(marker in lowered for marker in markers)
+
+
+def _running_vms(vbox: str) -&gt; tuple[bool, list[str], str]:
+    ok, stdout, stderr = _run(vbox, &quot;list&quot;, &quot;runningvms&quot;)
+    if not ok:
+        return False, [], _combined_error(stdout, stderr)
+
+    names: list[str] = []
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if &#39;&quot;&#39; in line:
+            names.append(line.split(&#39;&quot;&#39;)[1])
+        else:
+            names.append(line)
+    return True, names, &quot;&quot;
+
+
+def _probe(vbox: str) -&gt; dict[str, Any]:
+    probes = (
+        (&quot;hostonlyifs&quot;, (&quot;list&quot;, &quot;hostonlyifs&quot;)),
+        (&quot;dhcpservers&quot;, (&quot;list&quot;, &quot;dhcpservers&quot;)),
+        (&quot;vms&quot;, (&quot;list&quot;, &quot;vms&quot;)),
+    )
+
+    failures: list[dict[str, str]] = []
+    passed: list[str] = []
+
+    for name, args in probes:
+        ok, stdout, stderr = _run(vbox, *args)
+        if ok:
+            passed.append(name)
+        else:
+            detail = _combined_error(stdout, stderr)
+            failures.append({
+                &quot;probe&quot;: name,
+                &quot;command&quot;: &quot;VBoxManage &quot; + &quot; &quot;.join(args),
+                &quot;error&quot;: detail or f&quot;VBoxManage {&#39; &#39;.join(args)} failed.&quot;,
+            })
+
+    combined = &quot;\n&quot;.join(item[&quot;error&quot;] for item in failures)
+    return {
+        &quot;ok&quot;: not failures,
+        &quot;passed&quot;: passed,
+        &quot;failures&quot;: failures,
+        &quot;classification&quot;: &quot;virtualbox-com-session&quot; if _is_com_lock_error(combined) else &quot;unknown&quot;,
+    }
+
+
+def _process_snapshot() -&gt; dict[str, Any]:
+    names = (&quot;VBoxSVC.exe&quot;, &quot;VirtualBox.exe&quot;, &quot;VBoxHeadless.exe&quot;, &quot;VBoxManage.exe&quot;)
+    result: dict[str, Any] = {}
+
+    for name in names:
+        try:
+            completed = subprocess.run(
+                [&quot;tasklist.exe&quot;, &quot;/FI&quot;, f&quot;IMAGENAME eq {name}&quot;, &quot;/FO&quot;, &quot;CSV&quot;, &quot;/NH&quot;],
+                capture_output=True,
+                text=True,
+                encoding=&quot;utf-8&quot;,
+                errors=&quot;replace&quot;,
+                timeout=10,
+                check=False,
+            )
+            lines = [
+                line.strip()
+                for line in completed.stdout.splitlines()
+                if line.strip() and &quot;INFO:&quot; not in line.upper()
+            ]
+            result[name] = {&quot;running&quot;: bool(lines), &quot;entries&quot;: lines}
+        except (OSError, subprocess.SubprocessError) as exc:
+            result[name] = {&quot;running&quot;: False, &quot;error&quot;: str(exc)}
+
+    return result
+
+
+def _repair_vboxsvc(vbox: str) -&gt; dict[str, Any]:
+    running_ok, running_vms, running_error = _running_vms(vbox)
+    if not running_ok:
+        return {
+            &quot;attempted&quot;: False,
+            &quot;success&quot;: False,
+            &quot;stage&quot;: &quot;safety-check&quot;,
+            &quot;reason&quot;: f&quot;Could not verify running VMs; repair aborted: {running_error}&quot;,
+        }
+
+    if running_vms:
+        return {
+            &quot;attempted&quot;: False,
+            &quot;success&quot;: False,
+            &quot;stage&quot;: &quot;safety-check&quot;,
+            &quot;reason&quot;: &quot;Repair skipped because VirtualBox VMs are currently running.&quot;,
+            &quot;running_vms&quot;: running_vms,
+        }
+
+    process_before = _process_snapshot()
+
+    taskkill = subprocess.run(
+        [&quot;taskkill.exe&quot;, &quot;/F&quot;, &quot;/IM&quot;, &quot;VBoxSVC.exe&quot;],
+        capture_output=True,
+        text=True,
+        encoding=&quot;utf-8&quot;,
+        errors=&quot;replace&quot;,
+        timeout=15,
+        check=False,
+    )
+
+    time.sleep(2)
+    ok, stdout, stderr = _run(vbox, &quot;list&quot;, &quot;vms&quot;)
+    detail = _combined_error(stdout, stderr)
+
+    result = {
+        &quot;attempted&quot;: True,
+        &quot;success&quot;: ok,
+        &quot;stage&quot;: &quot;restart-vboxsvc&quot;,
+        &quot;action&quot;: &quot;restart_vboxsvc&quot;,
+        &quot;taskkill_returncode&quot;: taskkill.returncode,
+        &quot;taskkill_error&quot;: _combined_error(taskkill.stdout, taskkill.stderr) or None,
+        &quot;processes_before&quot;: process_before,
+        &quot;verification_error&quot;: detail if not ok else None,
+        &quot;message&quot;: (
+            &quot;VBoxSVC was restarted and VBoxManage recovered.&quot;
+            if ok
+            else &quot;VBoxSVC restart was attempted, but VBoxManage is still unhealthy.&quot;
+        ),
+    }
+    _record(&quot;repair-stage&quot;, stage=&quot;restart-vboxsvc&quot;, result=result)
+    return result
+
+
+def _windows_event_correlation() -&gt; dict[str, Any]:
+    script = (
+        &quot;$start=(Get-Date).AddMinutes(-15); &quot;
+        &quot;Get-WinEvent -FilterHashtable @{LogName=@(&#39;System&#39;,&#39;Application&#39;);StartTime=$start} &quot;
+        &quot;-ErrorAction SilentlyContinue | &quot;
+        &quot;Where-Object {$_.ProviderName -match &#39;VirtualBox|VBox|Service Control Manager&#39;} | &quot;
+        &quot;Select-Object -First 25 TimeCreated,ProviderName,Id,LevelDisplayName,Message | &quot;
+        &quot;ConvertTo-Json -Depth 3 -Compress&quot;
+    )
+    try:
+        result = subprocess.run(
+            [&quot;powershell.exe&quot;, &quot;-NoProfile&quot;, &quot;-NonInteractive&quot;, &quot;-Command&quot;, script],
+            capture_output=True,
+            text=True,
+            encoding=&quot;utf-8&quot;,
+            errors=&quot;replace&quot;,
+            timeout=20,
+            check=False,
+        )
+        if result.returncode != 0:
+            return {&quot;available&quot;: False, &quot;error&quot;: _combined_error(result.stdout, result.stderr)}
+        raw = result.stdout.strip()
+        if not raw:
+            return {&quot;available&quot;: True, &quot;events&quot;: []}
+        payload = json.loads(raw)
+        events = payload if isinstance(payload, list) else [payload]
+        return {&quot;available&quot;: True, &quot;events&quot;: events}
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
+        return {&quot;available&quot;: False, &quot;error&quot;: str(exc)}
+
+
+def _recovery_recommendation(probe: dict[str, Any], repair: dict[str, Any] | None = None) -&gt; dict[str, Any]:
+    detail = &quot;\n&quot;.join(item[&quot;error&quot;] for item in probe.get(&quot;failures&quot;, []))
+    if &quot;E_ACCESSDENIED&quot; in detail or &quot;SessionMachine&quot; in detail or &quot;VBoxSVC&quot; in detail:
+        return {
+            &quot;priority&quot;: &quot;high&quot;,
+            &quot;action&quot;: &quot;Restart VBoxSVC only when no VMs are running; otherwise stop affected VMs cleanly first.&quot;,
+            &quot;reason&quot;: &quot;The failure matches a VirtualBox COM/session-lock condition.&quot;,
+        }
+    if repair and not repair.get(&quot;success&quot;):
+        return {
+            &quot;priority&quot;: &quot;critical&quot;,
+            &quot;action&quot;: &quot;Manual host-level VirtualBox investigation required.&quot;,
+            &quot;reason&quot;: &quot;The safe VBoxSVC recovery boundary did not restore VBoxManage.&quot;,
+        }
+    return {
+        &quot;priority&quot;: &quot;medium&quot;,
+        &quot;action&quot;: &quot;Review the failed VBoxManage probe and VirtualBox host state.&quot;,
+        &quot;reason&quot;: &quot;The telemetry engine detected an unclassified VirtualBox failure.&quot;,
+    }
+
+
+def _issue_engine(probe: dict[str, Any], vbox: str) -&gt; dict[str, Any]:
+    &quot;&quot;&quot;Classify a telemetry incident and select the safest automatic fixer.&quot;&quot;&quot;
+    detail = &quot;\n&quot;.join(item.get(&quot;error&quot;, &quot;&quot;) for item in probe.get(&quot;failures&quot;, []))
+    lowered = detail.lower()
+
+    if _is_com_lock_error(detail):
+        issue = &quot;com-session-lock&quot;
+        fixer = &quot;restart-vboxsvc&quot;
+        safety = &quot;only-when-no-vms-are-running&quot;
+        description = &quot;VirtualBox COM/session state is inconsistent or locked.&quot;
+    elif &quot;not found&quot; in lowered or &quot;cannot find&quot; in lowered:
+        issue = &quot;virtualbox-executable&quot;
+        fixer = &quot;rediscover-vboxmanage&quot;
+        safety = &quot;read-only&quot;
+        description = &quot;VBoxManage could not be located.&quot;
+    elif &quot;timeout&quot; in lowered or &quot;timed out&quot; in lowered:
+        issue = &quot;virtualbox-timeout&quot;
+        fixer = &quot;restart-vboxsvc&quot;
+        safety = &quot;only-when-no-vms-are-running&quot;
+        description = &quot;VBoxManage did not respond within the telemetry timeout.&quot;
+    else:
+        issue = &quot;unknown-virtualbox-failure&quot;
+        fixer = &quot;diagnose-only&quot;
+        safety = &quot;no-destructive-action&quot;
+        description = &quot;The failure is not recognized as a safe autonomous repair case.&quot;
+
+    return {
+        &quot;issue&quot;: issue,
+        &quot;description&quot;: description,
+        &quot;fixer&quot;: fixer,
+        &quot;safety&quot;: safety,
+        &quot;automatic&quot;: fixer != &quot;diagnose-only&quot;,
+        &quot;vboxmanage&quot;: vbox,
+    }
+
+
+def _run_issue_fixer(issue: dict[str, Any], vbox: str) -&gt; dict[str, Any]:
+    &quot;&quot;&quot;Execute only fixers explicitly approved by the issue engine.&quot;&quot;&quot;
+    fixer = issue.get(&quot;fixer&quot;)
+
+    if fixer == &quot;restart-vboxsvc&quot;:
+        return _repair_vboxsvc(vbox)
+
+    if fixer == &quot;rediscover-vboxmanage&quot;:
+        return {
+            &quot;attempted&quot;: False,
+            &quot;success&quot;: _find_vboxmanage() is not None,
+            &quot;stage&quot;: &quot;rediscovery&quot;,
+            &quot;message&quot;: &quot;VBoxManage discovery was retried without changing VirtualBox state.&quot;,
+        }
+
+    return {
+        &quot;attempted&quot;: False,
+        &quot;success&quot;: False,
+        &quot;stage&quot;: &quot;diagnosis&quot;,
+        &quot;message&quot;: &quot;No autonomous fixer is approved for this issue classification.&quot;,
+    }
+
+
+def _repair(force_repair: bool = False) -&gt; dict[str, Any]:
+    vbox = _find_vboxmanage()
+    if not vbox:
+        return {&quot;attempted&quot;: False, &quot;success&quot;: False, &quot;stage&quot;: &quot;discovery&quot;, &quot;reason&quot;: &quot;VBoxManage.exe not found.&quot;}
+
+    repair = _repair_vboxsvc(vbox)
+    if repair[&quot;success&quot;]:
+        return repair
+
+    return {
+        **repair,
+        &quot;escalation&quot;: {
+            &quot;level&quot;: &quot;manual&quot;,
+            &quot;reason&quot;: (
+                &quot;Automatic recovery stopped at the safe VBoxSVC restart boundary. &quot;
+                &quot;No VM processes were terminated and no VirtualBox configuration was deleted.&quot;
+            ),
+        },
+    }
+
+
+def check_and_recover(force_repair: bool = False) -&gt; dict[str, Any]:
+    now = _now()
+
+    with _lock:
+        vbox = _find_vboxmanage()
+        if not vbox:
+            _state.update({
+                &quot;status&quot;: &quot;failed&quot;,
+                &quot;healthy&quot;: False,
+                &quot;last_check&quot;: now,
+                &quot;last_error&quot;: &quot;VBoxManage.exe not found.&quot;,
+                &quot;active_incident&quot;: True,
+            })
+            _record(&quot;failure&quot;, reason=&quot;VBoxManage.exe not found&quot;)
+            return _snapshot()
+
+        probe = _probe(vbox)
+        if probe[&quot;ok&quot;]:
+            was_incident = bool(_state[&quot;active_incident&quot;])
+            _state.update({
+                &quot;status&quot;: &quot;recovered&quot; if was_incident else &quot;healthy&quot;,
+                &quot;healthy&quot;: True,
+                &quot;consecutive_failures&quot;: 0,
+                &quot;last_check&quot;: now,
+                &quot;last_error&quot;: None,
+                &quot;active_incident&quot;: False,
+                &quot;active_issue&quot;: None,
+            })
+            if was_incident:
+                _record(&quot;recovered&quot;, message=&quot;VirtualBox probes returned to healthy state.&quot;)
+            return _snapshot(
+                probe=probe,
+                vboxmanage=vbox,
+                recommendation=_recovery_recommendation(probe),
+            )
+
+        _state[&quot;consecutive_failures&quot;] = int(_state[&quot;consecutive_failures&quot;]) + 1
+        _state.update({
+            &quot;last_check&quot;: now,
+            &quot;healthy&quot;: False,
+            &quot;status&quot;: &quot;degraded&quot;,
+            &quot;last_error&quot;: probe[&quot;failures&quot;],
+            &quot;active_incident&quot;: True,
+        })
+
+        _record(
+            &quot;probe-failure&quot;,
+            classification=probe[&quot;classification&quot;],
+            consecutive_failures=_state[&quot;consecutive_failures&quot;],
+            failures=probe[&quot;failures&quot;],
+        )
+
+        issue = _issue_engine(probe, vbox)
+        _state[&quot;active_issue&quot;] = issue
+
+        should_repair = force_repair or (issue[&quot;automatic&quot;] and int(_state[&quot;consecutive_failures&quot;]) &gt;= REPAIR_THRESHOLD)
+
+        if _state[&quot;last_repair&quot;] and not force_repair:
+            try:
+                last_repair = datetime.fromisoformat(str(_state[&quot;last_repair&quot;]).replace(&quot;Z&quot;, &quot;+00:00&quot;))
+                elapsed = (datetime.now(timezone.utc) - last_repair).total_seconds()
+                if elapsed &lt; REPAIR_COOLDOWN_SECONDS:
+                    should_repair = False
+            except ValueError:
+                pass
+
+        if not should_repair:
+            result = _snapshot(
+                probe=probe,
+                vboxmanage=vbox,
+                repair_pending=_is_com_lock_error(
+                    &quot;\n&quot;.join(item[&quot;error&quot;] for item in probe[&quot;failures&quot;])
+                ),
+            )
+            return result
+
+        repair = _run_issue_fixer(issue, vbox)
+        _state[&quot;last_repair&quot;] = now
+        _state[&quot;last_repair_result&quot;] = repair
+        _state[&quot;repair_count&quot;] = int(_state[&quot;repair_count&quot;]) + 1
+
+        verification = _probe(vbox)
+        if verification[&quot;ok&quot;]:
+            _state.update({
+                &quot;status&quot;: &quot;repaired&quot;,
+                &quot;healthy&quot;: True,
+                &quot;consecutive_failures&quot;: 0,
+                &quot;last_error&quot;: None,
+                &quot;active_incident&quot;: False,
+            })
+            _record(&quot;repaired&quot;, repair=repair)
+        else:
+            _state.update({
+                &quot;status&quot;: &quot;failed&quot;,
+                &quot;healthy&quot;: False,
+                &quot;last_error&quot;: verification[&quot;failures&quot;],
+            })
+            correlation = _windows_event_correlation()
+            recommendation = _recovery_recommendation(verification, repair)
+            repair[&quot;windows_event_correlation&quot;] = correlation
+            repair[&quot;recommendation&quot;] = recommendation
+            _record(
+                &quot;repair-failed&quot;,
+                repair=repair,
+                verification=verification,
+                recommendation=recommendation,
+            )
+
+        return _snapshot(
+            probe=verification,
+            repair=repair,
+            vboxmanage=vbox,
+        )
+
+
+def _snapshot(**extra: Any) -&gt; dict[str, Any]:
+    return {
+        **_state,
+        &quot;history&quot;: list(_history),
+        &quot;persistent_history&quot;: persistent_history()[:MAX_HISTORY],
+        &quot;incident_log_path&quot;: incident_log_path(),
+        &quot;policy&quot;: {
+            &quot;monitor_interval_seconds&quot;: MONITOR_INTERVAL_SECONDS,
+            &quot;repair_threshold&quot;: REPAIR_THRESHOLD,
+            &quot;repair_cooldown_seconds&quot;: REPAIR_COOLDOWN_SECONDS,
+            &quot;probe_timeout_seconds&quot;: PROBE_TIMEOUT_SECONDS,
+            &quot;max_history&quot;: MAX_HISTORY,
+        },
+        &quot;processes&quot;: _process_snapshot(),
+        &quot;issue_engine&quot;: {
+            &quot;enabled&quot;: True,
+            &quot;mode&quot;: &quot;autonomous-safe-recovery&quot;,
+            &quot;supported_fixers&quot;: [&quot;restart-vboxsvc&quot;, &quot;rediscover-vboxmanage&quot;],
+            &quot;unsafe_cases&quot;: [&quot;running-vms&quot;, &quot;unknown-failure&quot;, &quot;configuration-corruption&quot;],
+        },
+        **extra,
+    }
+
+
+def get_telemetry() -&gt; dict[str, Any]:
+    return check_and_recover(force_repair=False)
+
+
+def force_repair() -&gt; dict[str, Any]:
+    return check_and_recover(force_repair=True)
+
+
+def start_monitor() -&gt; None:
+    with _lock:
+        if _state[&quot;monitor_running&quot;]:
+            return
+        _state[&quot;monitor_running&quot;] = True
+        _record(&quot;monitor-started&quot;, interval_seconds=MONITOR_INTERVAL_SECONDS)
+
+    def _loop() -&gt; None:
+        while True:
+            try:
+                check_and_recover()
+            except Exception as exc:
+                with _lock:
+                    _state[&quot;status&quot;] = &quot;failed&quot;
+                    _state[&quot;healthy&quot;] = False
+                    _state[&quot;last_error&quot;] = str(exc)
+                    _state[&quot;active_incident&quot;] = True
+                    _record(&quot;monitor-exception&quot;, error=str(exc))
+            time.sleep(max(10, MONITOR_INTERVAL_SECONDS))
+
+    thread = threading.Thread(
+        target=_loop,
+        name=&quot;NetworkLab-VBoxTelemetry&quot;,
+        daemon=True,
+    )
+    thread.start()
+</code></pre>
+</main>
+</body>
+</html>

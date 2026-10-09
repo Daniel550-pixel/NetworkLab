@@ -1,0 +1,200 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>app\services\storage_service.py - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>app\services\storage_service.py</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../app/services/storage_service.py">Open origineel bestand</a></header>
+<main>
+<pre><code>from __future__ import annotations
+
+import os
+from pathlib import Path
+from typing import Any
+
+from app.services.vm_service import VM_DEFINITIONS, _find_vm, _vboxmanage, _run
+
+DISK_SIZE_MB = 20 * 1024
+STORAGE_CONTROLLER = &quot;NetworkLab-SATA&quot;
+DISK_FORMAT = &quot;VDI&quot;
+
+
+def _machine_fields(vbox: str, name: str) -&gt; dict[str, str]:
+    ok, out, err = _run(vbox, &quot;showvminfo&quot;, name, &quot;--machinereadable&quot;)
+    if not ok:
+        raise RuntimeError(err or out or f&quot;Unable to inspect {name}.&quot;)
+    fields: dict[str, str] = {}
+    for line in out.splitlines():
+        if &quot;=&quot; in line:
+            key, value = line.split(&quot;=&quot;, 1)
+            fields[key.strip(&#39;&quot;&#39;)] = value.strip(&#39;&quot;&#39;)
+    return fields
+
+
+def _disk_path(vbox: str, name: str) -&gt; Path:
+    fields = _machine_fields(vbox, name)
+    cfg = fields.get(&quot;CfgFile&quot;)
+    if cfg:
+        return Path(cfg).parent / f&quot;{name}.vdi&quot;
+    base = Path(os.environ.get(&quot;USERPROFILE&quot;, str(Path.home()))) / &quot;VirtualBox VMs&quot; / name
+    return base / f&quot;{name}.vdi&quot;
+
+
+def _storage_for_vm(vbox: str, definition: dict[str, Any]) -&gt; dict[str, Any]:
+    name = definition[&quot;name&quot;]
+    vm = _find_vm(vbox, name)
+    if not vm:
+        return {**definition, &quot;exists&quot;: False, &quot;disk&quot;: None, &quot;iso&quot;: None}
+
+    fields = _machine_fields(vbox, name)
+    disk = (
+        fields.get(&quot;SATA-0-0&quot;)
+        or fields.get(&quot;NetworkLab-SATA-0-0&quot;)
+        or fields.get(&quot;SATA-0-1&quot;)
+        or fields.get(&quot;NetworkLab-SATA-0-1&quot;)
+    )
+    iso = (
+        fields.get(&quot;SATA-1-0&quot;)
+        or fields.get(&quot;NetworkLab-SATA-1-0&quot;)
+        or fields.get(&quot;IDE-1-0&quot;)
+    )
+    return {
+        **definition,
+        &quot;exists&quot;: True,
+        &quot;disk&quot;: disk or None,
+        &quot;disk_path&quot;: str(_disk_path(vbox, name)) if disk else None,
+        &quot;iso&quot;: iso if iso and iso.lower() != &quot;none&quot; else None,
+        &quot;storage_controller&quot;: STORAGE_CONTROLLER if fields.get(&quot;storagecontrollername0&quot;) else None,
+    }
+
+
+def attach_vm_iso(name: str, iso_path: str) -&gt; dict[str, Any]:
+    vbox = _vboxmanage()
+    if not vbox:
+        raise RuntimeError(&quot;VirtualBox VBoxManage.exe was not found.&quot;)
+    if name not in {item[&quot;name&quot;] for item in VM_DEFINITIONS}:
+        raise ValueError(&quot;Unknown NetworkLab VM.&quot;)
+    if not _find_vm(vbox, name):
+        raise RuntimeError(f&quot;{name} does not exist. Create the VM topology first.&quot;)
+
+    path = Path(iso_path).expanduser().resolve()
+    if not path.is_file():
+        raise RuntimeError(f&quot;ISO file does not exist: {path}&quot;)
+    if path.suffix.lower() != &quot;.iso&quot;:
+        raise RuntimeError(&quot;OS media must be an .iso file.&quot;)
+
+    fields = _machine_fields(vbox, name)
+    if not fields.get(&quot;storagecontrollername0&quot;):
+        raise RuntimeError(f&quot;{name} has no {STORAGE_CONTROLLER} controller. Create VM storage first.&quot;)
+
+    ok, out, err = _run(
+        vbox, &quot;storageattach&quot;, name, &quot;--storagectl&quot;, STORAGE_CONTROLLER,
+        &quot;--port&quot;, &quot;1&quot;, &quot;--device&quot;, &quot;0&quot;, &quot;--type&quot;, &quot;dvddrive&quot;,
+        &quot;--medium&quot;, str(path),
+    )
+    if not ok:
+        raise RuntimeError(err or out or f&quot;Unable to attach ISO to {name}.&quot;)
+
+    ok, out, err = _run(
+        vbox, &quot;modifyvm&quot;, name, &quot;--boot1&quot;, &quot;dvd&quot;, &quot;--boot2&quot;, &quot;disk&quot;,
+        &quot;--boot3&quot;, &quot;none&quot;, &quot;--boot4&quot;, &quot;none&quot;,
+    )
+    if not ok:
+        raise RuntimeError(err or out or f&quot;Unable to configure boot order for {name}.&quot;)
+    return get_vm_storage()
+
+
+def eject_vm_iso(name: str) -&gt; dict[str, Any]:
+    vbox = _vboxmanage()
+    if not vbox:
+        raise RuntimeError(&quot;VirtualBox VBoxManage.exe was not found.&quot;)
+    if name not in {item[&quot;name&quot;] for item in VM_DEFINITIONS}:
+        raise ValueError(&quot;Unknown NetworkLab VM.&quot;)
+    if not _find_vm(vbox, name):
+        raise RuntimeError(f&quot;{name} does not exist. Create the VM topology first.&quot;)
+
+    ok, out, err = _run(
+        vbox, &quot;storageattach&quot;, name, &quot;--storagectl&quot;, STORAGE_CONTROLLER,
+        &quot;--port&quot;, &quot;1&quot;, &quot;--device&quot;, &quot;0&quot;, &quot;--type&quot;, &quot;dvddrive&quot;, &quot;--medium&quot;, &quot;none&quot;,
+    )
+    if not ok:
+        raise RuntimeError(err or out or f&quot;Unable to eject ISO from {name}.&quot;)
+
+    ok, out, err = _run(
+        vbox, &quot;modifyvm&quot;, name, &quot;--boot1&quot;, &quot;disk&quot;, &quot;--boot2&quot;, &quot;none&quot;,
+        &quot;--boot3&quot;, &quot;none&quot;, &quot;--boot4&quot;, &quot;none&quot;,
+    )
+    if not ok:
+        raise RuntimeError(err or out or f&quot;Unable to restore disk boot order for {name}.&quot;)
+    return get_vm_storage()
+
+
+def get_vm_storage() -&gt; dict[str, Any]:
+    vbox = _vboxmanage()
+    if not vbox:
+        return {&quot;available&quot;: False, &quot;vms&quot;: [], &quot;error&quot;: &quot;VBoxManage.exe not found.&quot;}
+    return {
+        &quot;available&quot;: True,
+        &quot;disk_size_gb&quot;: DISK_SIZE_MB // 1024,
+        &quot;disk_format&quot;: DISK_FORMAT,
+        &quot;vms&quot;: [_storage_for_vm(vbox, definition) for definition in VM_DEFINITIONS],
+    }
+
+
+def create_vm_storage() -&gt; dict[str, Any]:
+    vbox = _vboxmanage()
+    if not vbox:
+        raise RuntimeError(&quot;VirtualBox VBoxManage.exe was not found.&quot;)
+
+    for definition in VM_DEFINITIONS:
+        name = definition[&quot;name&quot;]
+        if not _find_vm(vbox, name):
+            raise RuntimeError(f&quot;{name} does not exist. Create the VM topology first.&quot;)
+
+        fields = _machine_fields(vbox, name)
+        controller = fields.get(&quot;storagecontrollername0&quot;)
+        if not controller:
+            ok, out, err = _run(
+                vbox, &quot;storagectl&quot;, name, &quot;--name&quot;, STORAGE_CONTROLLER,
+                &quot;--add&quot;, &quot;sata&quot;, &quot;--controller&quot;, &quot;IntelAhci&quot;, &quot;--portcount&quot;, &quot;4&quot;,
+            )
+            if not ok:
+                raise RuntimeError(err or out or f&quot;Unable to create storage controller for {name}.&quot;)
+
+        fields = _machine_fields(vbox, name)
+        disk_attached = bool(fields.get(&quot;SATA-0-0&quot;) or fields.get(f&quot;{STORAGE_CONTROLLER}-0-0&quot;))
+        disk_path = _disk_path(vbox, name)
+
+        if not disk_attached:
+            if not disk_path.is_file():
+                disk_path.parent.mkdir(parents=True, exist_ok=True)
+                ok, out, err = _run(
+                    vbox, &quot;createhd&quot;, &quot;--filename&quot;, str(disk_path),
+                    &quot;--size&quot;, str(DISK_SIZE_MB), &quot;--format&quot;, DISK_FORMAT,
+                )
+                if not ok:
+                    raise RuntimeError(err or out or f&quot;Unable to create disk for {name}.&quot;)
+
+            ok, out, err = _run(
+                vbox, &quot;storageattach&quot;, name, &quot;--storagectl&quot;, STORAGE_CONTROLLER,
+                &quot;--port&quot;, &quot;0&quot;, &quot;--device&quot;, &quot;0&quot;, &quot;--type&quot;, &quot;hdd&quot;,
+                &quot;--medium&quot;, str(disk_path),
+            )
+            if not ok:
+                raise RuntimeError(err or out or f&quot;Unable to attach disk to {name}.&quot;)
+
+    return get_vm_storage()
+</code></pre>
+</main>
+</body>
+</html>
