@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="NetworkLab technische documentatie">
+<title>Architectuur van NetworkLab | NetworkLab</title>
+<style>
+:root{color-scheme:light;--bg:#f4f6fa;--paper:#fff;--ink:#172033;--muted:#596579;--line:#dce2eb;--accent:#185abd;--code:#eef2f8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{background:#101c32;color:white;padding:18px max(22px,calc((100vw - 1050px)/2));display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+header a{color:#d7e6ff}header strong{letter-spacing:.04em}.tools{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;border:1px solid #b9c7da;background:#fff;color:#172033;border-radius:8px;padding:8px 12px;cursor:pointer}button:hover{background:#eaf1fc}
+main{max-width:1050px;margin:28px auto;padding:clamp(20px,4vw,48px);background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px #14213a0c}
+h1,h2,h3,h4{line-height:1.25;scroll-margin-top:20px}h1{font-size:2.1rem;margin-top:0}h2{font-size:1.5rem;margin-top:2.2em;border-bottom:1px solid var(--line);padding-bottom:.35em}h3{font-size:1.2rem;margin-top:1.7em}
+p,li{max-width:90ch}a{color:var(--accent);text-underline-offset:3px}code,pre{font-family:Consolas,"Cascadia Code",monospace}code{background:var(--code);padding:.12em .3em;border-radius:4px;overflow-wrap:anywhere}pre{background:#111827;color:#e5edf9;padding:18px;border-radius:10px;overflow:auto;line-height:1.5}pre code{background:none;color:inherit;padding:0;white-space:pre}
+blockquote{margin:1.5em 0;padding:12px 18px;border-left:4px solid var(--accent);background:#f0f5ff}.table-wrap{overflow-x:auto;margin:1em 0}table{border-collapse:collapse;width:100%;font-size:.95rem}th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}th{background:#edf2f9}tr:nth-child(even) td{background:#fafbfd}
+footer{max-width:1050px;margin:0 auto 30px;padding:0 20px;color:var(--muted);font-size:.88rem}
+#sourcePanel{display:none;max-width:1050px;margin:0 auto 28px;padding:0 20px}#sourceEditor{width:100%;min-height:65vh;font:13px/1.5 Consolas,monospace;padding:14px;border:1px solid var(--line);border-radius:8px}
+@media(max-width:650px){header{align-items:flex-start}main{margin:12px;border-radius:10px;padding:20px}h1{font-size:1.7rem}table{font-size:.86rem}}
+@media print{body{background:white}header,.tools,#sourcePanel{display:none!important}main{max-width:none;margin:0;padding:0;border:0;box-shadow:none}a{color:inherit;text-decoration:none}pre{white-space:pre-wrap;overflow-wrap:anywhere}footer{display:none}h2,h3{break-after:avoid}}
+</style>
+</head>
+<body>
+<header><div><strong>NETWORKLAB</strong><br><a href="README.html">Documentatie-index</a></div><div class="tools"><button type="button" onclick="window.print()">Afdrukken / PDF</button><button type="button" id="editButton">HTML-bron bekijken/bewerken</button><button type="button" id="downloadButton">HTML downloaden</button></div></header>
+<main id="document"><h1>Architectuur van NetworkLab</h1>
+<h2>1. Overzicht</h2>
+<p>NetworkLab combineert een lokale webinterface met PowerShell-diagnostiek, Python-monitoring en optionele VirtualBox-labfuncties. De onderdelen zijn bedoeld om netwerk- en infrastructuurstatus zichtbaar en controleerbaar te maken.</p>
+<h2>2. Logische componenten</h2>
+<div class="table-wrap"><table><thead><tr><th>Component</th><th>Locatie</th><th>Verantwoordelijkheid</th></tr></thead><tbody>
+<tr><td>Lokale HTTP-server</td><td>app/server.py</td><td>Serveert webbestanden en lokale API-routes</td></tr>
+<tr><td>Webinterface</td><td>web/</td><td>Dashboard, statusweergave en gebruikersbediening</td></tr>
+<tr><td>Labconfiguratie</td><td>config/lab-config.json</td><td>Veiligheidsinstellingen en labparameters</td></tr>
+<tr><td>PowerShell-tools</td><td>powershell/</td><td>Windows-netwerkinspectie, beheer en diagnostiek</td></tr>
+<tr><td>Python-monitoring</td><td>python/monitoring/</td><td>Periodieke of handmatige statusverzameling</td></tr>
+<tr><td>Python-diagnostiek</td><td>python/diagnostics/</td><td>Gerichte netwerkdiagnostiek</td></tr>
+<tr><td>Rapportage</td><td>python/reporting/</td><td>Resultaten verwerken en rapporten schrijven</td></tr>
+<tr><td>Tests</td><td>tests/</td><td>Controle van netwerk-, connectiviteits- en infrastructuurgedrag</td></tr>
+<tr><td>Documentatie</td><td>docs/</td><td>Procedures, topologie en bewijsregistratie</td></tr>
+<tr><td>CI</td><td>.github/workflows/</td><td>Automatische validatie volgens workflowconfiguratie</td></tr>
+</tbody></table></div>
+<p>Controleer de actuele bestandsstructuur in de repository; deze tabel is de logische architectuur en geen garantie dat iedere module in elke branch aanwezig is.</p>
+<h2>3. Gegevensstroom</h2>
+<p>Beheerder | v Browser: http://127.0.0.1:8501 | v Lokale HTTP-server (app/server.py)</p>
+<p>|                         | v                         v web/ UI                lokale API-routes | +---------------+---------------+</p>
+<p>|               |               | v               v               v hoststatus       VirtualBox       labconfig</p>
+<p>|               |               | +---------------+---------------+ | v status in de UI</p>
+<p>PowerShell- en Python-tools kunnen afzonderlijk worden uitgevoerd om observaties te verzamelen en resultaten vast te leggen. Een rapport hoort gebaseerd te zijn op de werkelijk verzamelde gegevens.</p>
+<h2>4. Lokale netwerkgrens</h2>
+<p>De webapp is ontworpen voor localhost-gebruik via 127.0.0.1. Gebruik deze interface niet als publiek toegankelijke beheersconsole. De applicatie-laag en het VirtualBox host-only lab zijn verschillende netwerkgrenzen:</p>
+<ul>
+<li>localhost is voor de browserinterface op de host;</li>
+<li>NetworkLab-Lab is het virtuele segment voor de gastmachines;</li>
+<li>de documentatie gaat niet uit van een fysieke LAN-bridge.</li>
+</ul>
+<h2>5. Veiligheidsontwerp</h2>
+<ul>
+<li>Netwerkwijzigingen zijn standaard uitgeschakeld in de labconfiguratie.</li>
+<li>Configuratieacties moeten een expliciete scope gebruiken.</li>
+<li>Inspectie gaat vooraf aan configuratie.</li>
+<li>Geen automatische OS-downloads of externe ISO-selectie worden verondersteld.</li>
+<li>Werkelijke observaties worden onderscheiden van gesimuleerde gebeurtenissen.</li>
+<li>Geheimen horen niet in broncode, commits, logs of screenshots.</li>
+</ul>
+<h2>6. Foutisolatie</h2>
+<p>Onderzoek problemen in deze volgorde:</p>
+<ol>
+<li>Browser en localhost-poort.</li>
+<li>HTTP-server en terminaluitvoer.</li>
+<li>API- of applicatielaag.</li>
+<li>Hostnetwerk en adapterstatus.</li>
+<li>VirtualBox host-only segment.</li>
+<li>Gast-OS, DHCP en guest-to-guest-connectiviteit.</li>
+</ol>
+<p>Zie <a href="troubleshooting.html">Troubleshooting</a> voor concrete controles.</p></main>
+<section id="sourcePanel"><h2>HTML-bron</h2><p>Bewerk de bron hieronder en kies “Voorbeeld bijwerken” om de wijziging lokaal te bekijken. Download daarna de HTML en commit het bestand naar GitHub om de wijziging blijvend te maken.</p><textarea id="sourceEditor" spellcheck="false"></textarea><div class="tools"><button type="button" id="previewButton">Voorbeeld bijwerken</button><button type="button" id="downloadEditedButton">Bewerkte HTML downloaden</button></div></section>
+<footer>NetworkLab-documentatie · Bewaar wijzigingen in de GitHub-repository om ze blijvend te maken.</footer>
+<script>
+const sourcePanel=document.getElementById('sourcePanel'),editor=document.getElementById('sourceEditor');
+document.getElementById('editButton').addEventListener('click',()=>{sourcePanel.style.display=sourcePanel.style.display==='block'?'none':'block';if(!editor.value)editor.value='<!doctype html>\n'+document.documentElement.outerHTML;sourcePanel.scrollIntoView({behavior:'smooth'});});
+function download(text,name){const a=document.createElement('a');const url=URL.createObjectURL(new Blob([text],{type:'text/html;charset=utf-8'}));a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
+document.getElementById('downloadButton').addEventListener('click',()=>download('<!doctype html>\n'+document.documentElement.outerHTML,location.pathname.split('/').pop()||'networklab-document.html'));
+document.getElementById('previewButton').addEventListener('click',()=>{try{const d=new DOMParser().parseFromString(editor.value,'text/html');if(d.querySelector('parsererror'))throw Error('HTML kon niet worden gelezen');document.getElementById('document').innerHTML=d.body.querySelector('main')?.innerHTML||d.body.innerHTML;}catch(e){alert('HTML-fout: '+e.message);}});
+document.getElementById('downloadEditedButton').addEventListener('click',()=>download(editor.value,'networklab-document-edited.html'));
+</script>
+</body></html>
