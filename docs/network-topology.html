@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Netwerktopologie van het NetworkLab-stageproject, inclusief host-only netwerk, VirtualBox-VM's en toelichting op verificatie.">
+<title>NetworkLab | Netwerktopologie</title>
+<style>
+:root{color-scheme:light;--ink:#172033;--muted:#536174;--line:#cbd5e1;--panel:#f4f7fb;--blue:#1459a6;--blue-soft:#e7f0ff;--green:#176b4d;--green-soft:#e6f6ee;--amber:#8a5200;--amber-soft:#fff4db}
+*{box-sizing:border-box}body{margin:0;background:#fff;color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1180px;margin:auto;padding:28px 22px 56px}header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:24px}
+.eyebrow{text-transform:uppercase;letter-spacing:.1em;font-size:.78rem;font-weight:700;color:var(--blue)}h1{font-size:clamp(2rem,4vw,3rem);line-height:1.12;margin:.35rem 0}h2{margin-top:2.2rem;font-size:1.5rem}h3{margin:.2rem 0 .5rem;font-size:1.05rem}
+p{max-width:82ch}a{color:var(--blue)}.muted{color:var(--muted)}.notice{padding:14px 16px;border-left:4px solid var(--amber);background:var(--amber-soft);border-radius:8px;margin:18px 0}
+.diagram{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fbfdff;overflow-x:auto}.diagram svg{display:block;width:100%;min-width:720px;height:auto}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--ink)}.node{fill:#fff;stroke:#8da1b9;stroke-width:2}.node-blue{fill:var(--blue-soft);stroke:var(--blue)}.node-green{fill:var(--green-soft);stroke:var(--green)}.network{fill:#f2f7ff;stroke:#5d83bd;stroke-width:2;stroke-dasharray:8 6}.wire{stroke:#64748b;stroke-width:3;fill:none}.wire-dash{stroke:#64748b;stroke-width:2;stroke-dasharray:6 5;fill:none}.label{font-size:15px;font-weight:700}.sub{font-size:12px;fill:var(--muted)}.section-card{border:1px solid var(--line);border-radius:12px;padding:16px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:.78rem;font-weight:700;background:var(--blue-soft);color:#124a89}.pill-green{background:var(--green-soft);color:var(--green)}table{width:100%;border-collapse:collapse;margin:14px 0}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--panel)}code{background:var(--panel);padding:2px 5px;border-radius:4px}footer{margin-top:36px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted)}
+@media(max-width:600px){main{padding:20px 14px}.diagram{padding:4px}th,td{padding:7px;font-size:.92rem}}
+@media print{.diagram{overflow:visible}.diagram svg{min-width:0}.notice{break-inside:avoid}a{color:inherit;text-decoration:none}main{max-width:none;padding:0}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="eyebrow">NetworkLab · Technische documentatie</div>
+<h1>Netwerktopologie</h1>
+<p class="muted">Logische weergave van de lokale VirtualBox-labomgeving. De tekening is inline SVG en kan rechtstreeks in dit HTML-bestand worden aangepast.</p>
+<p><a href="../README.md">Project-README</a> · <a href="incident-simulation.md">Incident- en monitoringdocumentatie</a> · <a href="b1-k2-w1-w2-evidence.md">Bewijsmatrix B1-K2-W1/W2</a></p>
+</header>
+
+<div class="notice"><strong>Belangrijk onderscheid:</strong> de netwerknaam en het subnet hieronder beschrijven de vastgelegde labconfiguratie. De actuele IP-adressen van de gastbesturingssystemen zijn niet in deze documentatie geverifieerd en worden daarom niet verzonnen. Controleer ze in VirtualBox en in de gast-OS'en voordat je deze tekening als definitieve as-built-topologie inlevert.</div>
+
+<h2>1. Logische netwerktekening</h2>
+<p>De Windows-host beheert de VirtualBox-VM's. De VM's zijn bedoeld voor gescheiden beheer-, infrastructuur- en clientrollen. De host-only adapter biedt communicatie tussen de host en aangesloten VM's zonder dat deze verbinding op zichzelf internettoegang garandeert.</p>
+<div class="diagram" role="img" aria-label="Netwerktopologie met Windows-host, host-only adapter en drie VirtualBox-VM's op NetworkLab-Lab">
+<svg viewBox="0 0 1040 590" xmlns="http://www.w3.org/2000/svg" aria-labelledby="topologyTitle topologyDesc">
+<title id="topologyTitle">NetworkLab logische netwerktopologie</title><desc id="topologyDesc">Windows-host met VirtualBox, host-only adapter 192.168.77.1, netwerk NetworkLab-Lab 192.168.77.0/24 en drie VM-rollen. IP-adressen van gasten moeten nog worden gecontroleerd.</desc>
+<rect x="20" y="18" width="1000" height="552" rx="18" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+<rect class="node node-blue" x="330" y="42" width="380" height="90" rx="12"/>
+<text class="label" x="520" y="72" text-anchor="middle">Windows-host</text><text class="sub" x="520" y="95" text-anchor="middle">VirtualBox 7.x · NetworkLab-app</text><text class="sub" x="520" y="114" text-anchor="middle">PowerShell-beheer en diagnostiek</text>
+<path class="wire" d="M520 132 V174"/>
+<rect class="node" x="355" y="174" width="330" height="74" rx="10"/>
+<text class="label" x="520" y="202" text-anchor="middle">Host-only adapter</text><text class="sub" x="520" y="225" text-anchor="middle">Hostadres: 192.168.77.1/24</text>
+<path class="wire" d="M520 248 V280"/>
+<rect class="network" x="65" y="280" width="910" height="72" rx="14"/>
+<text class="label" x="520" y="309" text-anchor="middle">VirtualBox-netwerk: NetworkLab-Lab</text>
+<text class="sub" x="520" y="332" text-anchor="middle">Subnet: 192.168.77.0/24 · DHCP-pool vastgelegd: 192.168.77.100–192.168.77.200</text>
+<path class="wire" d="M520 352 V380 H190 V405 M520 380 V405 M520 380 H850 V405"/>
+<rect class="node node-green" x="75" y="405" width="230" height="110" rx="12"/>
+<text class="label" x="190" y="435" text-anchor="middle">VM01 · Management</text><text class="sub" x="190" y="458" text-anchor="middle">Beheerrol</text><text class="sub" x="190" y="481" text-anchor="middle">Gast-IP: verifiëren</text>
+<rect class="node node-green" x="405" y="405" width="230" height="110" rx="12"/>
+<text class="label" x="520" y="435" text-anchor="middle">VM02 · Infrastructure</text><text class="sub" x="520" y="458" text-anchor="middle">Infrastructuurrol</text><text class="sub" x="520" y="481" text-anchor="middle">Gast-IP: verifiëren</text>
+<rect class="node node-green" x="735" y="405" width="230" height="110" rx="12"/>
+<text class="label" x="850" y="435" text-anchor="middle">VM03 · Client</text><text class="sub" x="850" y="458" text-anchor="middle">Clientrol</text><text class="sub" x="850" y="481" text-anchor="middle">Gast-IP: verifiëren</text>
+<text class="sub" x="520" y="546" text-anchor="middle">Conceptuele rolweergave; controleer de daadwerkelijke VM-namen en netwerkadapters.</text>
+</svg>
+</div>
+
+<h2>2. Adresseringsplan</h2>
+<table>
+<thead><tr><th>Onderdeel</th><th>Waarde</th><th>Controle voor oplevering</th></tr></thead>
+<tbody>
+<tr><td>Labnetwerk</td><td><code>NetworkLab-Lab</code></td><td>Naam vergelijken met VirtualBox Host Network Manager.</td></tr>
+<tr><td>IPv4-subnet</td><td><code>192.168.77.0/24</code></td><td>Subnetmasker moet <code>255.255.255.0</code> zijn.</td></tr>
+<tr><td>Host-only hostadres</td><td><code>192.168.77.1</code></td><td>Controleren met <code>ipconfig</code> op Windows.</td></tr>
+<tr><td>DHCP-pool</td><td><code>192.168.77.100–192.168.77.200</code></td><td>Controleren of DHCP is ingeschakeld en de pool overeenkomt.</td></tr>
+<tr><td>Gastadressen</td><td>Nog te verifiëren</td><td>Per VM vastleggen met <code>ipconfig</code> (Windows) of <code>ip addr</code> (Linux).</td></tr>
+<tr><td>Default gateway / DNS</td><td>Niet ingevuld in deze tekening</td><td>Alleen opnemen nadat de werkelijke configuratie is gecontroleerd.</td></tr>
+</tbody>
+</table>
+
+<h2>3. Verificatie op de Windows-host</h2>
+<div class="section-card">
+<h3>Adapter en IP-configuratie</h3>
+<pre><code>Get-NetIPConfiguration
+Get-NetIPAddress -AddressFamily IPv4 |
+    Sort-Object InterfaceAlias |
+    Format-Table InterfaceAlias, IPAddress, PrefixLength</code></pre>
+<h3>VirtualBox-netwerken en VM's</h3>
+<pre><code>&amp; "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" list hostonlyifs
+&amp; "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" list vms
+&amp; "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" showvminfo "NetworkLab-VM01-MGMT"</code></pre>
+<p class="muted">Gebruik bij <code>showvminfo</code> de exacte VM-naam die door <code>list vms</code> wordt weergegeven. Herhaal voor elke VM en noteer de werkelijk aangesloten netwerkadapter.</p>
+</div>
+
+<h2>4. Incidentafhandeling — procesweergave</h2>
+<div class="diagram" role="img" aria-label="Incidentproces van normale status naar fout, detectie, herstel en verificatie">
+<svg viewBox="0 0 1000 210" xmlns="http://www.w3.org/2000/svg" aria-labelledby="flowTitle">
+<title id="flowTitle">Gesimuleerde incidentcyclus</title>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64748b"/></marker></defs>
+<g class="wire" marker-end="url(#arrow)"><path d="M180 90 H225"/><path d="M370 90 H415"/><path d="M560 90 H605"/><path d="M750 90 H795"/></g>
+<rect class="node" x="20" y="52" width="160" height="76" rx="10"/><text class="label" x="100" y="82" text-anchor="middle">NORMAL</text><text class="sub" x="100" y="104" text-anchor="middle">Beginsituatie</text>
+<rect class="node" x="225" y="52" width="145" height="76" rx="10"/><text class="label" x="297" y="82" text-anchor="middle">FAULT</text><text class="sub" x="297" y="104" text-anchor="middle">InjectFault</text>
+<rect class="node node-blue" x="415" y="52" width="145" height="76" rx="10"/><text class="label" x="487" y="82" text-anchor="middle">DETECTED</text><text class="sub" x="487" y="104" text-anchor="middle">Detect</text>
+<rect class="node" x="605" y="52" width="145" height="76" rx="10"/><text class="label" x="677" y="82" text-anchor="middle">RECOVERY</text><text class="sub" x="677" y="104" text-anchor="middle">Recover</text>
+<rect class="node node-green" x="795" y="52" width="180" height="76" rx="10"/><text class="label" x="885" y="82" text-anchor="middle">VERIFIED → NORMAL</text><text class="sub" x="885" y="104" text-anchor="middle">Verify</text>
+<text class="sub" x="500" y="166" text-anchor="middle">Deze cyclus wijzigt een lokale simulatiestatus en JSONL-logs; het is geen echte netwerkstoring.</text>
+</svg>
+</div>
+
+<h2>5. Legenda en grenzen</h2>
+<div class="grid">
+<div class="section-card"><span class="pill">Blauw</span><h3>Host / beheer</h3><p class="muted">Windows-host, VirtualBox en lokaal beheer.</p></div>
+<div class="section-card"><span class="pill pill-green">Groen</span><h3>Virtuele systemen</h3><p class="muted">VM-rollen; werkelijke gast-IP's moeten nog worden vastgesteld.</p></div>
+<div class="section-card"><span class="pill">Gestippeld kader</span><h3>Virtueel netwerk</h3><p class="muted">Host-only netwerksegment, niet automatisch een internetverbinding.</p></div>
+</div>
+<p>Deze pagina is een documentatietekening, geen live discovery. Werk de diagrammen bij nadat de echte adapters, VM-namen, gast-IP-adressen en eventuele services zijn gecontroleerd.</p>
+<footer>NetworkLab · Stageproject · HTML en inline SVG · Laatste documentatie-update: 9 oktober 2026</footer>
+</main>
+</body>
+</html>
