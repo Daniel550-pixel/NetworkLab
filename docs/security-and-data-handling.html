@@ -1,0 +1,51 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Beveiliging en gegevensbeheer | NetworkLab</title><style>*{box-sizing:border-box}body{margin:0;background:#f4f6fa;color:#172033;font:16px/1.65 system-ui,sans-serif}header{background:#101c32;color:#fff;padding:18px max(22px,calc((100vw - 1050px)/2));display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}header a{color:#d7e6ff}button{padding:8px 12px;border-radius:8px;border:1px solid #b9c7da;cursor:pointer}main{max-width:1050px;margin:28px auto;padding:clamp(20px,4vw,48px);background:white;border:1px solid #dce2eb;border-radius:14px}h1{font-size:2.1rem}h2{margin-top:2em;border-bottom:1px solid #dce2eb}a{color:#185abd}code,pre{font-family:Consolas,monospace}code{background:#eef2f8;padding:.12em .3em;border-radius:4px}pre{background:#111827;color:#e5edf9;padding:18px;border-radius:10px;overflow:auto}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{border:1px solid #dce2eb;padding:9px;text-align:left;vertical-align:top}th{background:#edf2f9}#sourcePanel{display:none;max-width:1050px;margin:0 auto 25px}textarea{width:100%;min-height:65vh;font:13px Consolas,monospace}@media print{header,#sourcePanel{display:none}main{margin:0;border:0}}@media(max-width:650px){main{margin:10px;padding:20px}}</style></head><body><header><div><strong>NETWORKLAB</strong><br><a href="README.html">Documentatie-index</a></div><div><button onclick="print()">Afdrukken / PDF</button> <button id="edit">HTML-bron bewerken</button> <button id="download">HTML downloaden</button></div></header><main id="document"><h1>Beveiliging en gegevensbeheer</h1>
+<h2>Doel</h2>
+<p>NetworkLab is bedoeld voor lokaal leren, beheer en gecontroleerde tests. De veiligheidsmaatregelen voorkomen dat een test onbedoeld een productieomgeving raakt of gevoelige gegevens in de repository terechtkomen.</p>
+<h2>Netwerkgrenzen</h2>
+<ul>
+<li>De webapp hoort bereikbaar te zijn via 127.0.0.1.</li>
+<li>Het VM-lab gebruikt de VirtualBox host-only netwerkmodus.</li>
+<li>De gedocumenteerde topologie vereist geen fysieke bridge naar het thuis- of bedrijfsnetwerk.</li>
+<li>Schakel geen bridge, port-forwarding of externe toegang in zonder expliciete opdracht en risicoanalyse.</li>
+<li>Controleer de feitelijke instellingen; vertrouw niet uitsluitend op een diagram.</li>
+</ul>
+<h2>Least privilege</h2>
+<ul>
+<li>Gebruik een standaardaccount waar mogelijk.</li>
+<li>Voer PowerShell als administrator alleen uit wanneer de taak dat werkelijk vereist.</li>
+<li>Controleer iedere opdracht die adapters, services, firewallregels, routes, VM's of virtuele schijven kan wijzigen.</li>
+<li>Gebruik geen verwijder- of resetcommando's als eerste diagnostische stap.</li>
+</ul>
+<h2>Geheimen en persoonsgegevens</h2>
+<p>Commit of deel nooit:</p>
+<ul>
+<li>wachtwoorden of herstelcodes;</li>
+<li>API-tokens, sessiecookies of private sleutels;</li>
+<li>persoonlijke identificatiegegevens die niet nodig zijn voor de opdracht;</li>
+<li>screenshots waarop credentials, persoonlijke bestanden of gevoelige netwerkdetails zichtbaar zijn.</li>
+</ul>
+<p>Gebruik voor screenshots en rapporten alleen de informatie die nodig is om de test aan te tonen. Redigeer irrelevante gegevens.</p>
+<h2>Logs en bewijs</h2>
+<p>Bewaar bij bewijs de context die nodig is om het resultaat te reproduceren, maar geen secrets. Gebruik betekenisvolle bestandsnamen, bijvoorbeeld datum-component-test. Controleer bestanden vóór commit:</p>
+<p>git status --short git diff --check</p>
+<p>Controleer ook of nieuw toegevoegde logs geen tokens of wachtwoorden bevatten.</p>
+<h2>Configuratie en wijzigingscontrole</h2>
+<ul>
+<li>Netwerkwijzigingen staan standaard uit.</li>
+<li>De echte interface moet expliciet worden gekozen.</li>
+<li>Inspectie en bewijsverzameling gaan vooraf aan wijziging.</li>
+<li>Noteer de oorspronkelijke toestand en een rollbackplan.</li>
+<li>Valideer de toestand na iedere wijziging.</li>
+</ul>
+<h2>Incidentrespons</h2>
+<p>Bij een onbedoelde wijziging:</p>
+<ol>
+<li>Stop verdere wijzigingen.</li>
+<li>Leg de actuele toestand vast.</li>
+<li>Identificeer de betrokken component.</li>
+<li>Herstel de vorige toestand met een gecontroleerde procedure.</li>
+<li>Test opnieuw en noteer de uitkomst.</li>
+<li>Meld eventuele impact aan de verantwoordelijke begeleider.</li>
+</ol>
+<h2>Grenzen</h2>
+<p>Deze documentatie is geen formele security-audit en bewijst niet dat alle implementaties beveiligingsgetest zijn. Beoordeel de actuele code, configuratie en omgeving vóór gebruik buiten een geïsoleerd lab.</p></main><section id="sourcePanel"><h2>HTML-bron</h2><p>Bewerk de HTML-bron en download het bestand. Commit de wijziging naar GitHub om deze blijvend te maken.</p><textarea id="source"></textarea><button id="preview">Voorbeeld bijwerken</button><button id="save">Bewerkte HTML downloaden</button></section><script>const panel=document.getElementById('sourcePanel'),src=document.getElementById('source');function dl(t,n){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([t],{type:'text/html'}));a.href=u;a.download=n;a.click();URL.revokeObjectURL(u)}document.getElementById('edit').onclick=()=>{panel.style.display=panel.style.display==='block'?'none':'block';if(!src.value)src.value='<!doctype html>\\n'+document.documentElement.outerHTML};document.getElementById('download').onclick=()=>dl('<!doctype html>\\n'+document.documentElement.outerHTML,location.pathname.split('/').pop());document.getElementById('preview').onclick=()=>{let d=new DOMParser().parseFromString(src.value,'text/html');document.getElementById('document').innerHTML=d.querySelector('main')?.innerHTML||d.body.innerHTML};document.getElementById('save').onclick=()=>dl(src.value,'networklab-document-edited.html');</script></body></html>
