@@ -12,6 +12,7 @@ NetworkLab is een lokale, gecontroleerde labomgeving voor het installeren/config
 |---|---|---|
 | [Netwerktopologie (HTML)](network-topology.html) | De host, host-only verbinding, subnet en rollen van de VM's zijn inzichtelijk gemaakt. | Werkelijke adaptergegevens, VM-namen, gast-IP's en eventueel gateway/DNS invullen na controle. |
 | Project-README | Startprocedure, technologieën, projectonderdelen en veiligheidsmodel zijn beschreven. | Screenshots van de daadwerkelijke werkende applicatie en relevante VirtualBox-instellingen toevoegen. |
+| [Verificatieformulier](verification-record-template.md) | Een vaste registratie van host-, VM-, adresserings-, connectiviteits- en veiligheidscontroles. | Vul het formulier pas na daadwerkelijke controle in en voeg relevante, opgeschoonde bewijsstukken toe. |
 | PowerShell- en VirtualBox-controles | Een reproduceerbare controle van adapters, VM's en configuratie is mogelijk. | Datum, uitvoer en eventuele afwijkingen opslaan als bewijsstuk. |
 | Configuratiebestanden | De labconfiguratie en veiligheidsvoorwaarden zijn als bestanden te controleren. | Noteer welke instellingen zijn aangepast, waarom en hoe de wijziging is gevalideerd. |
 
@@ -61,6 +62,7 @@ Leg per opdracht of wijziging steeds vast:
 
 - [ ] Vergelijk de werkprocesnamen en beoordelingscriteria met het officiële formulier van de opleiding.
 - [ ] Vervang de voorlopige netwerkweergave door een geverifieerde as-built-tekening.
+- [ ] Vul [het verificatieformulier](verification-record-template.md) in met de werkelijke resultaten en verwijs naar de bijbehorende bewijsbestanden.
 - [ ] Voeg schermafbeeldingen toe van de webapp en de daadwerkelijke VirtualBox-configuratie.
 - [ ] Bewaar representatieve testuitvoer, maar commit geen tijdelijke runtime-logs zonder reden.
 - [ ] Laat een begeleider controleren of ieder bewijsstuk direct aansluit op een beoordelingsindicator.
