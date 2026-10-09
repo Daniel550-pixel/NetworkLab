@@ -92,3 +92,6 @@
 "docs\\network-topology.html",".html","Handmatige HTML-netwerktekening met inline SVG","../network-topology.html"
 "docs\\b1-k2-w1-w2-evidence.md",".md","Bewijsmatrix toegevoegd; controleer officiële beoordelingsrubric",""
 "docs\\verification-record-template.md",".md","Invulbaar formulier voor reproduceerbare labverificatie",""
+"config\simulation\incident-state.json",".json","Startstatus voor incident-simulatie",""
+"powershell\manage\Start-NetworkLabMonitoringFeed.ps1",".ps1","Bestandgebaseerde monitoringfeed voor simulaties",""
+"tests\incidents\Invoke-NetworkLabIncidentSimulation.ps1",".ps1","PowerShell-script voor gesimuleerde incidentcyclus",""
