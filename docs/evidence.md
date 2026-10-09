@@ -42,6 +42,10 @@ For the actual stage lab, record the topology, interface used, intended configur
 - The diagram records configured addressing (`192.168.77.0/24`, host `192.168.77.1`, DHCP server `192.168.77.2`, pool `192.168.77.100–192.168.77.200`).
 - VM IP addresses and end-to-end connectivity are explicitly marked as pending until measured. The diagram is a documentation artefact, not proof that the guest operating systems are installed or reachable.
 
+## VM installation and connectivity evidence
+
+Follow [`vm-installation-guide.md`](vm-installation-guide.md) to install Ubuntu Server on the three VirtualBox guests and record observed DHCP addresses and connectivity results. The guide's registration table starts as **Openstaand**; update it only after performing the tests and saving the actual output/screenshots. Do not treat the planned topology as proof of working connectivity.
+
 ## Evidence standard
 
 Each recorded evidence item should identify:
