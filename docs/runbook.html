@@ -1,0 +1,36 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>NetworkLab Runbook | NetworkLab</title><style>*{box-sizing:border-box}body{margin:0;background:#f4f6fa;color:#172033;font:16px/1.65 system-ui,sans-serif}header{background:#101c32;color:#fff;padding:18px max(22px,calc((100vw - 1050px)/2));display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}header a{color:#d7e6ff}button{padding:8px 12px;border-radius:8px;border:1px solid #b9c7da;cursor:pointer}main{max-width:1050px;margin:28px auto;padding:clamp(20px,4vw,48px);background:white;border:1px solid #dce2eb;border-radius:14px}h1{font-size:2.1rem}h2{margin-top:2em;border-bottom:1px solid #dce2eb}a{color:#185abd}code,pre{font-family:Consolas,monospace}code{background:#eef2f8;padding:.12em .3em;border-radius:4px}pre{background:#111827;color:#e5edf9;padding:18px;border-radius:10px;overflow:auto}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{border:1px solid #dce2eb;padding:9px;text-align:left;vertical-align:top}th{background:#edf2f9}#sourcePanel{display:none;max-width:1050px;margin:0 auto 25px}textarea{width:100%;min-height:65vh;font:13px Consolas,monospace}@media print{header,#sourcePanel{display:none}main{margin:0;border:0}}@media(max-width:650px){main{margin:10px;padding:20px}}</style></head><body><header><div><strong>NETWORKLAB</strong><br><a href="README.html">Documentatie-index</a></div><div><button onclick="print()">Afdrukken / PDF</button> <button id="edit">HTML-bron bewerken</button> <button id="download">HTML downloaden</button></div></header><main id="document"><h1>NetworkLab Runbook</h1>
+<h2>Doel en veilige volgorde</h2>
+<p>Dit runbook is de korte operationele checklist. Begin met read-only controles en voer geen netwerkconfiguratie uit wanneer de lab-scope niet duidelijk is. Controleer in de huidige checkout of een genoemd script bestaat voordat je het uitvoert.</p>
+<h2>1. Repository en omgeving</h2>
+<p>git status --short --branch python --version $PSVersionTable.PSVersion</p>
+<p>Bekijk eerst de lokale wijzigingen. Bewaar eigen werk voordat je de repository synchroniseert.</p>
+<h2>2. Initialiseren en inspecteren</h2>
+<p>./powershell/install/Initialize-NetworkLab.ps1 ./powershell/configure/Get-NetworkLabState.ps1 ./powershell/configure/Get-NetworkConfiguration.ps1</p>
+<p>De initialisatie hoort vereisten te controleren; inspectiescripts verzamelen status. Controleer de actuele scriptinhoud wanneer onduidelijk is of een actie read-only is.</p>
+<h2>3. Netwerk- en infrastructuurvalidatie</h2>
+<p>./powershell/diagnostics/Test-NetworkLabConfiguration.ps1 ./tests/network/Test-NetworkConfiguration.ps1 ./tests/connectivity/Test-Connectivity.ps1 ./powershell/manage/Get-NetworkLabServices.ps1 ./powershell/manage/Get-NetworkLabProcesses.ps1 ./powershell/manage/Get-NetworkLabHealth.ps1</p>
+<p>Registreer verwachte én werkelijke uitkomsten. Een foutmelding is een resultaat dat moet worden onderzocht, niet iets dat uit het rapport moet worden weggelaten.</p>
+<h2>4. Webapplicatie</h2>
+<p>Start de webapp volgens de actuele README vanuit de repositoryroot. De gedocumenteerde startmethode is:</p>
+<p>.\Run-NetworkLab.ps1</p>
+<p>Open http://127.0.0.1:8501. Controleer de terminaluitvoer en stop de server met Ctrl+C. Stel de beheerinterface niet bloot aan een openbaar netwerk.</p>
+<h2>5. VirtualBox-lab controleren</h2>
+<p>$VBoxManage = 'C:\Program Files\Oracle\VirtualBox\VBoxManage.exe' if (Test-Path $VBoxManage) { &amp; $VBoxManage list vms &amp; $VBoxManage list hostonlyifs &amp; $VBoxManage list dhcpservers } else { Write-Warning 'VBoxManage.exe niet gevonden op het verwachte pad.' }</p>
+<p>Controleer de VM-namen, host-only adapter, DHCP-instellingen, virtuele schijven en ISO-koppelingen. Gebruik <a href="vm-installation-guide.html">VM-installatiehandleiding</a> voordat je gast-OS-installaties uitvoert.</p>
+<h2>6. Python-monitoring en rapportage</h2>
+<p>python ./python/monitoring/run_monitor.py '[]' | python ./python/reporting/generate_report.py</p>
+<p>Controleer de actuele scriptinterface en invoervereisten vóór uitvoering. Een lege lijst kan alleen een syntactische voorbeeldinvoer zijn en is geen echte meetdata. Gebruik voor een bewijsrapport de werkelijk verzamelde resultaten.</p>
+<h2>7. Configuratiewijzigingen</h2>
+<p>De baseline-configuratie is afgeschermd door veiligheidsinstellingen. Schakel die niet in voordat de echte labtopologie, interface en IP-plan zijn gecontroleerd en goedgekeurd. Leg de beginsituatie vast, wijzig één component tegelijk en test daarna opnieuw.</p>
+<h2>8. Bewijs vastleggen</h2>
+<p>Gebruik <a href="test-plan.html">Testplan</a> en <a href="test-and-evidence-register.html">HTML-test- en bewijsregister</a>. Noteer datum/tijd, doel, opdracht, verwacht resultaat, werkelijk resultaat, status, foutmelding en bewijsreferentie. Laat tests openstaand zolang ze niet zijn uitgevoerd.</p>
+<h2>Gerelateerde documentatie</h2>
+<ul>
+<li><a href="README.html">Documentatie-index</a></li>
+<li><a href="architecture.html">Architectuur</a></li>
+<li><a href="configuration.html">Configuratie</a></li>
+<li><a href="monitoring.html">Monitoring</a></li>
+<li><a href="troubleshooting.html">Troubleshooting</a></li>
+<li><a href="security-and-data-handling.html">Beveiliging en gegevensbeheer</a></li>
+<li><a href="stage-competency-mapping.html">Stagecompetenties en bewijs</a></li>
+</ul></main><section id="sourcePanel"><h2>HTML-bron</h2><p>Bewerk de HTML-bron en download het bestand. Commit de wijziging naar GitHub om deze blijvend te maken.</p><textarea id="source"></textarea><button id="preview">Voorbeeld bijwerken</button><button id="save">Bewerkte HTML downloaden</button></section><script>const panel=document.getElementById('sourcePanel'),src=document.getElementById('source');function dl(t,n){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([t],{type:'text/html'}));a.href=u;a.download=n;a.click();URL.revokeObjectURL(u)}document.getElementById('edit').onclick=()=>{panel.style.display=panel.style.display==='block'?'none':'block';if(!src.value)src.value='<!doctype html>\\n'+document.documentElement.outerHTML};document.getElementById('download').onclick=()=>dl('<!doctype html>\\n'+document.documentElement.outerHTML,location.pathname.split('/').pop());document.getElementById('preview').onclick=()=>{let d=new DOMParser().parseFromString(src.value,'text/html');document.getElementById('document').innerHTML=d.querySelector('main')?.innerHTML||d.body.innerHTML};document.getElementById('save').onclick=()=>dl(src.value,'networklab-document-edited.html');</script></body></html>
