@@ -114,6 +114,24 @@ No production-network assumptions are encoded in the repository.
 
 The web layer is now independent of Streamlit and runs as a local Python HTTP application on `127.0.0.1`.
 
+## Validation
+
+Run the Python infrastructure and documentation-link tests from the repository root:
+
+```powershell
+python -m pip install pytest
+python -m compileall -q app python tests
+python -m pytest tests/infrastructure -q
+```
+
+Run the incident simulation integration test in PowerShell:
+
+```powershell
+.\tests\incidents\Test-NetworkLabIncidentSimulation.ps1
+```
+
+The Python documentation tests verify local links in the generated portal and the HTML paths listed in its CSV inventory. These tests validate repository consistency; they do not prove that the VirtualBox lab or guest connectivity is working.
+
 ## Project documentation
 
 - [Netwerktopologie (HTML)](docs/network-topology.html) — inline-SVG-netwerktekening, adresseringsplan en verificatiecommando's.
