@@ -2,7 +2,7 @@ name: NetworkLab Validation
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/vm-readiness]
   pull_request:
     branches: [main]
 
