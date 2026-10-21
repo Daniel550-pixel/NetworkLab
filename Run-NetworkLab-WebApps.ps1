@@ -1,5 +1,4 @@
 [CmdletBinding()]
-param([int]$ClientPort=8510,[int]$MgmtPort=8511,[int]$InfraPort=8512)
 $ErrorActionPreference="Stop"
 $ProjectRoot=Split-Path -Parent $MyInvocation.MyCommand.Path
 $PythonCommand=Get-Command python -ErrorAction SilentlyContinue
@@ -8,9 +7,9 @@ $Python=$PythonCommand.Source
 $LogDir=Join-Path $ProjectRoot "logs"
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 $Apps=@(
- @{Name="CLIENT";Port=$ClientPort;Url="http://127.0.0.1:$ClientPort";Directory=(Join-Path $ProjectRoot "apps\client");Kind="static"},
- @{Name="MGMT";Port=$MgmtPort;Url="http://127.0.0.1:$MgmtPort";Directory=(Join-Path $ProjectRoot "apps\mgmt");Kind="static"},
- @{Name="INFRA";Port=$InfraPort;Url="http://127.0.0.1:$InfraPort";Directory=(Join-Path $ProjectRoot "apps\infra");Kind="infra"}
+ @{Name="CLIENT";Port=8510;Url="http://127.0.0.1:8510";Directory=(Join-Path $ProjectRoot "apps\client");Kind="static"},
+ @{Name="MGMT";Port=8511;Url="http://127.0.0.1:8511";Directory=(Join-Path $ProjectRoot "apps\mgmt");Kind="static"},
+ @{Name="INFRA";Port=8512;Url="http://127.0.0.1:8512";Directory=(Join-Path $ProjectRoot "apps\infra");Kind="infra"}
 )
 foreach($App in $Apps){
  if(-not(Test-Path -LiteralPath $App.Directory -PathType Container)){throw "Applicatiemap ontbreekt: $($App.Directory)"}
@@ -28,6 +27,13 @@ foreach($App in $Apps){
 }
 Start-Sleep -Seconds 2
 Write-Host "`n=== NETWORKLAB WEBAPPS ===" -ForegroundColor Cyan
-foreach($App in $Started){$Proc=Get-Process -Id $App.PID -ErrorAction SilentlyContinue;$Status=if($Proc){"PROCESS STARTED"}else{"PROCESS EXITED - inspect logs"};[pscustomobject]@{App=$App.Name;Status=$Status;PID=$App.PID;URL=$App.Url}|Format-Table -AutoSize}
+$Results=@()
+foreach($App in $Started){
+ $Proc=Get-Process -Id $App.PID -ErrorAction SilentlyContinue
+ $HttpStatus="NOT TESTED"
+ try{$Response=Invoke-WebRequest -Uri $App.Url -TimeoutSec 3 -UseBasicParsing;$HttpStatus=[string][int]$Response.StatusCode}catch{$HttpStatus="HTTP FAILED - inspect logs"}
+ $Results += [pscustomobject]@{App=$App.Name;Process=if($Proc){"RUNNING"}else{"EXITED"};HTTP=$HttpStatus;PID=$App.PID;URL=$App.Url}
+}
+$Results | Format-Table -AutoSize
 Write-Host "Logbestanden: $LogDir" -ForegroundColor DarkGray
 Write-Host "Alle apps binden aan 127.0.0.1; er worden geen firewall- of hostnetwerkwijzigingen uitgevoerd." -ForegroundColor Yellow
