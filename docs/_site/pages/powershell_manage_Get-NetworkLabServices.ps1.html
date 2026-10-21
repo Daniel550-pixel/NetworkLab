@@ -1,0 +1,33 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>powershell\manage\Get-NetworkLabServices.ps1 - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>powershell\manage\Get-NetworkLabServices.ps1</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../powershell/manage/Get-NetworkLabServices.ps1">Open origineel bestand</a></header>
+<main>
+<pre><code>[CmdletBinding()]
+param(
+    [string[]]$Name = @(&#39;Dnscache&#39;,&#39;Dhcp&#39;,&#39;NlaSvc&#39;)
+)
+
+$ErrorActionPreference = &#39;Stop&#39;
+
+Get-Service -Name $Name -ErrorAction SilentlyContinue |
+    Select-Object Name, DisplayName, Status, StartType |
+    Sort-Object Name |
+    Format-Table -AutoSize
+</code></pre>
+</main>
+</body>
+</html>

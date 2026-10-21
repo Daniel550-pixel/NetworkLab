@@ -1,0 +1,78 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>app\services\virtualbox_incident_store.py - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>app\services\virtualbox_incident_store.py</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../app/services/virtualbox_incident_store.py">Open origineel bestand</a></header>
+<main>
+<pre><code>from __future__ import annotations
+
+import json
+import os
+import threading
+from collections import deque
+from pathlib import Path
+from typing import Any
+
+DEFAULT_PATH = Path(
+    os.environ.get(
+        &quot;NETWORKLAB_VBOX_INCIDENT_LOG&quot;,
+        Path(__file__).resolve().parents[2] / &quot;data&quot; / &quot;virtualbox_incidents.json&quot;,
+    )
+)
+MAX_EVENTS = int(os.environ.get(&quot;NETWORKLAB_VBOX_INCIDENT_HISTORY&quot;, &quot;500&quot;))
+_lock = threading.RLock()
+
+
+def _load() -&gt; deque[dict[str, Any]]:
+    try:
+        if not DEFAULT_PATH.exists():
+            return deque(maxlen=MAX_EVENTS)
+        payload = json.loads(DEFAULT_PATH.read_text(encoding=&quot;utf-8&quot;))
+        if not isinstance(payload, list):
+            return deque(maxlen=MAX_EVENTS)
+        return deque(
+            [item for item in payload if isinstance(item, dict)],
+            maxlen=MAX_EVENTS,
+        )
+    except (OSError, json.JSONDecodeError):
+        return deque(maxlen=MAX_EVENTS)
+
+
+_events = _load()
+
+
+def record(event: dict[str, Any]) -&gt; None:
+    with _lock:
+        _events.appendleft(event)
+        DEFAULT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        temporary = DEFAULT_PATH.with_suffix(&quot;.tmp&quot;)
+        temporary.write_text(
+            json.dumps(list(_events), indent=2, ensure_ascii=False),
+            encoding=&quot;utf-8&quot;,
+        )
+        temporary.replace(DEFAULT_PATH)
+
+
+def history() -&gt; list[dict[str, Any]]:
+    with _lock:
+        return list(_events)
+
+
+def path() -&gt; str:
+    return str(DEFAULT_PATH)
+</code></pre>
+</main>
+</body>
+</html>

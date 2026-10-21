@@ -1,0 +1,56 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>python\monitoring\network_monitor.py - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>python\monitoring\network_monitor.py</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../python/monitoring/network_monitor.py">Open origineel bestand</a></header>
+<main>
+<pre><code>&quot;&quot;&quot;NetworkLab read-only network monitoring baseline.&quot;&quot;&quot;
+
+from __future__ import annotations
+
+import platform
+import socket
+from datetime import datetime, timezone
+
+
+def check_host(host: str) -&gt; dict[str, object]:
+    &quot;&quot;&quot;Resolve a host and return a small, serializable monitoring result.&quot;&quot;&quot;
+    timestamp = datetime.now(timezone.utc).isoformat()
+    try:
+        address = socket.gethostbyname(host)
+        return {
+            &quot;timestamp&quot;: timestamp,
+            &quot;host&quot;: host,
+            &quot;resolved&quot;: True,
+            &quot;address&quot;: address,
+            &quot;platform&quot;: platform.system(),
+        }
+    except socket.gaierror as exc:
+        return {
+            &quot;timestamp&quot;: timestamp,
+            &quot;host&quot;: host,
+            &quot;resolved&quot;: False,
+            &quot;address&quot;: None,
+            &quot;platform&quot;: platform.system(),
+            &quot;error&quot;: str(exc),
+        }
+
+
+if __name__ == &quot;__main__&quot;:
+    print(check_host(&quot;localhost&quot;))
+</code></pre>
+</main>
+</body>
+</html>

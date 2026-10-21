@@ -1,0 +1,30 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>tests\infrastructure\test_inter_vm_validation.py - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>tests\infrastructure\test_inter_vm_validation.py</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../tests/infrastructure/test_inter_vm_validation.py">Open origineel bestand</a></header>
+<main>
+<pre><code>from app.services import inter_vm_validation_service as service
+
+def test_connectivity_matrix_contains_all_directional_pairs(monkeypatch):
+    monkeypatch.setattr(service, &quot;_ping&quot;, lambda ip: {&quot;reachable&quot;: False, &quot;method&quot;: &quot;icmp&quot;})
+    monkeypatch.setattr(service, &quot;_tcp&quot;, lambda ip, port: {&quot;reachable&quot;: False, &quot;port&quot;: port, &quot;method&quot;: &quot;tcp&quot;})
+    payload = service.validate_lab_connectivity()
+    assert len(payload[&quot;pairs&quot;]) == 6
+    assert all(pair[&quot;status&quot;] == &quot;host-probe-only&quot; for pair in payload[&quot;pairs&quot;])
+</code></pre>
+</main>
+</body>
+</html>

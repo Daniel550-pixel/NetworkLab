@@ -1,0 +1,395 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>web\app.js - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>web\app.js</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../web/app.js">Open origineel bestand</a></header>
+<main>
+<pre><code>const state = { data:null, health:null, evidence:null, virtualNetwork:null, vms:null, storage:null, readiness:null, architecture:null, connectivity:null, lab:null, verification:null, view:&quot;command&quot; };
+
+const meta = {
+  command:[&quot;Dashboard&quot;,&quot;Operational view of the local software network laboratory.&quot;],
+  topology:[&quot;Topology&quot;,&quot;Logical representation of the observed local network environment.&quot;],
+  interfaces:[&quot;Interfaces&quot;,&quot;Windows network adapter inventory and state.&quot;],
+  addressing:[&quot;Addressing&quot;,&quot;Observed IP configuration and addressing data.&quot;],
+  connectivity:[&quot;Connectivity&quot;,&quot;Connectivity checks and reachability observations.&quot;],
+  services:[&quot;Services&quot;,&quot;Infrastructure service state reported by the local host.&quot;],
+  diagnostics:[&quot;Diagnostics&quot;,&quot;Health signals and diagnostic output from the laboratory.&quot;],
+  evidence:[&quot;Evidence&quot;,&quot;Structured evidence output suitable for stage documentation.&quot;],
+  &quot;vm-lab&quot;:[&quot;VM Lab&quot;,&quot;VirtualBox runtime, storage and boot-state control for the isolated stage laboratory.&quot;],
+  telemetry:[&quot;Telemetry&quot;,&quot;Continuous VirtualBox health monitoring, incident detection and controlled recovery.&quot;],
+  architecture:[&quot;Architecture&quot;,&quot;Consolidated control plane, runtime, verification, recovery and evidence architecture.&quot;],
+  &quot;lab-control&quot;:[&quot;Lab Control&quot;,&quot;Provision the host-side lab, inspect roles, and verify the complete build state.&quot;],
+  &quot;guest-build&quot;:[&quot;Guest Build&quot;,&quot;OS-agnostic guest contracts and service validation boundaries for MGMT, INFRA and CLIENT.&quot;],
+  &quot;evidence-capture&quot;:[&quot;Evidence&quot;,&quot;Capture a complete lab snapshot after provisioning and guest validation.&quot;]
+};
+
+const $ = id =&gt; document.getElementById(id);
+const arr = value =&gt; Array.isArray(value) ? value : [];
+const esc = value =&gt; String(value ?? &quot;&quot;).replace(/[&amp;&lt;&gt;&quot;&#39;]/g, c =&gt; ({ &quot;&amp;&quot;:&quot;&amp;amp;&quot;,&quot;&lt;&quot;:&quot;&amp;lt;&quot;,&quot;&gt;&quot;:&quot;&amp;gt;&quot;,&quot;\&quot;&quot;:&quot;&amp;quot;&quot;,&quot;&#39;&quot;:&quot;&amp;#039;&quot; }[c]));
+const badge = (value, cls=&quot;&quot;) =&gt; &#39;&lt;span class=&quot;badge &#39;+cls+&#39;&quot;&gt;&#39;+esc(value)+&#39;&lt;/span&gt;&#39;;
+
+async function post(path, body=null){
+  const options={method:&quot;POST&quot;,cache:&quot;no-store&quot;};
+  if(body){ options.headers={&quot;Content-Type&quot;:&quot;application/json&quot;}; options.body=JSON.stringify(body); }
+  const response = await fetch(path,options);
+  const payload = await response.json();
+  if(!response.ok) throw new Error(payload.error || &quot;Request failed&quot;);
+  return payload;
+}
+
+async function get(path){
+  const response = await fetch(path,{cache:&quot;no-store&quot;});
+  const payload = await response.json();
+  if(!response.ok) throw new Error(payload.error || &quot;Request failed&quot;);
+  return payload;
+}
+
+function setStatus(){
+  const h = state.health || {};
+  const d = state.data || {};
+  const adapters = arr(d.adapters);
+  const conn = !!h.connectivity_ok;
+  const services = !!h.services_ok;
+  const operational = conn &amp;&amp; services;
+  $(&quot;lab-status&quot;).textContent = operational ? &quot;OPERATIONAL&quot; : &quot;ATTENTION&quot;;
+  $(&quot;lab-status&quot;).className = operational ? &quot;ok&quot; : &quot;bad&quot;;
+  $(&quot;connectivity-status&quot;).textContent = conn ? &quot;PASS&quot; : &quot;FAIL&quot;;
+  $(&quot;connectivity-status&quot;).className = conn ? &quot;ok&quot; : &quot;bad&quot;;
+  $(&quot;services-status&quot;).textContent = services ? &quot;HEALTHY&quot; : &quot;ATTENTION&quot;;
+  $(&quot;services-status&quot;).className = services ? &quot;ok&quot; : &quot;warn&quot;;
+  $(&quot;interface-count&quot;).textContent = adapters.length;
+  $(&quot;last-updated&quot;).textContent = &quot;UPDATED &quot; + new Date().toLocaleTimeString();
+}
+
+function table(items, columns){
+  if(!items.length) return &#39;&lt;div class=&quot;empty&quot;&gt;No data returned by the local telemetry layer.&lt;/div&gt;&#39;;
+  return &#39;&lt;div class=&quot;card&quot; style=&quot;padding:7px&quot;&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&#39;+columns.map(c=&gt;&#39;&lt;th&gt;&#39;+esc(c.label)+&#39;&lt;/th&gt;&#39;).join(&quot;&quot;)+&#39;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&#39;+
+    items.map(item=&gt;&#39;&lt;tr&gt;&#39;+columns.map(c=&gt;&#39;&lt;td&gt;&#39;+esc(typeof c.value===&quot;function&quot;?c.value(item):item[c.key])+&#39;&lt;/td&gt;&#39;).join(&quot;&quot;)+&#39;&lt;/tr&gt;&#39;).join(&quot;&quot;)+
+    &#39;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&#39;;
+}
+
+function topology(){
+  return &#39;&lt;div class=&quot;topology&quot;&gt;&lt;svg viewBox=&quot;0 0 900 430&quot; preserveAspectRatio=&quot;xMidYMid meet&quot;&gt;&#39;+
+    &#39;&lt;defs&gt;&lt;filter id=&quot;glow&quot;&gt;&lt;feGaussianBlur stdDeviation=&quot;5&quot; result=&quot;blur&quot;/&gt;&lt;feMerge&gt;&lt;feMergeNode in=&quot;blur&quot;/&gt;&lt;feMergeNode in=&quot;SourceGraphic&quot;/&gt;&lt;/feMerge&gt;&lt;/filter&gt;&lt;/defs&gt;&#39;+
+    &#39;&lt;line class=&quot;edge live&quot; x1=&quot;145&quot; y1=&quot;215&quot; x2=&quot;350&quot; y2=&quot;215&quot;/&gt;&lt;line class=&quot;edge&quot; x1=&quot;350&quot; y1=&quot;215&quot; x2=&quot;550&quot; y2=&quot;215&quot;/&gt;&lt;line class=&quot;edge live&quot; x1=&quot;550&quot; y1=&quot;215&quot; x2=&quot;755&quot; y2=&quot;215&quot;/&gt;&#39;+
+    &#39;&lt;circle cx=&quot;145&quot; cy=&quot;215&quot; r=&quot;34&quot; fill=&quot;#102735&quot; stroke=&quot;#55c7ff&quot; filter=&quot;url(#glow)&quot;/&gt;&lt;circle cx=&quot;350&quot; cy=&quot;215&quot; r=&quot;34&quot; fill=&quot;#102735&quot; stroke=&quot;#55c7ff&quot;/&gt;&lt;circle cx=&quot;550&quot; cy=&quot;215&quot; r=&quot;34&quot; fill=&quot;#102735&quot; stroke=&quot;#55c7ff&quot;/&gt;&lt;circle cx=&quot;755&quot; cy=&quot;215&quot; r=&quot;34&quot; fill=&quot;#102735&quot; stroke=&quot;#46d7a0&quot; filter=&quot;url(#glow)&quot;/&gt;&#39;+
+    &#39;&lt;text class=&quot;node-text&quot; x=&quot;145&quot; y=&quot;270&quot; text-anchor=&quot;middle&quot;&gt;HOST&lt;/text&gt;&lt;text class=&quot;node-sub&quot; x=&quot;145&quot; y=&quot;287&quot; text-anchor=&quot;middle&quot;&gt;WINDOWS&lt;/text&gt;&#39;+
+    &#39;&lt;text class=&quot;node-text&quot; x=&quot;350&quot; y=&quot;270&quot; text-anchor=&quot;middle&quot;&gt;INTERFACES&lt;/text&gt;&lt;text class=&quot;node-sub&quot; x=&quot;350&quot; y=&quot;287&quot; text-anchor=&quot;middle&quot;&gt;NIC LAYER&lt;/text&gt;&#39;+
+    &#39;&lt;text class=&quot;node-text&quot; x=&quot;550&quot; y=&quot;270&quot; text-anchor=&quot;middle&quot;&gt;TCP/IP&lt;/text&gt;&lt;text class=&quot;node-sub&quot; x=&quot;550&quot; y=&quot;287&quot; text-anchor=&quot;middle&quot;&gt;ADDRESSING&lt;/text&gt;&#39;+
+    &#39;&lt;text class=&quot;node-text&quot; x=&quot;755&quot; y=&quot;270&quot; text-anchor=&quot;middle&quot;&gt;LOOPBACK&lt;/text&gt;&lt;text class=&quot;node-sub&quot; x=&quot;755&quot; y=&quot;287&quot; text-anchor=&quot;middle&quot;&gt;127.0.0.1&lt;/text&gt;&#39;+
+    &#39;&lt;/svg&gt;&lt;/div&gt;&#39;;
+}
+
+function virtualNetworkCard(){
+  const n=state.virtualNetwork||{};
+  const exists=!!n.exists;
+  return &#39;&lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Segment&lt;/b&gt;&lt;span&gt;&#39;+esc(n.name||&quot;NetworkLab-Lab&quot;)+&#39;&lt;/span&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Subnet&lt;/b&gt;&lt;span&gt;&#39;+esc(n.network||&quot;192.168.77.0/24&quot;)+&#39;&lt;/span&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Host endpoint&lt;/b&gt;&lt;span&gt;&#39;+esc(n.host_ip||&quot;192.168.77.1&quot;)+&#39;&lt;/span&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;kv&quot;&gt;&lt;b&gt;DHCP&lt;/b&gt;&lt;span&gt;&#39;+esc(n.dhcp?n.dhcp.lower+&quot;&#226;€“&quot;+n.dhcp.upper:&quot;192.168.77.100&#226;€“192.168.77.200&quot;)+&#39;&lt;/span&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Status&lt;/b&gt;&lt;span&gt;&#39;+badge(exists?&quot;READY&quot;:&quot;NOT CREATED&quot;,exists?&quot;ok&quot;:&quot;warn&quot;)+&#39;&lt;/span&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;button class=&quot;button primary&quot; id=&quot;create-network&quot;&gt;&#39;+(exists?&quot;Reconcile virtual network&quot;:&quot;Create virtual network&quot;)+&#39;&lt;/button&gt;&#39;;
+}
+
+function vmTopologyCard(){
+  const items=arr((state.vms||{}).vms);
+  const rows=items.map(vm=&gt;{
+    const stateText=vm.exists?String(vm.state||&quot;unknown&quot;).toUpperCase():&quot;NOT CREATED&quot;;
+    const cls=vm.exists &amp;&amp; stateText===&quot;RUNNING&quot;?&quot;ok&quot;:vm.exists?&quot;warn&quot;:&quot;&quot;;
+    const actions=vm.exists ? &#39;&lt;button class=&quot;button&quot; data-vm-action=&quot;start&quot; data-vm=&quot;&#39;+esc(vm.name)+&#39;&quot;&gt;Start&lt;/button&gt;&lt;button class=&quot;button&quot; data-vm-action=&quot;stop&quot; data-vm=&quot;&#39;+esc(vm.name)+&#39;&quot;&gt;Stop&lt;/button&gt;&lt;button class=&quot;button&quot; data-vm-runtime=&quot;&#39;+esc(vm.name)+&#39;&quot;&gt;Runtime&lt;/button&gt;&#39; : &#39;&#39;;
+    return &#39;&lt;tr&gt;&lt;td&gt;&#39;+esc(vm.name)+&#39;&lt;/td&gt;&lt;td&gt;&#39;+esc(vm.role)+&#39;&lt;/td&gt;&lt;td&gt;&#39;+badge(stateText,cls)+&#39;&lt;/td&gt;&lt;td&gt;&#39;+esc(vm.network||&quot;&quot;)+&#39;&lt;/td&gt;&lt;td&gt;&#39;+actions+&#39;&lt;/td&gt;&lt;/tr&gt;&#39;;
+  }).join(&quot;&quot;);
+  return &#39;&lt;div class=&quot;card&quot;&gt;&lt;h2&gt;Virtual machine topology&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Three lab nodes attached to NetworkLab-Lab&lt;/div&gt;&lt;div style=&quot;overflow:auto&quot;&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;VM&lt;/th&gt;&lt;th&gt;Role&lt;/th&gt;&lt;th&gt;State&lt;/th&gt;&lt;th&gt;Network&lt;/th&gt;&lt;th&gt;Actions&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&#39;+(rows||&#39;&lt;tr&gt;&lt;td colspan=&quot;5&quot;&gt;No VM definitions returned.&lt;/td&gt;&lt;/tr&gt;&#39;)+&#39;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&lt;button class=&quot;button primary&quot; id=&quot;create-vms&quot;&gt;Create / reconcile VM topology&lt;/button&gt;&lt;/div&gt;&#39;;
+}
+function storageCard(){
+  const items=arr((state.storage||{}).vms);
+  const rows=items.map(vm=&gt;{
+    const disk=vm.disk ? &quot;ATTACHED&quot; : &quot;NOT CREATED&quot;;
+    const iso=vm.iso ? &quot;CONFIGURED&quot; : &quot;NOT CONFIGURED&quot;;
+    const action=vm.iso
+      ? &quot;&lt;button class=\&quot;button\&quot; data-iso-eject=\&quot;&quot;+esc(vm.name)+&quot;\&quot;&gt;Eject ISO&lt;/button&gt;&quot;
+      : &quot;&lt;button class=\&quot;button\&quot; data-iso-attach=\&quot;&quot;+esc(vm.name)+&quot;\&quot;&gt;Attach ISO&lt;/button&gt;&quot;;
+    return &quot;&lt;tr&gt;&lt;td&gt;&quot;+esc(vm.name)+&quot;&lt;/td&gt;&lt;td&gt;&quot;+esc(vm.role)+&quot;&lt;/td&gt;&lt;td&gt;&quot;+badge(disk,disk===&quot;ATTACHED&quot;?&quot;ok&quot;:&quot;warn&quot;)+&quot;&lt;/td&gt;&lt;td&gt;&quot;+badge(iso,iso===&quot;CONFIGURED&quot;?&quot;ok&quot;:&quot;warn&quot;)+&quot;&lt;/td&gt;&lt;td&gt;&quot;+esc(vm.iso||vm.disk_path||&quot;&quot;)+&quot;&lt;/td&gt;&lt;td&gt;&quot;+action+&quot;&lt;/td&gt;&lt;/tr&gt;&quot;;
+  }).join(&quot;&quot;);
+  return &quot;&lt;div class=\&quot;card\&quot;&gt;&lt;h2&gt;VM storage &amp; OS media&lt;/h2&gt;&lt;div class=\&quot;meta\&quot;&gt;20 GB local VDI storage plus explicit ISO assignment for boot/install preparation.&lt;/div&gt;&lt;div style=\&quot;overflow:auto\&quot;&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;VM&lt;/th&gt;&lt;th&gt;Role&lt;/th&gt;&lt;th&gt;Disk&lt;/th&gt;&lt;th&gt;ISO&lt;/th&gt;&lt;th&gt;Path&lt;/th&gt;&lt;th&gt;Action&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&quot;+(rows||&quot;&lt;tr&gt;&lt;td colspan=\&quot;6\&quot;&gt;No VM storage definitions returned.&lt;/td&gt;&lt;/tr&gt;&quot;)+&quot;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&lt;div class=\&quot;storage-actions\&quot;&gt;&lt;button class=\&quot;button primary\&quot; id=\&quot;create-storage\&quot;&gt;Create / reconcile 20 GB VDI storage&lt;/button&gt;&lt;div class=\&quot;iso-help\&quot;&gt;ISO attachment requires a local .iso path. NetworkLab does not download or select OS media automatically.&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&quot;;
+}
+function render(){
+  const d=state.data||{}, h=state.health||{}, e=state.evidence||{};
+  const telemetry=state.telemetry||{};
+  const adapters=arr(d.adapters), ip=arr(d.ip), conn=arr(d.connectivity), services=arr(d.services);
+  const view=state.view;
+  $(&quot;view-title&quot;).textContent=meta[view][0]; $(&quot;view-subtitle&quot;).textContent=meta[view][1];
+  let html=&quot;&quot;;
+  if(view===&quot;command&quot;){
+    const running=services.filter(x=&gt;String(x.status||&quot;&quot;).toLowerCase()===&quot;running&quot;).length;
+    const vmItems=arr((state.vms||{}).vms);
+    const runningVms=vmItems.filter(x=&gt;String(x.state||&quot;&quot;).toLowerCase()===&quot;running&quot;).length;
+    const readiness=state.readiness||{}; const t=state.telemetry||{};
+    const verified=state.verification?.verified===true;
+    const healthScore=[!!h.connectivity_ok,!!h.services_ok,!!t.healthy,!!readiness.ready,verified].filter(Boolean).length;
+    html=&#39;&lt;div class=&quot;dashboard-hero&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;NETWORKLAB CONTROL CENTER&lt;/div&gt;&lt;h2&gt;Laboratory operations&lt;/h2&gt;&lt;p&gt;Live host, virtualization, network and verification state from the local laboratory.&lt;/p&gt;&lt;/div&gt;&lt;div class=&quot;hero-state&quot;&gt;&#39;+badge(healthScore&gt;=4?&quot;STABLE&quot;:healthScore&gt;=2?&quot;DEGRADED&quot;:&quot;ATTENTION&quot;,healthScore&gt;=4?&quot;ok&quot;:healthScore&gt;=2?&quot;warn&quot;:&quot;bad&quot;)+&#39;&lt;span&gt;&#39;+healthScore+&#39;/5 control gates&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;grid four dashboard-metrics&quot;&gt;&#39;+[[&#39;Lab health&#39;,healthScore+&#39;/5&#39;],[&#39;VM runtime&#39;,runningVms+&#39;/&#39;+vmItems.length],[&#39;Readiness&#39;,String(readiness.completed??0)+&#39;/&#39;+String(readiness.total??0)],[&#39;Services&#39;,running+&#39;/&#39;+services.length]].map(x=&gt;&#39;&lt;div class=&quot;metric&quot;&gt;&lt;label&gt;&#39;+x[0]+&#39;&lt;/label&gt;&lt;strong&gt;&#39;+esc(x[1])+&#39;&lt;/strong&gt;&lt;/div&gt;&#39;).join(&quot;&quot;)+&#39;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;dashboard-section&quot;&gt;&lt;div class=&quot;section-heading&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;OPERATIONS&lt;/div&gt;&lt;h3&gt;Current system state&lt;/h3&gt;&lt;/div&gt;&lt;span class=&quot;section-note&quot;&gt;AUTO REFRESH 10S&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;grid three&quot;&gt;&#39;+
+    &#39;&lt;div class=&quot;card state-card&quot;&gt;&lt;div class=&quot;state-icon&quot;&gt;01&lt;/div&gt;&lt;div&gt;&lt;b&gt;Connectivity&lt;/b&gt;&lt;span&gt;&#39;+badge(h.connectivity_ok?&quot;PASS&quot;:&quot;FAIL&quot;,h.connectivity_ok?&quot;ok&quot;:&quot;bad&quot;)+&#39;&lt;/span&gt;&lt;/div&gt;&lt;p&gt;Host reachability and local network checks.&lt;/p&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;card state-card&quot;&gt;&lt;div class=&quot;state-icon&quot;&gt;02&lt;/div&gt;&lt;div&gt;&lt;b&gt;VirtualBox telemetry&lt;/b&gt;&lt;span&gt;&#39;+badge(t.healthy?&quot;HEALTHY&quot;:&quot;ATTENTION&quot;,t.healthy?&quot;ok&quot;:&quot;warn&quot;)+&#39;&lt;/span&gt;&lt;/div&gt;&lt;p&gt;&#39;+esc(t.active_incident?&quot;Active incident detected.&quot;:&quot;No active incident.&quot;)+&#39;&lt;/p&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;card state-card&quot;&gt;&lt;div class=&quot;state-icon&quot;&gt;03&lt;/div&gt;&lt;div&gt;&lt;b&gt;Verification&lt;/b&gt;&lt;span&gt;&#39;+badge(verified?&quot;VERIFIED&quot;:&quot;PENDING&quot;,verified?&quot;ok&quot;:&quot;warn&quot;)+&#39;&lt;/span&gt;&lt;/div&gt;&lt;p&gt;Lab verification gate across infrastructure and runtime.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;grid two dashboard-section&quot;&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;VIRTUALIZATION&lt;/div&gt;&lt;h2&gt;Lab nodes&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Runtime state of the defined laboratory VMs.&lt;/div&gt;&#39;+vmTopologyCard()+&#39;&lt;/div&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;NETWORK&lt;/div&gt;&lt;h2&gt;NetworkLab-Lab&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Host-only segment and control path.&lt;/div&gt;&#39;+virtualNetworkCard()+&#39;&lt;/div&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;grid two dashboard-section&quot;&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;READINESS&lt;/div&gt;&lt;h2&gt;Build progression&lt;/h2&gt;&lt;div class=&quot;readiness-mini&quot;&gt;&#39;+arr(readiness.steps).map((x,i)=&gt;&#39;&lt;div class=&quot;&#39;+(x.ready?&quot;ready&quot;:&quot;pending&quot;)+&#39;&quot;&gt;&lt;span&gt;0&#39;+(i+1)+&#39;&lt;/span&gt;&lt;b&gt;&#39;+esc(x.label)+&#39;&lt;/b&gt;&lt;/div&gt;&#39;).join(&quot;&quot;)+&#39;&lt;/div&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;OPERATIONS&lt;/div&gt;&lt;h2&gt;Quick navigation&lt;/h2&gt;&lt;div class=&quot;quick-actions&quot;&gt;&lt;button class=&quot;button primary&quot; data-nav-view=&quot;vm-lab&quot;&gt;Open VM Lab&lt;/button&gt;&lt;button class=&quot;button&quot; data-nav-view=&quot;guest-build&quot;&gt;Guest Build&lt;/button&gt;&lt;button class=&quot;button&quot; data-nav-view=&quot;telemetry&quot;&gt;Telemetry&lt;/button&gt;&lt;button class=&quot;button&quot; data-nav-view=&quot;evidence-capture&quot;&gt;Capture Evidence&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&#39;;
+  } else if(view===&quot;topology&quot;){
+    html=&#39;&lt;div class=&quot;page-intro&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;NETWORK CONTROL&lt;/div&gt;&lt;h2&gt;Topology&lt;/h2&gt;&lt;p&gt;Logical control path across the Windows host, adapter layer, TCP/IP stack and laboratory endpoint.&lt;/p&gt;&lt;/div&gt;&lt;span class=&quot;section-note&quot;&gt;LIVE OBSERVATION&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;card topology-card&quot;&gt;&lt;div class=&quot;card-toolbar&quot;&gt;&lt;div&gt;&lt;h2&gt;Observed network path&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Pure SVG visualization &#226;€” no external frontend dependency.&lt;/div&gt;&lt;/div&gt;&#39;+badge((state.virtualNetwork||{}).ready?&quot;READY&quot;:&quot;ATTENTION&quot;,(state.virtualNetwork||{}).ready?&quot;ok&quot;:&quot;warn&quot;)+&#39;&lt;/div&gt;&#39;+topology()+&#39;&lt;/div&gt;&#39;;
+  } else if(view===&quot;interfaces&quot;){
+    html=&#39;&lt;div class=&quot;page-intro&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;NETWORK INVENTORY&lt;/div&gt;&lt;h2&gt;Interfaces&lt;/h2&gt;&lt;p&gt;Observed Windows network adapters and their current host state.&lt;/p&gt;&lt;/div&gt;&lt;span class=&quot;section-note&quot;&gt;&#39;+adapters.length+&#39; ADAPTERS&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;card-toolbar&quot;&gt;&lt;div&gt;&lt;h2&gt;Adapter inventory&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Read-only host telemetry.&lt;/div&gt;&lt;/div&gt;&#39;+badge(adapters.length?&quot;OBSERVED&quot;:&quot;NO DATA&quot;,adapters.length?&quot;ok&quot;:&quot;warn&quot;)+&#39;&lt;/div&gt;&#39;+table(adapters,[{label:&quot;Name&quot;,key:&quot;name&quot;},{label:&quot;Status&quot;,key:&quot;status&quot;},{label:&quot;Description&quot;,key:&quot;description&quot;},{label:&quot;MAC&quot;,key:&quot;mac&quot;}])+&#39;&lt;/div&gt;&#39;;
+  } else if(view===&quot;addressing&quot;){
+    html=&#39;&lt;div class=&quot;page-intro&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;NETWORK CONFIGURATION&lt;/div&gt;&lt;h2&gt;Addressing&lt;/h2&gt;&lt;p&gt;Observed IP configuration used by the local laboratory host.&lt;/p&gt;&lt;/div&gt;&lt;span class=&quot;section-note&quot;&gt;&#39;+ip.length+&#39; ADDRESSES&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;card-toolbar&quot;&gt;&lt;div&gt;&lt;h2&gt;IP configuration&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Current interface addressing returned by PowerShell.&lt;/div&gt;&lt;/div&gt;&#39;+badge(ip.length?&quot;OBSERVED&quot;:&quot;NO DATA&quot;,ip.length?&quot;ok&quot;:&quot;warn&quot;)+&#39;&lt;/div&gt;&#39;+table(ip,[{label:&quot;Interface&quot;,key:&quot;interface&quot;},{label:&quot;Address&quot;,key:&quot;address&quot;},{label:&quot;Prefix&quot;,key:&quot;prefix&quot;},{label:&quot;Gateway&quot;,key:&quot;gateway&quot;}])+&#39;&lt;/div&gt;&#39;;
+  } else if(view===&quot;connectivity&quot;){
+    const passed=conn.filter(x=&gt;String(x.status||x.result||&quot;&quot;).toLowerCase().includes(&quot;pass&quot;)||String(x.status||&quot;&quot;).toLowerCase()===&quot;reachable&quot;).length;
+    html=&#39;&lt;div class=&quot;page-intro&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;REACHABILITY GATE&lt;/div&gt;&lt;h2&gt;Connectivity&lt;/h2&gt;&lt;p&gt;Read-only reachability observations for localhost and the laboratory network path.&lt;/p&gt;&lt;/div&gt;&lt;span class=&quot;section-note&quot;&gt;&#39;+passed+&#39;/&#39;+conn.length+&#39; PASS&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;grid three&quot;&gt;&lt;div class=&quot;metric&quot;&gt;&lt;label&gt;Observed targets&lt;/label&gt;&lt;strong&gt;&#39;+conn.length+&#39;&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;metric&quot;&gt;&lt;label&gt;Passing&lt;/label&gt;&lt;strong class=&quot;ok&quot;&gt;&#39;+passed+&#39;&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;metric&quot;&gt;&lt;label&gt;Gate&lt;/label&gt;&lt;strong class=&quot;&#39;+(passed===conn.length&amp;&amp;conn.length?&quot;ok&quot;:&quot;warn&quot;)+&#39;&quot;&gt;&#39;+(passed===conn.length&amp;&amp;conn.length?&quot;PASS&quot;:&quot;ATTENTION&quot;)+&#39;&lt;/strong&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;card&quot; style=&quot;margin-top:15px&quot;&gt;&lt;div class=&quot;card-toolbar&quot;&gt;&lt;div&gt;&lt;h2&gt;Reachability observations&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;No write operations are performed by this view.&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&#39;+table(conn,[{label:&quot;Target&quot;,key:&quot;target&quot;},{label:&quot;Status&quot;,value:x=&gt;x.status||x.result||&quot;&quot;},{label:&quot;Latency&quot;,value:x=&gt;x.latency_ms??x.latency??&quot;&quot;},{label:&quot;Details&quot;,value:x=&gt;x.message||x.details||&quot;&quot;}])+&#39;&lt;/div&gt;&#39;;
+  } else if(view===&quot;services&quot;){
+    const running=services.filter(x=&gt;String(x.status||&quot;&quot;).toLowerCase()===&quot;running&quot;).length;
+    html=&#39;&lt;div class=&quot;page-intro&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;HOST SERVICES&lt;/div&gt;&lt;h2&gt;Services&lt;/h2&gt;&lt;p&gt;Infrastructure service state reported by the local Windows host.&lt;/p&gt;&lt;/div&gt;&lt;span class=&quot;section-note&quot;&gt;&#39;+running+&#39;/&#39;+services.length+&#39; RUNNING&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;grid three&quot;&gt;&lt;div class=&quot;metric&quot;&gt;&lt;label&gt;Services&lt;/label&gt;&lt;strong&gt;&#39;+services.length+&#39;&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;metric&quot;&gt;&lt;label&gt;Running&lt;/label&gt;&lt;strong class=&quot;ok&quot;&gt;&#39;+running+&#39;&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;metric&quot;&gt;&lt;label&gt;Attention&lt;/label&gt;&lt;strong class=&quot;&#39;+(services.length===running?&quot;ok&quot;:&quot;warn&quot;)+&#39;&quot;&gt;&#39;+(services.length-running)+&#39;&lt;/strong&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;card&quot; style=&quot;margin-top:15px&quot;&gt;&lt;div class=&quot;card-toolbar&quot;&gt;&lt;div&gt;&lt;h2&gt;Service inventory&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Read-only Windows service telemetry.&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&#39;+table(services,[{label:&quot;Name&quot;,key:&quot;name&quot;},{label:&quot;Status&quot;,value:x=&gt;x.status||&quot;&quot;},{label:&quot;Start mode&quot;,value:x=&gt;x.start_type||x.startMode||&quot;&quot;},{label:&quot;Details&quot;,value:x=&gt;x.display_name||x.description||&quot;&quot;}])+&#39;&lt;/div&gt;&#39;;
+  } else if(view===&quot;diagnostics&quot;){
+    const checks=[
+      [&quot;Connectivity&quot;,!!h.connectivity_ok,h.connectivity_ok?&quot;PASS&quot;:&quot;FAIL&quot;],
+      [&quot;Services&quot;,!!h.services_ok,h.services_ok?&quot;HEALTHY&quot;:&quot;ATTENTION&quot;],
+      [&quot;VirtualBox telemetry&quot;,!!telemetry.healthy,telemetry.healthy?&quot;HEALTHY&quot;:&quot;ATTENTION&quot;],
+      [&quot;Lab readiness&quot;,!!state.readiness?.ready,state.readiness?.ready?&quot;READY&quot;:&quot;PENDING&quot;],
+      [&quot;Verification&quot;,state.verification?.verified===true,state.verification?.verified?&quot;VERIFIED&quot;:&quot;PENDING&quot;]
+    ];
+    const pass=checks.filter(x=&gt;x[1]).length;
+    html=&#39;&lt;div class=&quot;page-intro&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;SYSTEM OPERATIONS&lt;/div&gt;&lt;h2&gt;Diagnostics&lt;/h2&gt;&lt;p&gt;Single-screen health assessment across the host, virtualization, readiness and verification layers.&lt;/p&gt;&lt;/div&gt;&lt;span class=&quot;section-note&quot;&gt;&#39;+pass+&#39;/&#39;+checks.length+&#39; GATES PASS&lt;/span&gt;&lt;/div&gt;&#39;+
+      &#39;&lt;div class=&quot;grid four&quot;&gt;&lt;div class=&quot;metric&quot;&gt;&lt;label&gt;Control gates&lt;/label&gt;&lt;strong&gt;&#39;+pass+&#39;/&#39;+checks.length+&#39;&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;metric&quot;&gt;&lt;label&gt;Connectivity&lt;/label&gt;&lt;strong class=&quot;&#39;+(h.connectivity_ok?&quot;ok&quot;:&quot;bad&quot;)+&#39;&quot;&gt;&#39;+(h.connectivity_ok?&quot;PASS&quot;:&quot;FAIL&quot;)+&#39;&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;metric&quot;&gt;&lt;label&gt;Telemetry&lt;/label&gt;&lt;strong class=&quot;&#39;+(telemetry.healthy?&quot;ok&quot;:&quot;warn&quot;)+&#39;&quot;&gt;&#39;+(telemetry.healthy?&quot;HEALTHY&quot;:&quot;ATTENTION&quot;)+&#39;&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;metric&quot;&gt;&lt;label&gt;Verification&lt;/label&gt;&lt;strong class=&quot;&#39;+(state.verification?.verified?&quot;ok&quot;:&quot;warn&quot;)+&#39;&quot;&gt;&#39;+(state.verification?.verified?&quot;VERIFIED&quot;:&quot;PENDING&quot;)+&#39;&lt;/strong&gt;&lt;/div&gt;&lt;/div&gt;&#39;+
+      &#39;&lt;div class=&quot;card&quot; style=&quot;margin-top:15px&quot;&gt;&lt;div class=&quot;card-toolbar&quot;&gt;&lt;div&gt;&lt;h2&gt;Diagnostic gates&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Read-only summary of the current operational control plane.&lt;/div&gt;&lt;/div&gt;&#39;+badge(pass===checks.length?&quot;ALL CLEAR&quot;:&quot;ATTENTION&quot;,pass===checks.length?&quot;ok&quot;:&quot;warn&quot;)+&#39;&lt;/div&gt;&lt;div class=&quot;diagnostic-list&quot;&gt;&#39;+checks.map((x,i)=&gt;&#39;&lt;div class=&quot;diagnostic-row&quot;&gt;&lt;span class=&quot;state-icon&quot;&gt;0&#39;+(i+1)+&#39;&lt;/span&gt;&lt;div&gt;&lt;b&gt;&#39;+esc(x[0])+&#39;&lt;/b&gt;&lt;small&gt;&#39;+esc(x[2])+&#39;&lt;/small&gt;&lt;/div&gt;&#39;+badge(x[2],x[1]?&quot;ok&quot;:&quot;warn&quot;)+&#39;&lt;/div&gt;&#39;).join(&quot;&quot;)+&#39;&lt;/div&gt;&lt;/div&gt;&#39;+
+      &#39;&lt;div class=&quot;card&quot; style=&quot;margin-top:15px&quot;&gt;&lt;div class=&quot;card-toolbar&quot;&gt;&lt;div&gt;&lt;h2&gt;Health payload&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Raw diagnostic result from the local host health service.&lt;/div&gt;&lt;/div&gt;&lt;span class=&quot;section-note&quot;&gt;READ ONLY&lt;/span&gt;&lt;/div&gt;&lt;pre&gt;&#39;+esc(JSON.stringify(h,null,2))+&#39;&lt;/pre&gt;&lt;/div&gt;&#39;;
+  } else if(view===&quot;evidence&quot;){
+    html=&#39;&lt;div class=&quot;grid two&quot;&gt;&lt;div class=&quot;card&quot;&gt;&lt;h2&gt;Evidence package&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Current structured evidence returned by the local evidence service&lt;/div&gt;&lt;pre&gt;&#39;+esc(JSON.stringify(e,null,2))+&#39;&lt;/pre&gt;&lt;/div&gt;&#39;+
+      &#39;&lt;div class=&quot;card&quot;&gt;&lt;h2&gt;Export&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Save the current evidence payload locally.&lt;/div&gt;&lt;button class=&quot;button primary&quot; id=&quot;download&quot;&gt;Download JSON&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;&#39;;
+    html=&#39;&lt;div class=&quot;page-intro&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;OPERATIONS&lt;/div&gt;&lt;h2&gt;Evidence&lt;/h2&gt;&lt;p&gt;Structured evidence capture and export for the current lab state.&lt;/p&gt;&lt;/div&gt;&lt;span class=&quot;section-note&quot;&gt;LIVE STATE&lt;/span&gt;&lt;/div&gt;&#39;+html;
+  } else if(view===&quot;lab-control&quot;){
+    const lab=state.lab||{};
+    const def=lab.definition||{};
+    const roles=arr(def.roles);
+    const checks=arr((state.verification||{}).checks);
+    html=&#39;&lt;div class=&quot;grid four&quot;&gt;&#39;+
+      [[&#39;Lab&#39;,def.lab_id||&quot;&#226;€”&quot;],[&#39;Network&#39;,lab.network?.ready?&quot;READY&quot;:&quot;ATTENTION&quot;],[&#39;VMs&#39;,String((lab.topology?.vms||[]).filter(x=&gt;x.exists).length)+&quot;/3&quot;],[&#39;Storage&#39;,String((lab.storage?.vms||[]).filter(x=&gt;x.disk).length)+&quot;/3&quot;]].map(x=&gt;&#39;&lt;div class=&quot;metric&quot;&gt;&lt;label&gt;&#39;+esc(x[0])+&#39;&lt;/label&gt;&lt;strong&gt;&#39;+esc(x[1])+&#39;&lt;/strong&gt;&lt;/div&gt;&#39;).join(&quot;&quot;)+
+      &#39;&lt;/div&gt;&lt;div class=&quot;grid two&quot; style=&quot;margin-top:15px&quot;&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;HOST BUILD&lt;/div&gt;&lt;h2&gt;Lab provisioning&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Creates only the host-side network, VM topology and storage. OS media remains manual.&lt;/div&gt;&lt;div class=&quot;vm-actions&quot;&gt;&lt;button class=&quot;button primary&quot; id=&quot;prepare-lab&quot;&gt;Prepare lab&lt;/button&gt;&lt;button class=&quot;button&quot; id=&quot;verify-lab&quot;&gt;Verify lab&lt;/button&gt;&lt;/div&gt;&lt;pre id=&quot;lab-result&quot;&gt;&#39;+esc(JSON.stringify(lab.readiness||{},null,2))+&#39;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;ROLE MAP&lt;/div&gt;&lt;h2&gt;Guest architecture&lt;/h2&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;VM&lt;/th&gt;&lt;th&gt;Role&lt;/th&gt;&lt;th&gt;Purpose&lt;/th&gt;&lt;th&gt;Recommended IP&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&#39;+roles.map(x=&gt;&#39;&lt;tr&gt;&lt;td&gt;&#39;+esc(x.hostname)+&#39;&lt;/td&gt;&lt;td&gt;&#39;+esc(x.role)+&#39;&lt;/td&gt;&lt;td&gt;&#39;+esc(x.purpose)+&#39;&lt;/td&gt;&lt;td&gt;&#39;+esc(x.recommended_ip)+&#39;&lt;/td&gt;&lt;/tr&gt;&#39;).join(&quot;&quot;)+&#39;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&lt;/div&gt;&#39;+
+      &#39;&lt;div class=&quot;card&quot; style=&quot;margin-top:15px&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;VERIFICATION GATES&lt;/div&gt;&lt;h2&gt;Build status&lt;/h2&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Gate&lt;/th&gt;&lt;th&gt;Status&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&#39;+checks.map(x=&gt;&#39;&lt;tr&gt;&lt;td&gt;&#39;+esc(x.label)+&#39;&lt;/td&gt;&lt;td&gt;&#39;+badge(x.passed?&quot;PASS&quot;:&quot;ATTENTION&quot;,x.passed?&quot;ok&quot;:&quot;warn&quot;)+&#39;&lt;/td&gt;&lt;/tr&gt;&#39;).join(&quot;&quot;)+&#39;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&#39;;
+    html=&#39;&lt;div class=&quot;page-intro&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;LAB OPERATIONS&lt;/div&gt;&lt;h2&gt;Lab Control&lt;/h2&gt;&lt;p&gt;Provisioning, readiness and verification control for the NetworkLab host build.&lt;/p&gt;&lt;/div&gt;&lt;span class=&quot;section-note&quot;&gt;LIVE STATE&lt;/span&gt;&lt;/div&gt;&#39;+html;
+  } else if(view===&quot;guest-build&quot;){
+    const contracts=arr((state.guestContracts||{}).contracts);
+    const validation=state.guestValidation||{};
+    const endpointRows=arr(validation.endpoints).map(x=&gt;&#39;&lt;tr&gt;&lt;td&gt;&#39;+esc(x.role)+&#39;&lt;/td&gt;&lt;td&gt;&#39;+esc(x.ip)+&#39;&lt;/td&gt;&lt;td&gt;&#39;+badge(x.icmp?.reachable?&quot;REACHABLE&quot;:&quot;NOT REACHABLE&quot;,x.icmp?.reachable?&quot;ok&quot;:&quot;warn&quot;)+&#39;&lt;/td&gt;&lt;td&gt;&#39;+esc(x.expected_services?.dns?.reachable===true?&quot;DNS OPEN&quot;:x.expected_services?.dns?.skipped?&quot;&#226;€”&quot;:&quot;DNS NOT OPEN&quot;)+&#39;&lt;/td&gt;&lt;/tr&gt;&#39;).join(&quot;&quot;);
+    html=&#39;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;GUEST CONTRACTS&lt;/div&gt;&lt;h2&gt;OS-agnostic role definitions&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;The host prepares the VM boundary; guest OS installation remains explicit and manual.&lt;/div&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Role&lt;/th&gt;&lt;th&gt;VM&lt;/th&gt;&lt;th&gt;IP&lt;/th&gt;&lt;th&gt;Services&lt;/th&gt;&lt;th&gt;Validation&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&#39;+contracts.map(x=&gt;&#39;&lt;tr&gt;&lt;td&gt;&#39;+esc(x.role)+&#39;&lt;/td&gt;&lt;td&gt;&#39;+esc(x.vm)+&#39;&lt;/td&gt;&lt;td&gt;&#39;+esc(x.recommended_ip)+&#39;&lt;/td&gt;&lt;td&gt;&#39;+esc(x.services.join(&quot;, &quot;))+&#39;&lt;/td&gt;&lt;td&gt;&#39;+esc(x.validation.join(&quot;, &quot;))+&#39;&lt;/td&gt;&lt;/tr&gt;&#39;).join(&quot;&quot;)+&#39;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;card&quot; style=&quot;margin-top:15px&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;HOST-ASSISTED VALIDATION&lt;/div&gt;&lt;h2&gt;Guest endpoint probes&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;ICMP and selected TCP probes are observational; guest-to-guest checks require installed/configured guests.&lt;/div&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Role&lt;/th&gt;&lt;th&gt;IP&lt;/th&gt;&lt;th&gt;ICMP&lt;/th&gt;&lt;th&gt;DNS&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&#39;+endpointRows+&#39;&lt;/tbody&gt;&lt;/table&gt;&lt;button class=&quot;button primary&quot; id=&quot;refresh-guest&quot;&gt;Run guest validation&lt;/button&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;card&quot; style=&quot;margin-top:15px&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;BOUNDARY&lt;/div&gt;&lt;h2&gt;Manual guest configuration&lt;/h2&gt;&lt;pre&gt;&#39;+esc(JSON.stringify({os_selection:&quot;manual&quot;,next:[&quot;Install selected OS ISO&quot;,&quot;Apply role contract&quot;,&quot;Configure services&quot;,&quot;Run validation&quot;,&quot;Capture evidence&quot;]},null,2))+&#39;&lt;/pre&gt;&lt;/div&gt;&#39;;
+    html=&#39;&lt;div class=&quot;page-intro&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;GUEST CONFIGURATION&lt;/div&gt;&lt;h2&gt;Guest Build&lt;/h2&gt;&lt;p&gt;Role contracts and host-assisted validation for the guest layer.&lt;/p&gt;&lt;/div&gt;&lt;span class=&quot;section-note&quot;&gt;LIVE STATE&lt;/span&gt;&lt;/div&gt;&#39;+html;
+  } else if(view===&quot;evidence-capture&quot;){
+    html=&#39;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;EVIDENCE PIPELINE&lt;/div&gt;&lt;h2&gt;Capture complete laboratory snapshot&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Stores verification, guest contracts, connectivity and VirtualBox telemetry as a timestamped JSON artifact.&lt;/div&gt;&lt;button class=&quot;button primary&quot; id=&quot;capture-evidence&quot;&gt;Capture evidence&lt;/button&gt;&lt;pre id=&quot;capture-result&quot;&gt;Ready.&lt;/pre&gt;&lt;/div&gt;&#39;;
+  } else if(view===&quot;architecture&quot;){
+    const a=state.architecture||{};
+    const layers=arr(a.layers);
+    const layerRows=layers.map(x=&gt;&quot;&lt;tr&gt;&lt;td&gt;&quot;+esc(x.name)+&quot;&lt;/td&gt;&lt;td&gt;&quot;+badge(String(x.status||&quot;unknown&quot;).toUpperCase(),x.status===&quot;ready&quot;?&quot;ok&quot;:&quot;warn&quot;)+&quot;&lt;/td&gt;&lt;td&gt;&quot;+esc(x.purpose)+&quot;&lt;/td&gt;&lt;/tr&gt;&quot;).join(&quot;&quot;);
+    const pipeline=arr(a.pipeline).map((x,i)=&gt;&quot;&lt;div class=\&quot;life-step done\&quot;&gt;&lt;span&gt;0&quot;+(i+1)+&quot;&lt;/span&gt;&lt;b&gt;&quot;+esc(x)+&quot;&lt;/b&gt;&lt;small&gt;CONTROL PLANE&lt;/small&gt;&lt;/div&gt;&quot;).join(&quot;&quot;);
+    const conn=state.connectivity||{};
+    html=&quot;&lt;div class=\&quot;grid four\&quot;&gt;&quot;+
+      [[&quot;Mode&quot;,a.mode||&quot;&#226;€”&quot;],[&quot;Network&quot;,a.network?.ready?&quot;READY&quot;:&quot;ATTENTION&quot;],[&quot;Readiness&quot;,a.readiness?.ready?&quot;READY&quot;:&quot;ATTENTION&quot;],[&quot;Telemetry&quot;,a.telemetry?.healthy?&quot;HEALTHY&quot;:&quot;ATTENTION&quot;]].map(x=&gt;&quot;&lt;div class=\&quot;metric\&quot;&gt;&lt;label&gt;&quot;+esc(x[0])+&quot;&lt;/label&gt;&lt;strong&gt;&quot;+esc(x[1])+&quot;&lt;/strong&gt;&lt;/div&gt;&quot;).join(&quot;&quot;)+
+      &quot;&lt;/div&gt;&lt;div class=\&quot;card\&quot; style=\&quot;margin-top:15px\&quot;&gt;&lt;div class=\&quot;eyebrow\&quot;&gt;SYSTEM ARCHITECTURE&lt;/div&gt;&lt;h2&gt;NetworkLab control plane&lt;/h2&gt;&lt;div class=\&quot;meta\&quot;&gt;&quot;+esc(a.principle||&quot;observe -&gt; decide -&gt; safely execute -&gt; verify -&gt; record&quot;)+&quot;&lt;/div&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Layer&lt;/th&gt;&lt;th&gt;Status&lt;/th&gt;&lt;th&gt;Purpose&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&quot;+(layerRows||&quot;&lt;tr&gt;&lt;td colspan=\&quot;3\&quot;&gt;No architecture state returned.&lt;/td&gt;&lt;/tr&gt;&quot;)+&quot;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&quot;+
+      &quot;&lt;div class=\&quot;card\&quot; style=\&quot;margin-top:15px\&quot;&gt;&lt;div class=\&quot;eyebrow\&quot;&gt;EXECUTION PIPELINE&lt;/div&gt;&lt;h2&gt;Operational sequence&lt;/h2&gt;&lt;div class=\&quot;lifecycle\&quot;&gt;&quot;+pipeline+&quot;&lt;/div&gt;&lt;div class=\&quot;vm-actions\&quot;&gt;&lt;button class=\&quot;button primary\&quot; id=\&quot;run-audit\&quot;&gt;Run full architecture audit&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;&quot;+
+      &quot;&lt;div class=\&quot;grid two\&quot; style=\&quot;margin-top:15px\&quot;&gt;&lt;div class=\&quot;card\&quot;&gt;&lt;div class=\&quot;eyebrow\&quot;&gt;CONNECTIVITY GATE&lt;/div&gt;&lt;h2&gt;Read-only reachability&lt;/h2&gt;&lt;div class=\&quot;kv\&quot;&gt;&lt;b&gt;Status&lt;/b&gt;&lt;span&gt;&quot;+badge(conn.reachable?&quot;PASS&quot;:&quot;ATTENTION&quot;,conn.reachable?&quot;ok&quot;:&quot;warn&quot;)+&quot;&lt;/span&gt;&lt;/div&gt;&lt;pre&gt;&quot;+esc(JSON.stringify(conn.targets||[],null,2))+&quot;&lt;/pre&gt;&lt;/div&gt;&lt;div class=\&quot;card\&quot;&gt;&lt;div class=\&quot;eyebrow\&quot;&gt;VM RECOVERY&lt;/div&gt;&lt;h2&gt;Autonomous boundary&lt;/h2&gt;&lt;pre&gt;&quot;+esc(JSON.stringify(a.telemetry||{},null,2))+&quot;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&quot;;
+    html=&#39;&lt;div class=&quot;page-intro&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;SYSTEM DESIGN&lt;/div&gt;&lt;h2&gt;Architecture&lt;/h2&gt;&lt;p&gt;Layered control-plane view of NetworkLab and its operational pipeline.&lt;/p&gt;&lt;/div&gt;&lt;span class=&quot;section-note&quot;&gt;LIVE STATE&lt;/span&gt;&lt;/div&gt;&#39;+html;
+  } else if(view===&quot;telemetry&quot;){
+    const t=telemetry;
+    const recommendation=t.recommendation||{};
+    const healthy=!!t.healthy;
+    const history=arr(t.history);
+    const failures=arr(t.last_error);
+    const processRows=Object.entries(t.processes||{}).map(([name,item])=&gt;`&lt;tr&gt;&lt;td&gt;${esc(name)}&lt;/td&gt;&lt;td&gt;${item.running?badge(&quot;RUNNING&quot;,&quot;ok&quot;):badge(&quot;NOT RUNNING&quot;)}&lt;/td&gt;&lt;/tr&gt;`).join(&quot;&quot;);
+    const historyRows=history.slice(0,12).map(item=&gt;`&lt;tr&gt;&lt;td&gt;${esc(new Date(item.timestamp).toLocaleTimeString())}&lt;/td&gt;&lt;td&gt;${esc(item.event)}&lt;/td&gt;&lt;td&gt;${esc(item.classification||item.message||item.stage||&quot;&quot;)}&lt;/td&gt;&lt;/tr&gt;`).join(&quot;&quot;);
+    html=`&lt;div class=&quot;grid four&quot;&gt;
+      &lt;div class=&quot;metric&quot;&gt;&lt;label&gt;Engine&lt;/label&gt;&lt;strong class=&quot;${healthy?&quot;ok&quot;:&quot;bad&quot;}&quot;&gt;${healthy?&quot;HEALTHY&quot;:&quot;ATTENTION&quot;}&lt;/strong&gt;&lt;/div&gt;
+      &lt;div class=&quot;metric&quot;&gt;&lt;label&gt;Failures&lt;/label&gt;&lt;strong&gt;${esc(t.consecutive_failures||0)}&lt;/strong&gt;&lt;/div&gt;
+      &lt;div class=&quot;metric&quot;&gt;&lt;label&gt;Repairs&lt;/label&gt;&lt;strong&gt;${esc(t.repair_count||0)}&lt;/strong&gt;&lt;/div&gt;
+      &lt;div class=&quot;metric&quot;&gt;&lt;label&gt;Incident&lt;/label&gt;&lt;strong class=&quot;${t.active_incident?&quot;warn&quot;:&quot;ok&quot;}&quot;&gt;${t.active_incident?&quot;ACTIVE&quot;:&quot;CLEAR&quot;}&lt;/strong&gt;&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;grid two&quot; style=&quot;margin-top:15px&quot;&gt;
+      &lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;AUTONOMOUS RECOVERY&lt;/div&gt;&lt;h2&gt;VirtualBox control plane&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Safe recovery only: running VMs are never terminated by the repair engine.&lt;/div&gt;
+        &lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Status&lt;/b&gt;&lt;span&gt;${badge(t.status||&quot;UNKNOWN&quot;,healthy?&quot;ok&quot;:t.status===&quot;degraded&quot;?&quot;warn&quot;:&quot;bad&quot;)}&lt;/span&gt;&lt;/div&gt;
+        &lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Classification&lt;/b&gt;&lt;span&gt;${esc((t.probe||{}).classification||&quot;&#226;€”&quot;)}&lt;/span&gt;&lt;/div&gt;
+        &lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Last check&lt;/b&gt;&lt;span&gt;${esc(t.last_check||&quot;&#226;€”&quot;)}&lt;/span&gt;&lt;/div&gt;
+        &lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Last repair&lt;/b&gt;&lt;span&gt;${esc(t.last_repair||&quot;&#226;€”&quot;)}&lt;/span&gt;&lt;/div&gt;
+        &lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Repair threshold&lt;/b&gt;&lt;span&gt;${esc(t.policy?.repair_threshold??&quot;&#226;€”&quot;)} failures&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Cooldown&lt;/b&gt;&lt;span&gt;${esc(t.policy?.repair_cooldown_seconds??&quot;&#226;€”&quot;)} seconds&lt;/span&gt;&lt;/div&gt;
+        &lt;div class=&quot;vm-actions&quot;&gt;&lt;button class=&quot;button primary&quot; id=&quot;telemetry-repair&quot;&gt;Run controlled repair&lt;/button&gt;&lt;button class=&quot;button&quot; id=&quot;telemetry-refresh&quot;&gt;Probe now&lt;/button&gt;&lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;RECOVERY INTELLIGENCE&lt;/div&gt;&lt;h2&gt;Next action&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Generated from the detected failure class and the safe recovery boundary.&lt;/div&gt;\n        &lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Priority&lt;/b&gt;&lt;span&gt;${esc(recommendation?.priority||&quot;&#226;€”&quot;)}&lt;/span&gt;&lt;/div&gt;\n        &lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Action&lt;/b&gt;&lt;span&gt;${esc(recommendation?.action||&quot;No active recommendation.&quot;)}&lt;/span&gt;&lt;/div&gt;\n        &lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Reason&lt;/b&gt;&lt;span&gt;${esc(recommendation?.reason||&quot;&#226;€”&quot;)}&lt;/span&gt;&lt;/div&gt;\n        &lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Persistent ledger&lt;/b&gt;&lt;span&gt;${esc(t.incident_log_path||&quot;&#226;€”&quot;)}&lt;/span&gt;&lt;/div&gt;\n      &lt;/div&gt;\n      &lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;PROCESS SAFETY&lt;/div&gt;&lt;h2&gt;VirtualBox process state&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Diagnostic snapshot used before automatic recovery.&lt;/div&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Process&lt;/th&gt;&lt;th&gt;State&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;${processRows||&quot;&lt;tr&gt;&lt;td colspan=\&quot;2\&quot;&gt;No process snapshot yet.&lt;/td&gt;&lt;/tr&gt;&quot;}&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;grid two&quot; style=&quot;margin-top:15px&quot;&gt;
+      &lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;ACTIVE INCIDENT&lt;/div&gt;&lt;h2&gt;Latest fault&lt;/h2&gt;&lt;pre&gt;${esc(JSON.stringify(failures||t.last_error||&quot;No active error&quot;,null,2))}&lt;/pre&gt;&lt;/div&gt;
+      &lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;eyebrow&quot;&gt;EVENT LEDGER&lt;/div&gt;&lt;h2&gt;Recovery history&lt;/h2&gt;&lt;div style=&quot;overflow:auto&quot;&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Time&lt;/th&gt;&lt;th&gt;Event&lt;/th&gt;&lt;th&gt;Detail&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;${historyRows||&quot;&lt;tr&gt;&lt;td colspan=\&quot;3\&quot;&gt;No events recorded.&lt;/td&gt;&lt;/tr&gt;&quot;}&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&lt;/div&gt;
+    &lt;/div&gt;`;
+    html=&#39;&lt;div class=&quot;page-intro&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;OBSERVABILITY&lt;/div&gt;&lt;h2&gt;Telemetry&lt;/h2&gt;&lt;p&gt;VirtualBox health, recovery state, incidents and process diagnostics.&lt;/p&gt;&lt;/div&gt;&lt;span class=&quot;section-note&quot;&gt;LIVE STATE&lt;/span&gt;&lt;/div&gt;&#39;+html;
+  } else if(view===&quot;vm-lab&quot;){
+    const vmItems=arr((state.vms||{}).vms);
+    const storageItems=arr((state.storage||{}).vms);
+    const readiness=state.readiness||{};
+    const steps=arr(readiness.steps);
+    const readinessClass=readiness.ready?&quot;ok&quot;:readiness.completed&gt;0?&quot;warn&quot;:&quot;bad&quot;;
+    const readinessLabel=readiness.ready?&quot;LAB READY&quot;:readiness.completed+&quot;/&quot;+readiness.total+&quot; READY&quot;;
+    const readinessSteps=steps.map((step,index)=&gt;{
+      const cls=step.ready?&quot;done&quot;:&quot;pending&quot;;
+      const status=step.ready?&quot;READY&quot;:&quot;PENDING&quot;;
+      return &#39;&lt;div class=&quot;readiness-step &#39;+cls+&#39;&quot;&gt;&lt;span class=&quot;readiness-index&quot;&gt;0&#39;+(index+1)+&#39;&lt;/span&gt;&lt;div&gt;&lt;b&gt;&#39;+esc(step.label)+&#39;&lt;/b&gt;&lt;small&gt;&#39;+status+&#39;&lt;/small&gt;&lt;/div&gt;&lt;/div&gt;&#39;;
+    }).join(&quot;&quot;);
+    const nextLabel=readiness.next_step ? (steps.find(x=&gt;x.id===readiness.next_step)||{}).label : &quot;None&quot;;
+    html=&#39;&lt;div class=&quot;card readiness-card&quot;&gt;&lt;div class=&quot;readiness-head&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;INSTALLATION / READINESS CONTROL&lt;/div&gt;&lt;h2&gt;Lab readiness&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Live validation of the required NetworkLab provisioning chain.&lt;/div&gt;&lt;/div&gt;&#39;+badge(readinessLabel,readinessClass)+&#39;&lt;/div&gt;&#39;+
+      &#39;&lt;div class=&quot;readiness-track&quot;&gt;&#39;+readinessSteps+&#39;&lt;/div&gt;&#39;+
+      &#39;&lt;div class=&quot;readiness-footer&quot;&gt;&lt;span&gt;&lt;b&gt;Next required:&lt;/b&gt; &#39;+esc(nextLabel)+&#39;&lt;/span&gt;&lt;span&gt;&lt;b&gt;OS media:&lt;/b&gt; explicit ISO selection only&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;grid three&quot;&gt;&#39;+vmItems.map(vm=&gt;{
+      const storage=storageItems.find(x=&gt;x.name===vm.name)||{};
+      const runtimeState=String(vm.state||&quot;unknown&quot;).toUpperCase();
+      const runtimeClass=runtimeState===&quot;RUNNING&quot;?&quot;ok&quot;:runtimeState===&quot;POWERED OFF&quot;?&quot;warn&quot;:&quot;&quot;;
+      return &#39;&lt;div class=&quot;card vm-card&quot;&gt;&lt;div class=&quot;vm-head&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;&#39;+esc(vm.role)+&#39;&lt;/div&gt;&lt;h2&gt;&#39;+esc(vm.name)+&#39;&lt;/h2&gt;&lt;/div&gt;&#39;+badge(runtimeState,runtimeClass)+&#39;&lt;/div&gt;&#39;+
+        &#39;&lt;div class=&quot;kv&quot;&gt;&lt;b&gt;CPU / RAM&lt;/b&gt;&lt;span&gt;&#39;+esc(vm.cpus)+&#39; vCPU / &#39;+esc(vm.memory)+&#39; MB&lt;/span&gt;&lt;/div&gt;&#39;+
+        &#39;&lt;div class=&quot;kv&quot;&gt;&lt;b&gt;NIC&lt;/b&gt;&lt;span&gt;&#39;+esc(vm.nic1||&quot;&#226;€”&quot;)+&#39;&lt;/span&gt;&lt;/div&gt;&#39;+
+        &#39;&lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Host-only&lt;/b&gt;&lt;span&gt;&#39;+esc(vm.host_only_adapter||&quot;&#226;€”&quot;)+&#39;&lt;/span&gt;&lt;/div&gt;&#39;+
+        &#39;&lt;div class=&quot;kv&quot;&gt;&lt;b&gt;Disk&lt;/b&gt;&lt;span&gt;&#39;+esc(storage.disk_path||&quot;Not provisioned&quot;)+&#39;&lt;/span&gt;&lt;/div&gt;&#39;+
+        &#39;&lt;div class=&quot;kv&quot;&gt;&lt;b&gt;ISO&lt;/b&gt;&lt;span&gt;&#39;+esc(storage.iso||&quot;None attached&quot;)+&#39;&lt;/span&gt;&lt;/div&gt;&#39;+
+        &#39;&lt;div class=&quot;vm-actions&quot;&gt;&lt;button class=&quot;button&quot; data-vm-action=&quot;start&quot; data-vm=&quot;&#39;+esc(vm.name)+&#39;&quot;&gt;Start&lt;/button&gt;&lt;button class=&quot;button&quot; data-vm-action=&quot;stop&quot; data-vm=&quot;&#39;+esc(vm.name)+&#39;&quot;&gt;Stop&lt;/button&gt;&lt;button class=&quot;button danger&quot; data-vm-action=&quot;poweroff&quot; data-vm=&quot;&#39;+esc(vm.name)+&#39;&quot;&gt;Power off&lt;/button&gt;&lt;button class=&quot;button primary&quot; data-vm-runtime=&quot;&#39;+esc(vm.name)+&#39;&quot;&gt;Inspect runtime&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;&#39;;
+    }).join(&#39;&#39;)+&#39;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;card&quot; style=&quot;margin-top:15px&quot;&gt;&lt;h2&gt;Lab lifecycle&lt;/h2&gt;&lt;div class=&quot;meta&quot;&gt;Provision in order: virtual network &#226;†’ VM topology &#226;†’ 20 GB storage &#226;†’ OS ISO &#226;†’ boot &#226;†’ runtime inspection.&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;lifecycle&quot;&gt;&lt;div class=&quot;life-step &#39;+(steps.find(x=&gt;x.id===&quot;network&quot;)?.ready?&quot;done&quot;:&quot;&quot;)+&#39;&quot;&gt;&lt;span&gt;01&lt;/span&gt;&lt;b&gt;Host-only network&lt;/b&gt;&lt;small&gt;&#39;+esc((state.virtualNetwork||{}).name||&quot;NetworkLab-Lab&quot;)+&#39;&lt;/small&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;life-step &#39;+(steps.find(x=&gt;x.id===&quot;vms&quot;)?.ready?&quot;done&quot;:&quot;&quot;)+&#39;&quot;&gt;&lt;span&gt;02&lt;/span&gt;&lt;b&gt;VM topology&lt;/b&gt;&lt;small&gt;&#39;+vmItems.filter(x=&gt;x.exists).length+&#39;/3 registered&lt;/small&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;life-step &#39;+(steps.find(x=&gt;x.id===&quot;storage&quot;)?.ready?&quot;done&quot;:&quot;&quot;)+&#39;&quot;&gt;&lt;span&gt;03&lt;/span&gt;&lt;b&gt;Storage&lt;/b&gt;&lt;small&gt;&#39;+storageItems.filter(x=&gt;x.disk).length+&#39;/3 disks&lt;/small&gt;&lt;/div&gt;&#39;+
+    &#39;&lt;div class=&quot;life-step &#39;+(steps.find(x=&gt;x.id===&quot;media&quot;)?.ready?&quot;done&quot;:&quot;&quot;)+&#39;&quot;&gt;&lt;span&gt;04&lt;/span&gt;&lt;b&gt;OS media&lt;/b&gt;&lt;small&gt;&#39;+storageItems.filter(x=&gt;x.iso).length+&#39;/3 ISO mounts&lt;/small&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&#39;;
+    html=&#39;&lt;div class=&quot;page-intro&quot;&gt;&lt;div&gt;&lt;div class=&quot;eyebrow&quot;&gt;VIRTUALIZATION&lt;/div&gt;&lt;h2&gt;VM Lab&lt;/h2&gt;&lt;p&gt;Runtime state, lifecycle controls and provisioning readiness for the three lab VMs.&lt;/p&gt;&lt;/div&gt;&lt;span class=&quot;section-note&quot;&gt;LIVE STATE&lt;/span&gt;&lt;/div&gt;&#39;+html;
+  }
+  $(&quot;content&quot;).innerHTML=html;
+  bindLabControl();
+  const runAudit=$(&quot;run-audit&quot;);
+  if(runAudit) runAudit.onclick=async()=&gt;{
+    runAudit.disabled=true; runAudit.textContent=&quot;AUDITING...&quot;;
+    try { const audit=await get(&quot;/api/orchestrator/audit&quot;); state.architecture=audit.architecture; state.connectivity=audit.connectivity; state.readiness=audit.readiness; state.telemetry=audit.telemetry; render(); }
+    catch(error){ $(&quot;alert&quot;).textContent=&quot;ARCHITECTURE AUDIT ERROR: &quot;+error.message; $(&quot;alert&quot;).classList.remove(&quot;hidden&quot;); }
+    finally { runAudit.disabled=false; runAudit.textContent=&quot;Run full architecture audit&quot;; }
+  };
+  const telemetryRepair=$(&quot;telemetry-repair&quot;);
+  if(telemetryRepair) telemetryRepair.onclick=async()=&gt;{
+    telemetryRepair.disabled=true; telemetryRepair.textContent=&quot;REPAIRING...&quot;;
+    try { state.telemetry=await post(&quot;/api/vm/telemetry/repair&quot;); render(); }
+    catch(error){ $(&quot;alert&quot;).textContent=&quot;VIRTUALBOX REPAIR ERROR: &quot;+error.message; $(&quot;alert&quot;).classList.remove(&quot;hidden&quot;); telemetryRepair.disabled=false; telemetryRepair.textContent=&quot;Retry&quot;; }
+  };
+  const telemetryRefresh=$(&quot;telemetry-refresh&quot;);
+  if(telemetryRefresh) telemetryRefresh.onclick=loadTelemetry;
+  const createStorage=$(&quot;create-storage&quot;);
+  if(createStorage) createStorage.onclick=async()=&gt;{
+    createStorage.disabled=true; createStorage.textContent=&quot;PROVISIONING...&quot;;
+    try{ state.storage=await post(&quot;/api/vms/storage/create&quot;); render(); }
+    catch(error){ $(&quot;alert&quot;).textContent=&quot;VM STORAGE ERROR: &quot;+error.message; $(&quot;alert&quot;).classList.remove(&quot;hidden&quot;); createStorage.disabled=false; createStorage.textContent=&quot;Retry&quot;; }
+  };
+  document.querySelectorAll(&quot;[data-iso-attach]&quot;).forEach(button=&gt;button.onclick=async()=&gt;{
+    const name=button.dataset.isoAttach;
+    const path=window.prompt(&quot;Local ISO path for &quot;+name+&quot;:&quot;);
+    if(!path) return;
+    button.disabled=true; button.textContent=&quot;ATTACHING...&quot;;
+    try{ state.storage=await post(&quot;/api/vms/&quot;+encodeURIComponent(name)+&quot;/iso&quot;,{path}); render(); }
+    catch(error){ $(&quot;alert&quot;).textContent=&quot;ISO ATTACH ERROR: &quot;+error.message; $(&quot;alert&quot;).classList.remove(&quot;hidden&quot;); button.disabled=false; button.textContent=&quot;Retry&quot;; }
+  });
+  document.querySelectorAll(&quot;[data-iso-eject]&quot;).forEach(button=&gt;button.onclick=async()=&gt;{
+    const name=button.dataset.isoEject;
+    button.disabled=true; button.textContent=&quot;EJECTING...&quot;;
+    try{ state.storage=await post(&quot;/api/vms/&quot;+encodeURIComponent(name)+&quot;/iso&quot;,{action:&quot;eject&quot;}); render(); }
+    catch(error){ $(&quot;alert&quot;).textContent=&quot;ISO EJECT ERROR: &quot;+error.message; $(&quot;alert&quot;).classList.remove(&quot;hidden&quot;); button.disabled=false; button.textContent=&quot;Retry&quot;; }
+  });
+  const createVMs=$(&quot;create-vms&quot;);
+  if(createVMs) createVMs.onclick=async()=&gt;{
+    createVMs.disabled=true; createVMs.textContent=&quot;BUILDING...&quot;;
+    try{ state.vms=await post(&quot;/api/vms/create&quot;); render(); }
+    catch(error){ $(&quot;alert&quot;).textContent=&quot;VM TOPOLOGY ERROR: &quot;+error.message; $(&quot;alert&quot;).classList.remove(&quot;hidden&quot;); createVMs.disabled=false; createVMs.textContent=&quot;Retry&quot;; }
+  };
+  document.querySelectorAll(&quot;[data-vm-runtime]&quot;).forEach(button=&gt;button.onclick=async()=&gt;{
+    const name=button.dataset.vmRuntime;
+    try{
+      const runtime=await get(&quot;/api/vms/&quot;+encodeURIComponent(name)+&quot;/runtime&quot;);
+      const boot=runtime.boot_order.join(&quot; &gt; &quot;).toUpperCase();
+      $(&quot;alert&quot;).textContent=name+&quot; | STATE: &quot;+runtime.state.toUpperCase()+&quot; | BOOT: &quot;+boot+&quot; | NIC: &quot;+runtime.nic1;
+      $(&quot;alert&quot;).classList.remove(&quot;hidden&quot;);
+    }catch(error){
+      $(&quot;alert&quot;).textContent=&quot;VM RUNTIME ERROR: &quot;+error.message;
+      $(&quot;alert&quot;).classList.remove(&quot;hidden&quot;);
+    }
+  });
+  document.querySelectorAll(&quot;[data-vm-action]&quot;).forEach(button=&gt;button.onclick=async()=&gt;{
+    button.disabled=true;
+    try{ state.vms=await post(&quot;/api/vms/&quot;+encodeURIComponent(button.dataset.vm)+&quot;/&quot;+button.dataset.vmAction); render(); }
+    catch(error){ $(&quot;alert&quot;).textContent=&quot;VM ACTION ERROR: &quot;+error.message; $(&quot;alert&quot;).classList.remove(&quot;hidden&quot;); button.disabled=false; }
+  });
+  const createNetwork=$(&quot;create-network&quot;);
+  if(createNetwork) createNetwork.onclick=async()=&gt;{
+    createNetwork.disabled=true; createNetwork.textContent=&quot;BUILDING...&quot;;
+    try{ state.virtualNetwork=await post(&quot;/api/virtual-network/create&quot;); render(); }
+    catch(error){ $(&quot;alert&quot;).textContent=&quot;VIRTUAL NETWORK ERROR: &quot;+error.message; $(&quot;alert&quot;).classList.remove(&quot;hidden&quot;); createNetwork.disabled=false; createNetwork.textContent=&quot;Retry&quot;; }
+  };
+  const refreshGuest=$(&quot;refresh-guest&quot;);
+  if(refreshGuest) refreshGuest.onclick=async()=&gt;{ refreshGuest.disabled=true; refreshGuest.textContent=&quot;VALIDATING...&quot;; try{ state.guestValidation=await get(&quot;/api/guest/validation&quot;); render(); } catch(error){ $(&quot;alert&quot;).textContent=&quot;GUEST VALIDATION ERROR: &quot;+error.message; $(&quot;alert&quot;).classList.remove(&quot;hidden&quot;); refreshGuest.disabled=false; refreshGuest.textContent=&quot;Retry&quot;; } };
+  const captureEvidence=$(&quot;capture-evidence&quot;);
+  if(captureEvidence) captureEvidence.onclick=async()=&gt;{ captureEvidence.disabled=true; captureEvidence.textContent=&quot;CAPTURING...&quot;; try{ const x=await post(&quot;/api/evidence/capture&quot;,{}); const result=$(&quot;capture-result&quot;); if(result) result.textContent=JSON.stringify({captured:x.captured,path:x.path},null,2); } catch(error){ const result=$(&quot;capture-result&quot;); if(result) result.textContent=&quot;ERROR: &quot;+error.message; } finally { captureEvidence.disabled=false; captureEvidence.textContent=&quot;Capture evidence&quot;; } };
+  const download=$(&quot;download&quot;);
+  if(download) download.onclick=()=&gt;{const blob=new Blob([JSON.stringify(state.evidence,null,2)],{type:&quot;application/json&quot;});const a=document.createElement(&quot;a&quot;);a.href=URL.createObjectURL(blob);a.download=&quot;networklab-evidence.json&quot;;a.click();URL.revokeObjectURL(a.href)};
+}
+
+async function loadTelemetry(){
+  try { state.telemetry=await get(&quot;/api/vm/telemetry&quot;); } catch(error) { state.telemetry={status:&quot;failed&quot;,healthy:false,last_error:error.message}; }
+  if(state.view===&quot;telemetry&quot;) render();
+}
+
+async function load(){
+  $(&quot;alert&quot;).classList.add(&quot;hidden&quot;);
+  try{
+    const [data,health,evidence,virtualNetwork,vms,storage,readiness,telemetry,architecture,connectivity,lab,verification,guestContracts,guestValidation]=await Promise.all([get(&quot;/api/state&quot;),get(&quot;/api/health&quot;),get(&quot;/api/evidence&quot;),get(&quot;/api/virtual-network&quot;),get(&quot;/api/vms&quot;),get(&quot;/api/vms/storage&quot;),get(&quot;/api/vm/readiness&quot;),get(&quot;/api/vm/telemetry&quot;),get(&quot;/api/architecture&quot;),get(&quot;/api/connectivity&quot;),get(&quot;/api/lab/state&quot;),get(&quot;/api/lab/verify&quot;),get(&quot;/api/guest/contracts&quot;),get(&quot;/api/guest/validation&quot;)]);
+    state.data=data; state.health=health; state.evidence=evidence; state.virtualNetwork=virtualNetwork; state.vms=vms; state.storage=storage; state.readiness=readiness; state.telemetry=telemetry; state.architecture=architecture; state.connectivity=connectivity; state.lab=lab; state.verification=verification; state.guestContracts=guestContracts; state.guestValidation=guestValidation; setStatus(); render();
+  }catch(error){
+    $(&quot;alert&quot;).textContent=&quot;LOCAL TELEMETRY ERROR: &quot;+error.message;
+    $(&quot;alert&quot;).classList.remove(&quot;hidden&quot;);
+  }
+}
+
+document.querySelectorAll(&quot;.nav-item&quot;).forEach(button=&gt;button.addEventListener(&quot;click&quot;,()=&gt;{
+  document.querySelectorAll(&quot;.nav-item&quot;).forEach(x=&gt;x.classList.remove(&quot;active&quot;));
+  button.classList.add(&quot;active&quot;); state.view=button.dataset.view; render();
+}));
+$(&quot;refresh&quot;).addEventListener(&quot;click&quot;,load);
+load();
+setInterval(load,10000);
+
+
+async function bindLabControl(){
+  const prepare=$(&quot;prepare-lab&quot;), verify=$(&quot;verify-lab&quot;), result=$(&quot;lab-result&quot;);
+  if(prepare) prepare.onclick=async()=&gt;{
+    prepare.disabled=true; prepare.textContent=&quot;PREPARING...&quot;;
+    try { const x=await post(&quot;/api/lab/prepare&quot;,{}); state.lab=x; state.readiness=x.readiness; result.textContent=JSON.stringify(x,null,2); }
+    catch(error){ result.textContent=&quot;ERROR: &quot;+error.message; }
+    finally { prepare.disabled=false; prepare.textContent=&quot;Prepare lab&quot;; }
+  };
+  if(verify) verify.onclick=async()=&gt;{
+    verify.disabled=true; verify.textContent=&quot;VERIFYING...&quot;;
+    try { const x=await get(&quot;/api/lab/verify&quot;); state.verification=x; result.textContent=JSON.stringify(x,null,2); }
+    catch(error){ result.textContent=&quot;ERROR: &quot;+error.message; }
+    finally { verify.disabled=false; verify.textContent=&quot;Verify lab&quot;; }
+  };
+}
+
+</code></pre>
+</main>
+</body>
+</html>

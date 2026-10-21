@@ -1,0 +1,64 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>powershell\configure\Set-NetworkLabBaseline.ps1 - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>powershell\configure\Set-NetworkLabBaseline.ps1</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../powershell/configure/Set-NetworkLabBaseline.ps1">Open origineel bestand</a></header>
+<main>
+<pre><code>[CmdletBinding(SupportsShouldProcess)]
+param(
+    [Parameter(Mandatory = $false)]
+    [string]$InterfaceAlias,
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet(&#39;Automatic&#39;,&#39;Manual&#39;)]
+    [string]$DhcpMode = &#39;Automatic&#39;
+)
+
+$ErrorActionPreference = &#39;Stop&#39;
+
+$configPath = Join-Path $PSScriptRoot &#39;../../config/lab-config.json&#39;
+$config = Get-Content $configPath -Raw | ConvertFrom-Json
+
+if (-not $config.safety.configuration_enabled) {
+    throw &#39;Configuration changes are disabled in config/lab-config.json. Enable configuration_enabled only after the stage lab topology is defined.&#39;
+}
+
+if (-not $config.safety.require_lab_scope) {
+    throw &#39;Lab-scope safety requirement is disabled. Refusing to continue.&#39;
+}
+
+if ([string]::IsNullOrWhiteSpace($InterfaceAlias)) {
+    throw &#39;InterfaceAlias is required for any configuration operation.&#39;
+}
+
+$adapter = Get-NetAdapter -Name $InterfaceAlias -ErrorAction Stop
+
+if ($PSCmdlet.ShouldProcess($InterfaceAlias, &quot;Set IPv4 configuration mode to $DhcpMode&quot;)) {
+    if ($DhcpMode -eq &#39;Automatic&#39;) {
+        Set-NetIPInterface -InterfaceAlias $InterfaceAlias -Dhcp Enabled
+        Set-DnsClientServerAddress -InterfaceAlias $InterfaceAlias -ResetServerAddresses
+    }
+    else {
+        throw &#39;Manual mode requires an explicitly documented stage-lab IP, gateway and DNS plan before implementation.&#39;
+    }
+}
+
+Get-NetIPConfiguration -InterfaceAlias $InterfaceAlias |
+    Select-Object InterfaceAlias, IPv4Address, IPv4DefaultGateway, DNSServer |
+    Format-List
+</code></pre>
+</main>
+</body>
+</html>

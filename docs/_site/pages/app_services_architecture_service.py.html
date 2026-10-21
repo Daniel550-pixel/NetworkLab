@@ -1,0 +1,82 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>app\services\architecture_service.py - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>app\services\architecture_service.py</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../app/services/architecture_service.py">Open origineel bestand</a></header>
+<main>
+<pre><code>from __future__ import annotations
+
+from typing import Any
+
+from app.services.readiness_service import get_lab_readiness
+from app.services.virtualbox_telemetry_service import get_telemetry
+from app.services.virtualization_service import get_virtual_network
+from app.services.vm_service import get_vm_topology
+
+ARCHITECTURE_LAYERS = [
+    {&quot;id&quot;: &quot;control&quot;, &quot;name&quot;: &quot;Control Plane&quot;, &quot;purpose&quot;: &quot;Single local orchestration surface for lab state, lifecycle and diagnostics.&quot;},
+    {&quot;id&quot;: &quot;virtualization&quot;, &quot;name&quot;: &quot;Virtualization&quot;, &quot;purpose&quot;: &quot;VirtualBox network and VM lifecycle abstraction.&quot;},
+    {&quot;id&quot;: &quot;network&quot;, &quot;name&quot;: &quot;Network&quot;, &quot;purpose&quot;: &quot;Host-only lab network, addressing and connectivity validation.&quot;},
+    {&quot;id&quot;: &quot;runtime&quot;, &quot;name&quot;: &quot;Runtime&quot;, &quot;purpose&quot;: &quot;VM topology, storage, media and runtime readiness.&quot;},
+    {&quot;id&quot;: &quot;observability&quot;, &quot;name&quot;: &quot;Observability&quot;, &quot;purpose&quot;: &quot;Health, telemetry, incidents, evidence and persistent event history.&quot;},
+    {&quot;id&quot;: &quot;recovery&quot;, &quot;name&quot;: &quot;Recovery&quot;, &quot;purpose&quot;: &quot;Issue classification, safe autonomous remediation and escalation.&quot;},
+    {&quot;id&quot;: &quot;verification&quot;, &quot;name&quot;: &quot;Verification&quot;, &quot;purpose&quot;: &quot;Readiness and connectivity checks before declaring the lab operational.&quot;},
+    {&quot;id&quot;: &quot;evidence&quot;, &quot;name&quot;: &quot;Evidence&quot;, &quot;purpose&quot;: &quot;Reproducible state and test evidence for the stage project.&quot;},
+]
+
+def _status(ok: bool) -&gt; str:
+    return &quot;ready&quot; if ok else &quot;attention&quot;
+
+def get_architecture_state() -&gt; dict[str, Any]:
+    readiness = get_lab_readiness()
+    telemetry = get_telemetry()
+    network = get_virtual_network()
+    topology = get_vm_topology()
+    network_ready = bool(network.get(&quot;ready&quot;)) if isinstance(network, dict) else False
+    topology_ready = bool(topology.get(&quot;available&quot;)) if isinstance(topology, dict) else False
+    telemetry_ready = bool(telemetry.get(&quot;healthy&quot;))
+    readiness_ready = bool(readiness.get(&quot;ready&quot;))
+    return {
+        &quot;project&quot;: &quot;NetworkLab&quot;,
+        &quot;mode&quot;: &quot;stage-lab&quot;,
+        &quot;principle&quot;: &quot;observe -&gt; decide -&gt; safely execute -&gt; verify -&gt; record&quot;,
+        &quot;layers&quot;: [
+            {**ARCHITECTURE_LAYERS[0], &quot;status&quot;: &quot;ready&quot;},
+            {**ARCHITECTURE_LAYERS[1], &quot;status&quot;: _status(network_ready)},
+            {**ARCHITECTURE_LAYERS[2], &quot;status&quot;: _status(network_ready)},
+            {**ARCHITECTURE_LAYERS[3], &quot;status&quot;: _status(topology_ready)},
+            {**ARCHITECTURE_LAYERS[4], &quot;status&quot;: _status(telemetry_ready)},
+            {**ARCHITECTURE_LAYERS[5], &quot;status&quot;: _status(telemetry_ready)},
+            {**ARCHITECTURE_LAYERS[6], &quot;status&quot;: _status(readiness_ready)},
+            {**ARCHITECTURE_LAYERS[7], &quot;status&quot;: &quot;ready&quot;},
+        ],
+        &quot;pipeline&quot;: [
+            &quot;discover&quot;, &quot;observe&quot;, &quot;classify&quot;, &quot;policy-check&quot;,
+            &quot;execute-safe-action&quot;, &quot;verify&quot;, &quot;persist-evidence&quot;, &quot;report&quot;,
+        ],
+        &quot;network&quot;: network,
+        &quot;topology&quot;: topology,
+        &quot;readiness&quot;: readiness,
+        &quot;telemetry&quot;: {
+            &quot;status&quot;: telemetry.get(&quot;status&quot;),
+            &quot;healthy&quot;: telemetry.get(&quot;healthy&quot;),
+            &quot;active_issue&quot;: telemetry.get(&quot;active_issue&quot;),
+            &quot;repair_count&quot;: telemetry.get(&quot;repair_count&quot;),
+        },
+    }
+</code></pre>
+</main>
+</body>
+</html>

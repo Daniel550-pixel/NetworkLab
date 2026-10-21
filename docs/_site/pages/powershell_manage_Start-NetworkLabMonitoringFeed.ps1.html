@@ -1,0 +1,102 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>powershell\manage\Start-NetworkLabMonitoringFeed.ps1 - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>powershell\manage\Start-NetworkLabMonitoringFeed.ps1</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../powershell/manage/Start-NetworkLabMonitoringFeed.ps1">Open origineel bestand</a></header>
+<main>
+<pre><code>param(
+    [int]$IntervalSeconds = 30,
+    [int]$Iterations = 0
+)
+
+$ErrorActionPreference = &quot;Stop&quot;
+
+$Root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+
+$StatePath = Join-Path $Root &quot;config\simulation\incident-state.json&quot;
+$DetectionLogPath = Join-Path $Root &quot;logs\monitoring-detection.jsonl&quot;
+$RuntimeLogPath = Join-Path $Root &quot;logs\monitoring-feed.log&quot;
+
+if (-not (Test-Path $StatePath)) {
+    throw &quot;Incident state file not found: $StatePath&quot;
+}
+
+$PreviousState = &quot;normal&quot;
+$Count = 0
+
+Add-Content `
+    -Path $RuntimeLogPath `
+    -Value &quot;[$((Get-Date).ToString(&#39;o&#39;))] Monitoring feed started. Simulation-only mode.&quot;
+
+Write-Host &quot;&quot;
+Write-Host &quot;==============================================&quot; -ForegroundColor Cyan
+Write-Host &quot; NETWORKLAB MONITORING FEED&quot; -ForegroundColor Cyan
+Write-Host &quot;==============================================&quot; -ForegroundColor Cyan
+Write-Host &quot;Interval : $IntervalSeconds seconds&quot; -ForegroundColor White
+Write-Host &quot;Mode     : SIMULATION ONLY&quot; -ForegroundColor Yellow
+Write-Host &quot;Press CTRL+C to stop.&quot; -ForegroundColor Gray
+Write-Host &quot;==============================================&quot; -ForegroundColor Cyan
+Write-Host &quot;&quot;
+
+while ($true) {
+
+    $State = Get-Content $StatePath -Raw | ConvertFrom-Json
+    $ObservedState = [string]$State.state
+
+    if (
+        $ObservedState -eq &quot;fault_injected&quot; -and
+        $PreviousState -ne &quot;fault_injected&quot;
+    ) {
+
+        $Timestamp = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+        $DetectionEvent = @{
+            timestamp = $Timestamp
+            event = &quot;DETECTED&quot;
+            previous_state = $PreviousState
+            observed_state = $ObservedState
+            scenario = $State.scenario
+            target = $State.target
+            simulation = $true
+            detector = &quot;Start-NetworkLabMonitoringFeed&quot;
+        }
+
+        $DetectionEvent |
+            ConvertTo-Json -Compress |
+            Add-Content -Path $DetectionLogPath -Encoding UTF8
+
+        Add-Content `
+            -Path $RuntimeLogPath `
+            -Value &quot;[$Timestamp] DETECTED simulated incident: $($State.scenario) / $($State.target)&quot;
+
+        Write-Host &quot;[DETECTED] $($State.scenario) -&gt; $($State.target)&quot; -ForegroundColor Red
+    }
+    else {
+        Write-Host &quot;[$((Get-Date).ToString(&#39;HH:mm:ss&#39;))] State: $ObservedState&quot; -ForegroundColor Green
+    }
+
+    $PreviousState = $ObservedState
+    $Count++
+
+    if ($Iterations -gt 0 -and $Count -ge $Iterations) {
+        break
+    }
+
+    Start-Sleep -Seconds $IntervalSeconds
+}
+</code></pre>
+</main>
+</body>
+</html>

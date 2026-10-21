@@ -13,6 +13,16 @@ from app.services.network_service import get_state
 from app.services.virtualization_service import create_virtual_network, get_virtual_network
 from app.services.vm_service import create_vm_topology, get_vm_runtime, get_vm_topology, vm_action
 from app.services.storage_service import attach_vm_iso, create_vm_storage, eject_vm_iso, get_vm_storage
+from app.services.readiness_service import get_lab_readiness
+from app.services.architecture_service import get_architecture_state
+from app.services.connectivity_service import get_connectivity_state
+from app.services.orchestrator_service import run_audit
+from app.services.lab_lifecycle_service import get_lab_definition, get_lab_state, prepare_lab
+from app.services.verification_service import verify_lab
+from app.services.guest_contract_service import get_guest_contracts
+from app.services.inter_vm_validation_service import validate_lab_connectivity
+from app.services.lab_evidence_service import capture_lab_evidence
+from app.services.virtualbox_telemetry_service import force_repair, get_telemetry, start_monitor
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB_ROOT = ROOT / "web"
@@ -54,12 +64,18 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
             if not isinstance(body, dict):
                 raise ValueError("Request body must be a JSON object.")
 
-            if route == "/api/virtual-network/create":
+            if route == "/api/lab/prepare":
+                self._json(HTTPStatus.OK, prepare_lab())
+            elif route == "/api/virtual-network/create":
                 self._json(HTTPStatus.OK, create_virtual_network())
             elif route == "/api/vms/create":
                 self._json(HTTPStatus.OK, create_vm_topology())
             elif route == "/api/vms/storage/create":
                 self._json(HTTPStatus.OK, create_vm_storage())
+            elif route == "/api/vm/telemetry/repair":
+                self._json(HTTPStatus.OK, force_repair())
+            elif route == "/api/evidence/capture":
+                self._json(HTTPStatus.OK, capture_lab_evidence())
             elif route.startswith("/api/vms/") and route.endswith("/iso"):
                 parts = route.split("/")
                 if len(parts) != 5:
@@ -111,6 +127,26 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, get_vm_topology())
             elif route == "/api/vms/storage":
                 self._json(HTTPStatus.OK, get_vm_storage())
+            elif route == "/api/vm/readiness":
+                self._json(HTTPStatus.OK, get_lab_readiness())
+            elif route == "/api/lab/definition":
+                self._json(HTTPStatus.OK, get_lab_definition())
+            elif route == "/api/lab/state":
+                self._json(HTTPStatus.OK, get_lab_state())
+            elif route == "/api/lab/verify":
+                self._json(HTTPStatus.OK, verify_lab())
+            elif route == "/api/guest/contracts":
+                self._json(HTTPStatus.OK, get_guest_contracts())
+            elif route == "/api/guest/validation":
+                self._json(HTTPStatus.OK, validate_lab_connectivity())
+            elif route == "/api/architecture":
+                self._json(HTTPStatus.OK, get_architecture_state())
+            elif route == "/api/connectivity":
+                self._json(HTTPStatus.OK, get_connectivity_state())
+            elif route == "/api/orchestrator/audit":
+                self._json(HTTPStatus.OK, run_audit())
+            elif route == "/api/vm/telemetry":
+                self._json(HTTPStatus.OK, get_telemetry())
             elif route.startswith("/api/vms/") and route.endswith("/runtime"):
                 parts = route.split("/")
                 if len(parts) != 5:
@@ -151,6 +187,7 @@ class NetworkLabHandler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
+    start_monitor()
     server = ThreadingHTTPServer((HOST, PORT), NetworkLabHandler)
     print(f"NetworkLab local server: http://{HOST}:{PORT}")
     print("Press Ctrl+C to stop.")

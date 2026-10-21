@@ -1,0 +1,92 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Run-NetworkLab.ps1 - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>Run-NetworkLab.ps1</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../Run-NetworkLab.ps1">Open origineel bestand</a></header>
+<main>
+<pre><code>param(
+    [int]$Port = 8501,
+    [switch]$NoBrowser
+)
+
+$ErrorActionPreference = &#39;Stop&#39;
+$Root = $PSScriptRoot
+$Server = Join-Path $Root &#39;app\server.py&#39;
+$Url = &quot;http://127.0.0.1:$Port&quot;
+
+if (-not (Test-Path (Join-Path $Root &#39;.git&#39;))) {
+    throw &quot;NetworkLab Git repository not found: $Root&quot;
+}
+
+if (-not (Test-Path $Server)) {
+    throw &quot;Local web server not found: $Server&quot;
+}
+
+$PythonCommand = Get-Command python.exe -ErrorAction SilentlyContinue
+if (-not $PythonCommand) {
+    throw &quot;Python was not found on PATH.&quot;
+}
+
+$PythonPath = $PythonCommand.Source
+if ([string]::IsNullOrWhiteSpace($PythonPath)) {
+    $PythonPath = $PythonCommand.Path
+}
+
+$existing = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+if ($existing) {
+    Write-Host &quot;NetworkLab is already running: $Url&quot; -ForegroundColor Green
+    if (-not $NoBrowser) { Start-Process $Url }
+    return
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;NETWORKLAB&quot; -ForegroundColor Cyan
+Write-Host &quot;Mode: pure localhost web application&quot; -ForegroundColor DarkGray
+Write-Host &quot;Server: $Server&quot; -ForegroundColor DarkGray
+Write-Host &quot;URL: $Url&quot; -ForegroundColor Green
+Write-Host &quot;&quot;
+
+$env:NETWORKLAB_PORT = &quot;$Port&quot;
+
+$process = Start-Process `
+    -FilePath $PythonPath `
+    -ArgumentList &quot;-m app.server&quot; `
+    -WorkingDirectory $Root `
+    -PassThru `
+    -WindowStyle Hidden
+
+Start-Sleep -Seconds 2
+
+$listener = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+if (-not $listener) {
+    if ($process.HasExited) {
+        throw &quot;NetworkLab local server failed to start. Exit code: $($process.ExitCode)&quot;
+    }
+    Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+    throw &quot;NetworkLab did not open port $Port.&quot;
+}
+
+Write-Host &quot;NetworkLab running: $Url&quot; -ForegroundColor Green
+Write-Host &quot;Python PID: $($process.Id)&quot; -ForegroundColor DarkGray
+
+if (-not $NoBrowser) {
+    Start-Process $Url
+}
+
+Write-Host &quot;Local web app detached from this terminal.&quot; -ForegroundColor DarkGray
+</code></pre>
+</main>
+</body>
+</html>

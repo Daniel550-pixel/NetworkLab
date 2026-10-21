@@ -1,0 +1,38 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>tests\infrastructure\test_lab_lifecycle.py - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>tests\infrastructure\test_lab_lifecycle.py</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../tests/infrastructure/test_lab_lifecycle.py">Open origineel bestand</a></header>
+<main>
+<pre><code>from app.services.lab_definition import VM_ROLES
+from app.services import lab_lifecycle_service
+
+def test_lab_definition_has_three_explicit_roles():
+    assert [item[&quot;role&quot;] for item in VM_ROLES] == [&quot;MGMT&quot;, &quot;INFRA&quot;, &quot;CLIENT&quot;]
+    assert [item[&quot;recommended_ip&quot;] for item in VM_ROLES] == [
+        &quot;192.168.77.10&quot;, &quot;192.168.77.20&quot;, &quot;192.168.77.30&quot;
+    ]
+
+def test_lab_state_contains_all_host_layers(monkeypatch):
+    monkeypatch.setattr(lab_lifecycle_service, &quot;get_virtual_network&quot;, lambda: {&quot;ready&quot;: True})
+    monkeypatch.setattr(lab_lifecycle_service, &quot;get_vm_topology&quot;, lambda: {&quot;vms&quot;: []})
+    monkeypatch.setattr(lab_lifecycle_service, &quot;get_vm_storage&quot;, lambda: {&quot;vms&quot;: []})
+    monkeypatch.setattr(lab_lifecycle_service, &quot;get_lab_readiness&quot;, lambda: {&quot;ready&quot;: False})
+    state = lab_lifecycle_service.get_lab_state()
+    assert {&quot;definition&quot;, &quot;network&quot;, &quot;topology&quot;, &quot;storage&quot;, &quot;readiness&quot;} &lt;= set(state)
+</code></pre>
+</main>
+</body>
+</html>

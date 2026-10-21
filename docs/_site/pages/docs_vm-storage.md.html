@@ -1,0 +1,27 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>docs\vm-storage.md - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>docs\vm-storage.md</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../docs/vm-storage.md">Open origineel bestand</a></header>
+<main>
+<h1>NetworkLab VM Storage</h1>
+<p>The VM storage layer provisions one empty 20 GB VDI disk for each NetworkLab VM.</p>
+<p>| VM | Role | Disk | Format | |---|---|---:|---| | NetworkLab-VM01-MGMT | MGMT | 20 GB | VDI | | NetworkLab-VM02-INFRA | INFRA | 20 GB | VDI | | NetworkLab-VM03-CLIENT | CLIENT | 20 GB | VDI |</p>
+<p>The storage operation is idempotent: an existing controller and attached disk are reused.</p>
+<p>No operating-system ISO is embedded or downloaded by NetworkLab. ISO attachment remains a separate operation so the lab does not make assumptions about the required operating system.</p>
+<p>All disks are local VirtualBox storage associated with the isolated NetworkLab-Lab VM topology.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,154 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>tests\incidents\Invoke-NetworkLabIncidentSimulation.ps1 - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>tests\incidents\Invoke-NetworkLabIncidentSimulation.ps1</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../tests/incidents/Invoke-NetworkLabIncidentSimulation.ps1">Open origineel bestand</a></header>
+<main>
+<pre><code>param(
+    [Parameter(Mandatory = $true)]
+    [ValidateSet(&quot;InjectFault&quot;, &quot;Detect&quot;, &quot;Recover&quot;, &quot;Verify&quot;)]
+    [string]$Action
+)
+
+$ErrorActionPreference = &quot;Stop&quot;
+
+$Root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+
+$StatePath = Join-Path $Root &quot;config\simulation\incident-state.json&quot;
+$LogPath   = Join-Path $Root &quot;logs\incident-simulation.jsonl&quot;
+
+if (-not (Test-Path $StatePath)) {
+    throw &quot;Incident state file not found: $StatePath&quot;
+}
+
+$State = Get-Content $StatePath -Raw | ConvertFrom-Json
+
+$Timestamp = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+switch ($Action) {
+
+    &quot;InjectFault&quot; {
+
+        $State.incident_id = &quot;INC-SIM-001&quot;
+        $State.scenario = &quot;connectivity-loss&quot;
+        $State.target = &quot;simulated-network-node&quot;
+        $State.state = &quot;fault_injected&quot;
+        $State.simulation = $true
+        $State.updated_at = $Timestamp
+
+        $Event = @{
+            timestamp = $Timestamp
+            event = &quot;FAULT_INJECTED&quot;
+            previous_state = &quot;normal&quot;
+            new_state = &quot;fault_injected&quot;
+            scenario = $State.scenario
+            target = $State.target
+            simulation = $true
+        }
+    }
+
+    &quot;Detect&quot; {
+
+        if ($State.state -ne &quot;fault_injected&quot;) {
+            throw &quot;Detect requires incident state &#39;fault_injected&#39;. Current state: $($State.state)&quot;
+        }
+
+        $PreviousState = $State.state
+
+        $State.state = &quot;detected&quot;
+        $State.updated_at = $Timestamp
+
+        $Event = @{
+            timestamp = $Timestamp
+            event = &quot;DETECTED&quot;
+            previous_state = $PreviousState
+            new_state = &quot;detected&quot;
+            scenario = $State.scenario
+            target = $State.target
+            simulation = $true
+            detector = &quot;Invoke-NetworkLabIncidentSimulation.ps1&quot;
+        }
+    }
+
+    &quot;Recover&quot; {
+
+        if ($State.state -ne &quot;detected&quot;) {
+            throw &quot;Recover requires incident state &#39;detected&#39;. Current state: $($State.state)&quot;
+        }
+
+        $PreviousState = $State.state
+
+        $State.state = &quot;recovery&quot;
+        $State.updated_at = $Timestamp
+
+        $Event = @{
+            timestamp = $Timestamp
+            event = &quot;RECOVERY&quot;
+            previous_state = $PreviousState
+            new_state = &quot;recovery&quot;
+            scenario = $State.scenario
+            target = $State.target
+            simulation = $true
+        }
+    }
+
+    &quot;Verify&quot; {
+
+        if ($State.state -ne &quot;recovery&quot;) {
+            throw &quot;Verify requires incident state &#39;recovery&#39;. Current state: $($State.state)&quot;
+        }
+
+        $PreviousState = $State.state
+
+        $State.state = &quot;verified&quot;
+        $State.updated_at = $Timestamp
+
+        $Event = @{
+            timestamp = $Timestamp
+            event = &quot;VERIFIED&quot;
+            previous_state = $PreviousState
+            new_state = &quot;verified&quot;
+            scenario = $State.scenario
+            target = $State.target
+            simulation = $true
+        }
+
+        # Complete lifecycle: return to NORMAL.
+        $State.state = &quot;normal&quot;
+        $State.updated_at = $Timestamp
+    }
+}
+
+$State | ConvertTo-Json -Depth 10 |
+    Set-Content -Path $StatePath -Encoding UTF8
+
+$Event |
+    ConvertTo-Json -Compress |
+    Add-Content -Path $LogPath -Encoding UTF8
+
+Write-Host &quot;&quot;
+Write-Host &quot;==============================================&quot; -ForegroundColor Cyan
+Write-Host &quot; NETWORKLAB INCIDENT SIMULATION&quot; -ForegroundColor Cyan
+Write-Host &quot;==============================================&quot; -ForegroundColor Cyan
+Write-Host &quot;Action : $Action&quot; -ForegroundColor White
+Write-Host &quot;State  : $($State.state)&quot; -ForegroundColor Green
+Write-Host &quot;Target : $($State.target)&quot; -ForegroundColor White
+Write-Host &quot;Mode   : SIMULATION ONLY&quot; -ForegroundColor Yellow
+Write-Host &quot;==============================================&quot; -ForegroundColor Cyan
+Write-Host &quot;&quot;
+</code></pre>
+</main>
+</body>
+</html>

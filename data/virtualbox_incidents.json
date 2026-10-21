@@ -1,0 +1,7 @@
+[
+  {
+    "timestamp": "2026-10-21T07:29:05.093884+00:00",
+    "event": "monitor-started",
+    "interval_seconds": 60
+  }
+]

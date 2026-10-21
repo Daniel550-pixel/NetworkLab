@@ -1,0 +1,84 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>powershell\manage\Get-NetworkLabState.ps1 - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>powershell\manage\Get-NetworkLabState.ps1</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../powershell/manage/Get-NetworkLabState.ps1">Open origineel bestand</a></header>
+<main>
+<pre><code>[CmdletBinding()]
+param()
+
+$ErrorActionPreference = &#39;Stop&#39;
+
+$adapters = @(Get-NetAdapter -ErrorAction SilentlyContinue |
+    Select-Object Name, Status, LinkSpeed, MacAddress)
+
+$ip = @(Get-NetIPConfiguration -ErrorAction SilentlyContinue | ForEach-Object {
+    [PSCustomObject]@{
+        interface = $_.InterfaceAlias
+        ipv4 = @($_.IPv4Address | ForEach-Object { $_.IPv4Address }) -join &#39;, &#39;
+        gateway = @($_.IPv4DefaultGateway | ForEach-Object { $_.NextHop }) -join &#39;, &#39;
+        dns = @($_.DNSServer.ServerAddresses) -join &#39;, &#39;
+    }
+} | Where-Object { $_.ipv4 -or $_.gateway -or $_.dns })
+
+$connectivity = @(
+    &#39;127.0.0.1&#39; | ForEach-Object {
+        $target = $_
+        $watch = [Diagnostics.Stopwatch]::StartNew()
+        $ok = Test-Connection -ComputerName $target -Count 1 -Quiet -ErrorAction SilentlyContinue
+        $watch.Stop()
+
+        [PSCustomObject]@{
+            target = $target
+            ok = [bool]$ok
+            latency = if ($ok) { &quot;$($watch.ElapsedMilliseconds) ms&quot; } else { &#39;timeout&#39; }
+        }
+    }
+)
+
+$services = @(
+    &#39;Dnscache&#39;,&#39;Dhcp&#39;,&#39;NlaSvc&#39; | ForEach-Object {
+        $service = Get-Service -Name $_ -ErrorAction SilentlyContinue
+
+        if ($service) {
+            [PSCustomObject]@{
+                name = $service.Name
+                status = $service.Status.ToString()
+                startType = $service.StartType.ToString()
+            }
+        }
+        else {
+            [PSCustomObject]@{
+                name = $_
+                status = &#39;Not found&#39;
+                startType = &#39;Unknown&#39;
+            }
+        }
+    }
+)
+
+[PSCustomObject]@{
+    project = &#39;NetworkLab&#39;
+    environment = &#39;stage-lab&#39;
+    timestamp = (Get-Date).ToString(&#39;o&#39;)
+    adapters = $adapters
+    ip = $ip
+    connectivity = $connectivity
+    services = $services
+} | ConvertTo-Json -Depth 8
+</code></pre>
+</main>
+</body>
+</html>

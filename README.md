@@ -2,46 +2,56 @@
 
 ## Stage Project — Network & Infrastructure Management
 
-NetworkLab is een gecontroleerd lokaal lab voor het installeren, configureren, beheren en monitoren van netwerk- en infrastructuuronderdelen.
+NetworkLab is a controlled, reproducible local laboratory for demonstrating:
 
-De documentatie en projectbestanden ondersteunen twee in het project gebruikte stagewerkprocessen:
-1. **B1-K2-W1 — Installeert en configureert netwerk- en infrastructuuronderdelen**
-2. **B1-K2-W2 — Beheert en monitort netwerk- en infrastructuuronderdelen**
-
-Controleer de officiële beoordelingscriteria met de school of stagebegeleider. Scripts en documentatie zijn geen vervanging voor aantoonbaar uitgevoerde werkzaamheden.
+1. **Installatie en configuratie van netwerk- en infrastructuuronderdelen**
+2. **Beheer en monitoring van netwerk- en infrastructuuronderdelen**
 
 ## Technology Stack
 
-| Technologie | Doel |
+| Technology | Purpose |
 |---|---|
-| GitHub | Versiebeheer, implementatie, documentatie en bewijs |
-| Python | Lokale HTTP-server, monitoring, diagnostiek en rapportage |
-| HTML/CSS/JavaScript | Lokale webinterface |
-| PowerShell | Windows-netwerkinspectie, veiligheidscontroles en diagnostiek |
-| JSON | Labconfiguratie en gestructureerde gegevens |
-| VirtualBox | Geïsoleerde virtuele netwerk- en VM-omgeving |
-| GitHub Actions | Geautomatiseerde validatie volgens de workflows |
+| GitHub | Version control, implementation, documentation and evidence |
+| Python | Local HTTP server, monitoring, diagnostics and reporting |
+| HTML/CSS/JavaScript | Localhost web application and laboratory UI |
+| PowerShell | Network inspection, configuration safeguards and diagnostics |
+| JSON | Lab configuration and evidence format |
+| GitHub Actions | Automated validation |
 
-## Lokale webapplicatie
+## Local Web Application
 
-De NetworkLab-interface is een localhost-webapplicatie.
+The NetworkLab interface is now a **pure localhost web application**.
 
-- Geen Streamlit-runtime vereist.
-- Geen externe frontend-CDN vereist volgens het projectontwerp.
-- De Python-standaardbibliotheek levert de lokale HTTP-server.
-- De browserinterface is bedoeld voor 127.0.0.1.
-- De UI-bestanden staan in web/.
-- De server-entrypoint is app/server.py.
+- No Streamlit runtime is required.
+- No external frontend CDN or remote UI service is required.
+- The Python standard library provides the local HTTP server.
+- The browser connects only to `127.0.0.1`.
+- Network telemetry is exposed through local `/api/*` endpoints.
+- The UI is served from the repository's `web/` directory.
 
-### Starten
+### Start
 
-Voer vanuit de repositoryroot in PowerShell uit:
+From the repository root in PowerShell:
 
-    .\Run-NetworkLab.ps1
+```powershell
+.\Run-NetworkLab.ps1
+```
 
-Open vervolgens http://127.0.0.1:8501. Gebruik een aangepaste poort alleen als de huidige launcher die optie ondersteunt. Als de launcher ontbreekt, controleer dan eerst de actuele repositorybestanden.
+Then open:
 
-## Webapplicatieonderdelen
+```
+http://127.0.0.1:8501
+```
+
+Optional custom port:
+
+```powershell
+.\Run-NetworkLab.ps1 -Port 8510
+```
+
+The launcher starts `app/server.py`, which serves the frontend and local telemetry API.
+
+## Web Application Sections
 
 - Command Center
 - Topology
@@ -53,68 +63,45 @@ Open vervolgens http://127.0.0.1:8501. Gebruik een aangepaste poort alleen als d
 - Evidence
 - VM storage & OS media
 
-De applicatieweergave en de echte host-/VM-status moeten met de onderliggende observaties worden vergeleken.
+The topology visualization is rendered with native SVG. There are no external JavaScript dependencies.
 
-## Netwerktopologie en VM-lab
+## Safety Model
 
-De gedocumenteerde VirtualBox host-only topologie gebruikt de volgende doelwaarden:
+Network-changing operations remain disabled by default in `config/lab-config.json`. The baseline configuration workflow refuses to run unless the laboratory safety controls are explicitly enabled and an interface is supplied.
 
-| Onderdeel | Gedocumenteerde waarde |
-|---|---|
-| Netwerknaam | NetworkLab-Lab |
-| Subnet | 192.168.77.0/24 |
-| Hostadres | 192.168.77.1 |
-| DHCP-server | 192.168.77.2 |
-| DHCP-pool | 192.168.77.100–192.168.77.200 |
-| VM's | NetworkLab-VM01-MGMT, NetworkLab-VM02-INFRA, NetworkLab-VM03-CLIENT |
-| Virtuele schijf | 20 GB VDI per VM, volgens de projectdocumentatie |
+No production-network assumptions are encoded in the repository.
 
-Dit zijn gedocumenteerde doelwaarden. Controleer ze tegen de actuele VirtualBox-configuratie. Gast-IP-adressen en end-to-end-connectiviteit moeten na installatie worden gemeten; vul geen niet-waargenomen waarden in.
+## Execution Order
 
-## Veiligheidsmodel
+1. Initialize and validate the environment.
+2. Start the local NetworkLab web application.
+3. Inspect the current network state.
+4. Define and document the actual stage-lab topology.
+5. Enable guarded configuration only when that topology is known.
+6. Validate network and infrastructure state.
+7. Run monitoring and reporting.
+8. Preserve results as stage evidence.
 
-- Netwerkwijzigingen blijven standaard uitgeschakeld in config/lab-config.json.
-- Configuratieacties vereisen een expliciete lab-scope.
-- Begin met read-only inspectie.
-- Gebruik geen fysieke LAN-bridge of productieconfiguratie als impliciete aanname.
-- Commit geen wachtwoorden, tokens of privésleutels.
-- Een gesimuleerde incidentstatus is geen bewijs van een echte storing.
+## Status
 
-## Documentatie
+**Localhost web application: IMPLEMENTED**
 
-De volledige documentatie-index staat in [docs/README.html](docs/README.html).
+**VirtualBox VM infrastructure: IMPLEMENTED**
 
-Belangrijkste documenten:
-- [Architectuur en componenten](docs/architecture.html)
-- [Installatiehandleiding](docs/installation.html)
-- [Configuratiehandleiding](docs/configuration.html)
-- [HTML/SVG-netwerktopologie](docs/network-topology.html)
-- [Virtueel netwerk](docs/virtual-network.html)
-- [VM-installatiehandleiding](docs/vm-installation-guide.html)
-- [VM-opslag en ISO-media](docs/vm-storage.html)
-- [Runbook](docs/runbook.html)
-- [Monitoring en diagnostiek](docs/monitoring.html)
-- [Troubleshooting](docs/troubleshooting.html)
-- [Beveiliging en gegevensbeheer](docs/security-and-data-handling.html)
-- [Testplan](docs/test-plan.html)
-- [HTML-test- en bewijsregister](docs/test-and-evidence-register.html)
-- [Koppeling stagecompetenties aan bewijs](docs/stage-competency-mapping.html)
-- [Bestaand stagebewijsregister](docs/evidence.html)
-- [Begrippenlijst](docs/glossary.html)
+- NetworkLab-Lab host-only network
+- Three role-based lab VMs
+- 20 GB VDI storage per VM
+- Explicit local ISO attachment/ejection
+- DVD-first boot preparation for OS installation
+- No automatic OS downloads or external media selection
 
-## Uitvoeringsvolgorde
+The web layer is now independent of Streamlit and runs as a local Python HTTP application on `127.0.0.1`.
 
-1. Controleer de repository en lokale vereisten.
-2. Start de lokale NetworkLab-webapp.
-3. Inspecteer de actuele host- en VirtualBox-status.
-4. Vergelijk de werkelijke omgeving met de topologie.
-5. Voer alleen goedgekeurde configuratiestappen uit binnen de lab-scope.
-6. Valideer adressering en connectiviteit.
-7. Voer monitoring en rapportage uit.
-8. Bewaar resultaten en bewijs.
-9. Werk documentatie bij op basis van de waarnemingen.
+## Project documentation
 
-## Teststatus en beperkingen
-
-De handleidingen en registratieformulieren zijn documentatie en uitvoeringshulpmiddelen. Ze bewijzen niet dat een gast-OS is geïnstalleerd, DHCP werkt of VM's onderling bereikbaar zijn. De tests in [docs/test-plan.html](docs/test-plan.html) beginnen op **Openstaand** en mogen pas na daadwerkelijke uitvoering worden bijgewerkt.
+- [Netwerktopologie (HTML)](docs/network-topology.html) — inline-SVG-netwerktekening, adresseringsplan en verificatiecommando's.
+- [Bewijsmatrix B1-K2-W1/W2](docs/b1-k2-w1-w2-evidence.md) — koppeling tussen werkprocessen, bewijsstukken, controles en openstaande punten.
+- [Verificatieformulier (invulbaar)](docs/verification-record-template.md) — registreer echte host-, VM-, IP-, connectiviteits- en veiligheidscontroles.
+- [Incident simulation and monitoring](docs/incident-simulation.md) — incident lifecycle, PowerShell commands, validation evidence, limitations, and next improvements.
+- [Generated documentation portal](docs/_site/index.html) — browsable HTML views of repository documentation and source files (open locally or browse the folder in GitHub).
 

@@ -1,0 +1,44 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>docs\LAB_BUILD_PLAN.md - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>docs\LAB_BUILD_PLAN.md</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../docs/LAB_BUILD_PLAN.md">Open origineel bestand</a></header>
+<main>
+<h1>NetworkLab System Build</h1>
+<h2>Implemented system</h2>
+<ul>
+<li>VirtualBox host-only network and DHCP provisioning.</li>
+<li>Three-role VM topology: MGMT, INFRA, CLIENT.</li>
+<li>VM storage/controller provisioning.</li>
+<li>Explicit/manual ISO attachment.</li>
+<li>VM lifecycle controls.</li>
+<li>Readiness gates.</li>
+<li>Continuous VirtualBox telemetry.</li>
+<li>Persistent incident history.</li>
+<li>Autonomous safe recovery.</li>
+<li>Architecture/control-plane state.</li>
+<li>Connectivity verification.</li>
+<li>Unified audit and evidence.</li>
+</ul>
+<h2>Remaining guest-dependent work</h2>
+<p>These require an operating system to be installed in the VMs and therefore remain explicitly gated behind manual ISO installation:</p>
+<p>1. MGMT guest configuration and administration tooling. 2. INFRA guest services (DNS/DHCP/service roles as selected for the stage). 3. CLIENT guest configuration. 4. Inter-VM service validation. 5. Guest-level evidence collection.</p>
+<p>NetworkLab must not silently download or choose OS media.</p>
+<h2>Automated build pipeline</h2>
+<p>prepare -&gt; verify -&gt; install guest OS manually -&gt; configure guest roles -&gt; validate services -&gt; capture evidence</p>
+<p>The host-side system is designed so the guest-dependent phase can be added without changing the VirtualBox control plane.</p>
+</main>
+</body>
+</html>

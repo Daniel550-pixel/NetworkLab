@@ -1,0 +1,281 @@
+﻿<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>app\services\virtualization_service.py - NetworkLab</title>
+<style>
+body{font:16px/1.65 system-ui,Segoe UI,sans-serif;max-width:1100px;margin:40px auto;padding:0 22px;color:#172033}
+header{border-bottom:1px solid #ccd3df;margin-bottom:24px;padding-bottom:14px}
+a{color:#1459a6}pre{overflow:auto;background:#f2f5f9;padding:18px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+code{font-family:Consolas,monospace}h1{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><a href="../index.html">← Terug naar NetworkLab-documentatie</a>
+<h1>app\services\virtualization_service.py</h1><p>Automatisch gegenereerde weergave. Bewerk het originele bestand via de link hieronder.</p>
+<a href="../../app/services/virtualization_service.py">Open origineel bestand</a></header>
+<main>
+<pre><code>from __future__ import annotations
+
+import os
+import re
+import shutil
+import subprocess
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+NETWORK_NAME = &quot;NetworkLab-Lab&quot;
+NETWORK_CIDR = &quot;192.168.77.0/24&quot;
+HOST_IP = &quot;192.168.77.1&quot;
+NETMASK = &quot;255.255.255.0&quot;
+DHCP_IP = &quot;192.168.77.2&quot;
+DHCP_LOWER = &quot;192.168.77.100&quot;
+DHCP_UPPER = &quot;192.168.77.200&quot;
+
+
+@dataclass
+class VBoxResult:
+    ok: bool
+    stdout: str
+    stderr: str
+    returncode: int
+
+
+def _vboxmanage() -&gt; str | None:
+    candidates = [
+        shutil.which(&quot;VBoxManage.exe&quot;),
+        os.path.join(os.environ.get(&quot;VBOX_MSI_INSTALL_PATH&quot;, &quot;&quot;), &quot;VBoxManage.exe&quot;),
+        os.path.join(os.environ.get(&quot;ProgramFiles&quot;, &quot;&quot;), &quot;Oracle&quot;, &quot;VirtualBox&quot;, &quot;VBoxManage.exe&quot;),
+        os.path.join(os.environ.get(&quot;ProgramFiles&quot;, &quot;&quot;), &quot;VirtualBox&quot;, &quot;VBoxManage.exe&quot;),
+    ]
+    for candidate in candidates:
+        if candidate and Path(candidate).is_file():
+            return candidate
+    return None
+
+
+def _run(vbox: str, *args: str) -&gt; VBoxResult:
+    try:
+        p = subprocess.run(
+            [vbox, *args],
+            capture_output=True,
+            text=True,
+            encoding=&quot;utf-8&quot;,
+            errors=&quot;replace&quot;,
+            timeout=30,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return VBoxResult(False, &quot;&quot;, str(exc), 1)
+    return VBoxResult(p.returncode == 0, p.stdout.strip(), p.stderr.strip(), p.returncode)
+
+
+def _records(text: str) -&gt; list[dict[str, str]]:
+    &quot;&quot;&quot;Parse VBoxManage&#39;s key/value records without relying on blank lines.&quot;&quot;&quot;
+    records: list[dict[str, str]] = []
+    current: dict[str, str] = {}
+
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line:
+            if current:
+                records.append(current)
+                current = {}
+            continue
+
+        match = re.match(r&quot;^([^:]+):\s*(.*)$&quot;, line)
+        if not match:
+            continue
+
+        key, value = match.group(1).strip(), match.group(2).strip()
+
+        # VBoxManage list output starts each record with Name/NetworkName.
+        if key in {&quot;Name&quot;, &quot;NetworkName&quot;} and current:
+            records.append(current)
+            current = {}
+
+        current[key] = value
+
+    if current:
+        records.append(current)
+
+    return records
+
+
+def _find_host_only(vbox: str) -&gt; dict[str, str] | None:
+    result = _run(vbox, &quot;list&quot;, &quot;hostonlyifs&quot;)
+    if not result.ok:
+        return None
+
+    for item in _records(result.stdout):
+        if item.get(&quot;IPAddress&quot;) == HOST_IP:
+            return item
+    return None
+
+
+def _find_dhcp(vbox: str, adapter_name: str | None = None) -&gt; dict[str, str] | None:
+    result = _run(vbox, &quot;list&quot;, &quot;dhcpservers&quot;)
+    if not result.ok:
+        return None
+
+    expected_network = f&quot;HostInterfaceNetworking-{adapter_name}&quot; if adapter_name else &quot;&quot;
+    for item in _records(result.stdout):
+        network = item.get(&quot;NetworkName&quot;, &quot;&quot;)
+        ip = item.get(&quot;IP&quot;, &quot;&quot;)
+        if ip == DHCP_IP or network == expected_network or (
+            adapter_name and adapter_name in network
+        ):
+            return item
+    return None
+
+
+def _base_state() -&gt; dict[str, Any]:
+    return {
+        &quot;name&quot;: NETWORK_NAME,
+        &quot;network&quot;: NETWORK_CIDR,
+        &quot;host_ip&quot;: HOST_IP,
+        &quot;dhcp&quot;: {
+            &quot;ip&quot;: DHCP_IP,
+            &quot;lower&quot;: DHCP_LOWER,
+            &quot;upper&quot;: DHCP_UPPER,
+        },
+        &quot;internet_access&quot;: False,
+        &quot;physical_bridge&quot;: False,
+        &quot;virtualization&quot;: &quot;VirtualBox&quot;,
+    }
+
+
+def get_virtual_network() -&gt; dict[str, Any]:
+    vbox = _vboxmanage()
+    base = _base_state()
+
+    if not vbox:
+        return {
+            **base,
+            &quot;available&quot;: False,
+            &quot;exists&quot;: False,
+            &quot;ready&quot;: False,
+            &quot;error&quot;: &quot;VBoxManage.exe not found. Install VirtualBox or expose VBoxManage.exe on PATH.&quot;,
+        }
+
+    host = _find_host_only(vbox)
+    dhcp = _find_dhcp(vbox, host.get(&quot;Name&quot;) if host else None)
+    ready = host is not None and dhcp is not None
+
+    return {
+        **base,
+        &quot;available&quot;: True,
+        &quot;exists&quot;: host is not None,
+        &quot;ready&quot;: ready,
+        &quot;host_only_adapter&quot;: host,
+        &quot;dhcp_server&quot;: dhcp,
+    }
+
+
+def create_virtual_network() -&gt; dict[str, Any]:
+    vbox = _vboxmanage()
+    if not vbox:
+        raise RuntimeError(
+            &quot;VirtualBox VBoxManage.exe was not found. Install VirtualBox or add its installation directory to PATH.&quot;
+        )
+
+    # Resolve an existing NetworkLab adapter first.
+    host = _find_host_only(vbox)
+
+    if not host:
+        # Capture the adapter names before creation so we can reliably identify
+        # the adapter VirtualBox creates, regardless of localized VBoxManage
+        # output or changes in the create command&#39;s stdout format.
+        before_result = _run(vbox, &quot;list&quot;, &quot;hostonlyifs&quot;)
+        before = {
+            item.get(&quot;Name&quot;)
+            for item in _records(before_result.stdout)
+            if item.get(&quot;Name&quot;)
+        }
+
+        created = _run(vbox, &quot;hostonlyif&quot;, &quot;create&quot;)
+        if not created.ok:
+            raise RuntimeError(
+                created.stderr or created.stdout or &quot;Unable to create the VirtualBox host-only adapter.&quot;
+            )
+
+        # Prefer the newly-created adapter from VBoxManage&#39;s authoritative
+        # list output instead of parsing the human-readable create message.
+        after_result = _run(vbox, &quot;list&quot;, &quot;hostonlyifs&quot;)
+        after = [
+            item
+            for item in _records(after_result.stdout)
+            if item.get(&quot;Name&quot;)
+        ]
+
+        new_adapters = [item for item in after if item.get(&quot;Name&quot;) not in before]
+
+        if new_adapters:
+            host = new_adapters[-1]
+        else:
+            # A previously-created adapter may have existed with a different
+            # address. Fall back to the first host-only adapter only when it is
+            # the sole adapter available.
+            if len(after) == 1:
+                host = after[0]
+
+    if not host or not host.get(&quot;Name&quot;):
+        raise RuntimeError(
+            &quot;VirtualBox created a host-only adapter, but NetworkLab could not resolve its adapter name.&quot;
+        )
+
+    adapter_name = host[&quot;Name&quot;]
+
+    configured = _run(
+        vbox,
+        &quot;hostonlyif&quot;,
+        &quot;ipconfig&quot;,
+        adapter_name,
+        &quot;--ip&quot;,
+        HOST_IP,
+        &quot;--netmask&quot;,
+        NETMASK,
+    )
+    if not configured.ok:
+        raise RuntimeError(
+            configured.stderr or configured.stdout or &quot;Unable to configure the NetworkLab host-only adapter.&quot;
+        )
+
+    dhcp = _find_dhcp(vbox, adapter_name)
+    if not dhcp:
+        dhcp_result = _run(
+            vbox,
+            &quot;dhcpserver&quot;,
+            &quot;add&quot;,
+            &quot;--ifname&quot;,
+            adapter_name,
+            &quot;--ip&quot;,
+            DHCP_IP,
+            &quot;--netmask&quot;,
+            NETMASK,
+            &quot;--lowerip&quot;,
+            DHCP_LOWER,
+            &quot;--upperip&quot;,
+            DHCP_UPPER,
+            &quot;--enable&quot;,
+        )
+        if not dhcp_result.ok:
+            raise RuntimeError(
+                dhcp_result.stderr
+                or dhcp_result.stdout
+                or &quot;Unable to create the NetworkLab DHCP server.&quot;
+            )
+
+    final = get_virtual_network()
+    if not final.get(&quot;ready&quot;):
+        raise RuntimeError(
+            &quot;Virtual network provisioning completed without producing the expected host-only adapter and DHCP state.&quot;
+        )
+
+    return final
+</code></pre>
+</main>
+</body>
+</html>
