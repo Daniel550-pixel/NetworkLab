@@ -1,120 +1,45 @@
 # NetworkLab
 
-## Stage Project — Network & Infrastructure Management
+NetworkLab is een lichtgewicht lokaal netwerk- en infrastructuurdashboard met drie afzonderlijke webapps. De huidige architectuur vereist **geen VirtualBox, geen virtuele machines en geen externe frontend-CDN's**.
 
-NetworkLab is een gecontroleerd lokaal lab voor het installeren, configureren, beheren en monitoren van netwerk- en infrastructuuronderdelen.
+## Apps
 
-De documentatie en projectbestanden ondersteunen twee in het project gebruikte stagewerkprocessen:
-1. **B1-K2-W1 — Installeert en configureert netwerk- en infrastructuuronderdelen**
-2. **B1-K2-W2 — Beheert en monitort netwerk- en infrastructuuronderdelen**
+| App | Lokale URL | Doel |
+|---|---|---|
+| Client | http://127.0.0.1:8510 | Gebruikersportaal en verbindingstest |
+| MGMT | http://127.0.0.1:8511 | Centraal overzicht en read-only health checks |
+| INFRA | http://127.0.0.1:8512 | Python-standaardbibliotheek API en service-status |
 
-Controleer de officiële beoordelingscriteria met de school of stagebegeleider. Scripts en documentatie zijn geen vervanging voor aantoonbaar uitgevoerde werkzaamheden.
+## Starten op Windows
 
-## Technology Stack
+Vereisten: Python 3 en Windows PowerShell.
 
-| Technologie | Doel |
-|---|---|
-| GitHub | Versiebeheer, implementatie, documentatie en bewijs |
-| Python | Lokale HTTP-server, monitoring, diagnostiek en rapportage |
-| HTML/CSS/JavaScript | Lokale webinterface |
-| PowerShell | Windows-netwerkinspectie, veiligheidscontroles en diagnostiek |
-| JSON | Labconfiguratie en gestructureerde gegevens |
-| VirtualBox | Geïsoleerde virtuele netwerk- en VM-omgeving |
-| GitHub Actions | Geautomatiseerde validatie volgens de workflows |
+Voer vanuit de repositoryroot uit:
 
-## Lokale webapplicatie
+    .\Run-NetworkLab-WebApps.ps1
 
-De NetworkLab-interface is een localhost-webapplicatie.
+Open daarna de drie lokale URL's hierboven. De launcher controleert eerst of de poorten vrij zijn. Logs worden in logs/ geplaatst.
 
-- Geen Streamlit-runtime vereist.
-- Geen externe frontend-CDN vereist volgens het projectontwerp.
-- De Python-standaardbibliotheek levert de lokale HTTP-server.
-- De browserinterface is bedoeld voor 127.0.0.1.
-- De UI-bestanden staan in web/.
-- De server-entrypoint is app/server.py.
+## Architectuur
 
-### Starten
+- apps/client/: zelfstandige statische Client UI.
+- apps/mgmt/: zelfstandige statische Management UI.
+- apps/infra/: zelfstandige Infrastructure UI en API, gebouwd met Python's standaardbibliotheek.
+- Client en MGMT vragen status op bij INFRA via HTTP.
+- Alle services binden standaard aan 127.0.0.1; ze worden niet openbaar op het LAN aangeboden.
+- Er zijn geen externe JavaScript- of CSS-CDN's nodig.
+- De Infrastructure API voert geen shell- of PowerShell-opdrachten uit en wijzigt geen hostconfiguratie.
 
-Voer vanuit de repositoryroot in PowerShell uit:
+## API
 
-    .\Run-NetworkLab.ps1
+- GET /api/health — minimale health check.
+- GET /api/status — status, platform, Python-runtime en architectuurmodus.
+- GET /healthz — alternatieve health-checkroute.
 
-Open vervolgens http://127.0.0.1:8501. Gebruik een aangepaste poort alleen als de huidige launcher die optie ondersteunt. Als de launcher ontbreekt, controleer dan eerst de actuele repositorybestanden.
+## Veiligheidsgrenzen
 
-## Webapplicatieonderdelen
+Deze eerste versie is bewust read-only. Er zijn geen VM-start/stop-acties, virtuele netwerkacties, ISO-koppelingen of hostwijzigingen. De oude VM-gerichte code en documentatie kunnen nog in de repository staan, maar zijn geen onderdeel van de nieuwe launcher. Verwijdering van legacy-code gebeurt pas na afzonderlijke review.
 
-- Command Center
-- Topology
-- Interfaces
-- Addressing
-- Connectivity
-- Services
-- Diagnostics
-- Evidence
-- VM storage & OS media
+## Stage-documentatie
 
-De applicatieweergave en de echte host-/VM-status moeten met de onderliggende observaties worden vergeleken.
-
-## Netwerktopologie en VM-lab
-
-De gedocumenteerde VirtualBox host-only topologie gebruikt de volgende doelwaarden:
-
-| Onderdeel | Gedocumenteerde waarde |
-|---|---|
-| Netwerknaam | NetworkLab-Lab |
-| Subnet | 192.168.77.0/24 |
-| Hostadres | 192.168.77.1 |
-| DHCP-server | 192.168.77.2 |
-| DHCP-pool | 192.168.77.100–192.168.77.200 |
-| VM's | NetworkLab-VM01-MGMT, NetworkLab-VM02-INFRA, NetworkLab-VM03-CLIENT |
-| Virtuele schijf | 20 GB VDI per VM, volgens de projectdocumentatie |
-
-Dit zijn gedocumenteerde doelwaarden. Controleer ze tegen de actuele VirtualBox-configuratie. Gast-IP-adressen en end-to-end-connectiviteit moeten na installatie worden gemeten; vul geen niet-waargenomen waarden in.
-
-## Veiligheidsmodel
-
-- Netwerkwijzigingen blijven standaard uitgeschakeld in config/lab-config.json.
-- Configuratieacties vereisen een expliciete lab-scope.
-- Begin met read-only inspectie.
-- Gebruik geen fysieke LAN-bridge of productieconfiguratie als impliciete aanname.
-- Commit geen wachtwoorden, tokens of privésleutels.
-- Een gesimuleerde incidentstatus is geen bewijs van een echte storing.
-
-## Documentatie
-
-De volledige documentatie-index staat in [docs/README.html](docs/README.html).
-
-Belangrijkste documenten:
-- [Architectuur en componenten](docs/architecture.html)
-- [Installatiehandleiding](docs/installation.html)
-- [Configuratiehandleiding](docs/configuration.html)
-- [HTML/SVG-netwerktopologie](docs/network-topology.html)
-- [Virtueel netwerk](docs/virtual-network.html)
-- [VM-installatiehandleiding](docs/vm-installation-guide.html)
-- [VM-opslag en ISO-media](docs/vm-storage.html)
-- [Runbook](docs/runbook.html)
-- [Monitoring en diagnostiek](docs/monitoring.html)
-- [Troubleshooting](docs/troubleshooting.html)
-- [Beveiliging en gegevensbeheer](docs/security-and-data-handling.html)
-- [Testplan](docs/test-plan.html)
-- [HTML-test- en bewijsregister](docs/test-and-evidence-register.html)
-- [Koppeling stagecompetenties aan bewijs](docs/stage-competency-mapping.html)
-- [Bestaand stagebewijsregister](docs/evidence.html)
-- [Begrippenlijst](docs/glossary.html)
-
-## Uitvoeringsvolgorde
-
-1. Controleer de repository en lokale vereisten.
-2. Start de lokale NetworkLab-webapp.
-3. Inspecteer de actuele host- en VirtualBox-status.
-4. Vergelijk de werkelijke omgeving met de topologie.
-5. Voer alleen goedgekeurde configuratiestappen uit binnen de lab-scope.
-6. Valideer adressering en connectiviteit.
-7. Voer monitoring en rapportage uit.
-8. Bewaar resultaten en bewijs.
-9. Werk documentatie bij op basis van de waarnemingen.
-
-## Teststatus en beperkingen
-
-De handleidingen en registratieformulieren zijn documentatie en uitvoeringshulpmiddelen. Ze bewijzen niet dat een gast-OS is geïnstalleerd, DHCP werkt of VM's onderling bereikbaar zijn. De tests in [docs/test-plan.html](docs/test-plan.html) beginnen op **Openstaand** en mogen pas na daadwerkelijke uitvoering worden bijgewerkt.
-
+De bestaande documentatie rond B1-K2-W1 en B1-K2-W2 kan worden aangepast aan de nieuwe scope: webapps, servicebeschikbaarheid, API-controles, logging en testbewijs. Documentatie geldt niet als bewijs van een test die niet daadwerkelijk is uitgevoerd.
