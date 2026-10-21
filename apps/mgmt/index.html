@@ -8,8 +8,26 @@
 <article class="card"><h2>Activiteitenlog</h2><p class="desc">Resultaten van controles in deze browsersessie.</p><div class="log" id="log" aria-live="polite">[ready] Management Console gestart.
 [policy] Alleen-lezen controles ingeschakeld.</div><div class="safe">Veiligheidsgrens: deze console voert geen shell-opdrachten uit, verandert geen netwerkconfiguratie en beheert geen virtuele machines.</div></article></section><footer class="foot">NetworkLab MGMT · <span id="updated">Nog niet gecontroleerd</span></footer></main>
 <script>
-const API="http://127.0.0.1:8512";const $=id=>document.getElementById(id);
+const API="http://127.0.0.1:8512";const CLIENT="http://127.0.0.1:8510/";const $=id=>document.getElementById(id);
 function log(s){$("log").textContent+="\n["+new Date().toLocaleTimeString()+"] "+s;}
-async function check(){ $("infra").textContent="CHECKING";$("client").textContent="CHECKING";try{const r=await fetch(API+"/api/status",{cache:"no-store"});if(!r.ok)throw new Error("HTTP "+r.status);const d=await r.json();$("infra").textContent=d.status==="ok"?"ONLINE":"ATTENTION";$("client").textContent="ONLINE · UI bereikbaar";log("Infrastructure API antwoordt met HTTP "+r.status+".");log("Geen hostwijzigingen uitgevoerd.");}catch(e){$("infra").textContent="OFFLINE";$("client").textContent="UI-status niet op afstand bevestigd";log("Health check mislukt: "+e.message);}$("updated").textContent="Laatst gecontroleerd "+new Date().toLocaleTimeString();}
+async function check(){
+  $("infra").textContent="CHECKING";$("client").textContent="CHECKING";
+  const infraCheck=(async()=>{const r=await fetch(API+"/api/status",{cache:"no-store"});if(!r.ok)throw new Error("HTTP "+r.status);return r.json();})();
+  const clientCheck=(async()=>{await fetch(CLIENT,{mode:"no-cors",cache:"no-store"});return true;})();
+  const [infraResult,clientResult]=await Promise.allSettled([infraCheck,clientCheck]);
+  if(infraResult.status==="fulfilled"){
+    const d=infraResult.value;$("infra").textContent=d.status==="ok"?"ONLINE":"ATTENTION";
+    log("Infrastructure API antwoordt; status="+d.status+".");
+  }else{$("infra").textContent="OFFLINE";log("Infrastructure API-check mislukt: "+infraResult.reason.message);}
+  if(clientResult.status==="fulfilled"){
+    $("client").textContent="ONLINE · HTTP-server bereikbaar";
+    log("Client-server op poort 8510 is bereikbaar (no-cors reachability-check).");
+  }else{
+    $("client").textContent="OFFLINE · niet bereikbaar";
+    log("Client-server-check mislukt: "+clientResult.reason.message);
+  }
+  if(infraResult.status==="fulfilled"&&clientResult.status==="fulfilled")log("Alleen health checks uitgevoerd; geen hostwijzigingen.");
+  $("updated").textContent="Laatst gecontroleerd "+new Date().toLocaleTimeString();
+}
 $("check").addEventListener("click",check);check();
 </script></body></html>
