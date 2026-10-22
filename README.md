@@ -52,6 +52,11 @@ Deze eerste versie is bewust read-only. Er zijn geen VM-start/stop-acties, virtu
 
 De bestaande documentatie rond B1-K2-W1 en B1-K2-W2 kan worden aangepast aan de nieuwe scope: webapps, servicebeschikbaarheid, API-controles, logging en testbewijs. Documentatie geldt niet als bewijs van een test die niet daadwerkelijk is uitgevoerd.
 
+## Afronding en schoolbewijs
+
+- Gebruik [`docs/COMPLETION-AND-EVIDENCE.md`](docs/COMPLETION-AND-EVIDENCE.md) als controlelijst voor B1-K2-W1/W2, hersteltests, beveiligingsgrenzen en resterend inleverbewijs.
+- De checklist maakt onderscheid tussen automatisch testbewijs en handmatig bewijs dat op de Windows-laptop of in School4 moet worden vastgelegd.
+
 ## Projectstructuur en synchronisatie
 
 - De vaste mappenindeling staat in [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md).
