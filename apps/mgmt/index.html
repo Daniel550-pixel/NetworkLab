@@ -10,24 +10,41 @@
 <script>
 const API="http://127.0.0.1:8512";const CLIENT="http://127.0.0.1:8510/";const $=id=>document.getElementById(id);
 function log(s){$("log").textContent+="\n["+new Date().toLocaleTimeString()+"] "+s;}
-async function check(){
-  $("infra").textContent="CHECKING";$("client").textContent="CHECKING";
-  const infraCheck=(async()=>{const r=await fetch(API+"/api/status",{cache:"no-store"});if(!r.ok)throw new Error("HTTP "+r.status);return r.json();})();
-  const clientCheck=(async()=>{await fetch(CLIENT,{mode:"no-cors",cache:"no-store"});return true;})();
-  const [infraResult,clientResult]=await Promise.allSettled([infraCheck,clientCheck]);
-  if(infraResult.status==="fulfilled"){
-    const d=infraResult.value;$("infra").textContent=d.status==="ok"?"ONLINE":"ATTENTION";
+async function fetchWithTimeout(url,options={},timeoutMs=3500){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{return await fetch(url,{...options,signal:controller.signal});}
+  finally{clearTimeout(timer);}
+}
+async function checkInfrastructure(){
+  try{
+    const r=await fetchWithTimeout(API+"/api/status",{cache:"no-store"});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const d=await r.json();
+    $("infra").textContent=d.status==="ok"?"ONLINE":"ATTENTION";
     log("Infrastructure API antwoordt; status="+d.status+".");
-  }else{$("infra").textContent="OFFLINE";log("Infrastructure API-check mislukt: "+infraResult.reason.message);}
-  if(clientResult.status==="fulfilled"){
+  }catch(error){
+    $("infra").textContent="OFFLINE";
+    log("Infrastructure API-check mislukt: "+(error.name==="AbortError"?"timeout na 3,5 seconden":error.message));
+  }
+  $("updated").textContent="Laatst gecontroleerd "+new Date().toLocaleTimeString();
+}
+async function checkClient(){
+  try{
+    await fetchWithTimeout(CLIENT,{mode:"no-cors",cache:"no-store"});
     $("client").textContent="ONLINE · HTTP-server bereikbaar";
     log("Client-server op poort 8510 is bereikbaar (no-cors reachability-check).");
-  }else{
+  }catch(error){
     $("client").textContent="OFFLINE · niet bereikbaar";
-    log("Client-server-check mislukt: "+clientResult.reason.message);
+    log("Client-server-check mislukt: "+(error.name==="AbortError"?"timeout na 3,5 seconden":error.message));
   }
-  if(infraResult.status==="fulfilled"&&clientResult.status==="fulfilled")log("Alleen health checks uitgevoerd; geen hostwijzigingen.");
   $("updated").textContent="Laatst gecontroleerd "+new Date().toLocaleTimeString();
+}
+function check(){
+  $("infra").textContent="CHECKING";$("client").textContent="CHECKING";
+  log("Health checks gestart.");
+  void checkInfrastructure();
+  void checkClient();
 }
 $("check").addEventListener("click",check);check();
 </script></body></html>
