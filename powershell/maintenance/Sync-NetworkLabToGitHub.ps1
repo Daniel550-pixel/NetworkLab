@@ -1,33 +1,94 @@
 #requires -Version 5.1
-<# Safe Git sync for the NetworkLab workspace. No force-push; runtime evidence stays local. #>
+<#
+.SYNOPSIS
+  Controleert, commit en pusht veilige wijzigingen van NetworkLab naar GitHub.
+.DESCRIPTION
+  Werkt uitsluitend op feature/three-webapps-no-vms. Gebruikt geen force-push.
+  Runtime-bewijs, logs, geheimen en tijdelijke PowerShell-captures blijven lokaal.
+#>
 [CmdletBinding()]
 param([string]$CommitMessage = 'chore: sync NetworkLab workspace')
 $ErrorActionPreference = 'Stop'
 $ExpectedBranch = 'feature/three-webapps-no-vms'
-function Invoke-Git { param([string[]]$GitArgs) & git @GitArgs; if ($LASTEXITCODE -ne 0) { throw "Git failed: $($GitArgs -join ' ')" } }
+
+function Invoke-Git {
+    param([Parameter(Mandatory)][string[]]$GitArgs)
+    & git @GitArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "Git-opdracht mislukt (exit $LASTEXITCODE): git $($GitArgs -join ' ')"
+    }
+}
+
 $Root = (& git rev-parse --show-toplevel 2>$null)
-if ($LASTEXITCODE -ne 0 -or -not $Root) { throw 'Open PowerShell inside the NetworkLab Git repository.' }
+if ($LASTEXITCODE -ne 0 -or -not $Root) { throw 'Open PowerShell in de lokale NetworkLab Git-map.' }
 Set-Location $Root
 $Branch = (& git branch --show-current).Trim()
-if ($Branch -ne $ExpectedBranch) { throw "Wrong branch '$Branch'; expected '$ExpectedBranch'. Nothing was pushed." }
+if ($Branch -ne $ExpectedBranch) { throw "Verkeerde branch '$Branch'; verwacht '$ExpectedBranch'. Er is niets gepusht." }
 $RemoteUrl = (& git remote get-url origin 2>$null)
-if ($LASTEXITCODE -ne 0 -or $RemoteUrl -notmatch 'github\.com[:/]Daniel550-pixel/NetworkLab(?:\.git)?$') { throw 'origin is not the expected NetworkLab GitHub repository.' }
-Write-Host 'Checking local changes...' -ForegroundColor Cyan
+if ($LASTEXITCODE -ne 0 -or $RemoteUrl -notmatch 'github\.com[:/]Daniel550-pixel/NetworkLab(?:\.git)?$') {
+    throw 'origin verwijst niet naar Daniel550-pixel/NetworkLab.'
+}
+
+Write-Host ''
+Write-Host '[1/5] Lokale wijzigingen controleren' -ForegroundColor Cyan
 & git status --short
-if ($LASTEXITCODE -ne 0) { throw 'git status failed.' }
-$Blocked = @(& git status --porcelain | Where-Object { $_ -match '(^|/)(\.env|id_rsa|id_ed25519|credentials\.json|secrets?)(/|$)' -or $_ -match '(^|/)(node_modules|\.venv|venv|__pycache__)(/|$)' })
-if ($Blocked.Count -gt 0) { $Blocked | ForEach-Object { Write-Host $_ -ForegroundColor Red }; throw 'Potential secret/cache paths found; nothing was committed.' }
-Write-Host 'Fetching GitHub...' -ForegroundColor Cyan
+if ($LASTEXITCODE -ne 0) { throw 'git status is mislukt.' }
+
+# Terminalcaptures, back-ups en mogelijke geheimen worden niet automatisch meegestuurd.
+$Status = @(& git status --porcelain)
+$Review = @($Status | Where-Object {
+    $_ -match 'Windows PowerShell.*\.txt' -or
+    $_ -match '\.bak([.-]|$)' -or
+    $_ -match '(^|/)(\.env(\..*)?|credentials\.json|id_rsa|id_ed25519)(/|$)' -or
+    $_ -match '(^|/)(secrets|node_modules|\.venv|venv|__pycache__)(/|$)'
+})
+if ($Review.Count -gt 0) {
+    Write-Host 'Niet automatisch gepushte bestanden (eerst controleren):' -ForegroundColor Yellow
+    $Review | ForEach-Object { Write-Host "  $_" }
+}
+
+Write-Host ''
+Write-Host '[2/5] GitHub-status ophalen' -ForegroundColor Cyan
 Invoke-Git -GitArgs @('fetch','origin',$ExpectedBranch)
 $Counts = (& git rev-list --left-right --count "HEAD...origin/$ExpectedBranch").Trim() -split '\s+'
-if ($Counts.Count -lt 2) { throw 'Could not compare local and remote commits.' }
-if ([int]$Counts[1] -gt 0) { throw "Remote branch is ahead by $($Counts[1]) commit(s). Run git pull --rebase origin $ExpectedBranch, then retry." }
-Write-Host 'Staging changes (runtime JSON, logs, secrets and caches excluded)...' -ForegroundColor Cyan
-Invoke-Git -GitArgs @('add','-A','--','.',' :(exclude)evidence/runtime/**'.Trim(),' :(exclude)logs/*.log'.Trim(),' :(exclude)**/.env'.Trim(),' :(exclude)**/.env.*'.Trim(),' :(exclude)**/secrets/**'.Trim(),' :(exclude)**/credentials.json'.Trim(),' :(exclude)**/id_rsa'.Trim(),' :(exclude)**/id_ed25519'.Trim(),' :(exclude)**/__pycache__/**'.Trim(),' :(exclude)**/node_modules/**'.Trim(),' :(exclude)**/.venv/**'.Trim(),' :(exclude)**/venv/**'.Trim())
+if ($Counts.Count -lt 2) { throw 'Lokale en remote commits konden niet worden vergeleken.' }
+if ([int]$Counts[1] -gt 0) {
+    throw "GitHub loopt $($Counts[1]) commit(s) voor. Synchroniseer eerst met git pull --rebase origin $ExpectedBranch."
+}
+
+Write-Host ''
+Write-Host '[3/5] Veilige wijzigingen klaarzetten' -ForegroundColor Cyan
+$CandidateFiles = @(& git ls-files --others --exclude-standard)
+if ($LASTEXITCODE -ne 0) { throw 'Nieuwe bestanden konden niet worden opgesomd.' }
+$TrackedChanged = @(& git diff --name-only)
+if ($LASTEXITCODE -ne 0) { throw 'Gewijzigde bestanden konden niet worden opgesomd.' }
+$TrackedDeleted = @(& git ls-files --deleted)
+if ($LASTEXITCODE -ne 0) { throw 'Verwijderde bestanden konden niet worden opgesomd.' }
+$AllCandidates = @($CandidateFiles) + @($TrackedChanged) + @($TrackedDeleted)
+$SafeCandidates = @($AllCandidates | Sort-Object -Unique | Where-Object {
+    $_ -and
+    $_ -notmatch '(^|/)evidence/runtime(/|$)' -and
+    $_ -notmatch '(^|/)logs/.*\.log$' -and
+    $_ -notmatch '(^|/)Windows PowerShell.*\.txt$' -and
+    $_ -notmatch '\.bak([.-]|$)' -and
+    $_ -notmatch '(^|/)\.env(\..*)?$' -and
+    $_ -notmatch '(^|/)(credentials\.json|id_rsa|id_ed25519)$' -and
+    $_ -notmatch '(^|/)(secrets|node_modules|\.venv|venv|__pycache__)(/|$)'
+})
+foreach ($Path in $SafeCandidates) {
+    Invoke-Git -GitArgs @('add','-A','--',$Path)
+}
 $Staged = @(& git diff --cached --name-only)
-if ($LASTEXITCODE -ne 0) { throw 'Could not inspect staged changes.' }
-if ($Staged.Count -gt 0) { $Staged | ForEach-Object { Write-Host "  $_" }; Invoke-Git -GitArgs @('commit','-m',$CommitMessage) } else { Write-Host 'No local changes to commit.' -ForegroundColor Yellow }
-Write-Host 'Pushing to GitHub...' -ForegroundColor Cyan
+if ($LASTEXITCODE -ne 0) { throw 'Staged wijzigingen konden niet worden gecontroleerd.' }
+if ($Staged.Count -eq 0) {
+    Write-Host 'Geen veilige lokale wijzigingen om te committen.' -ForegroundColor Yellow
+} else {
+    Write-Host 'Bestanden in de commit:' -ForegroundColor Cyan
+    $Staged | ForEach-Object { Write-Host "  $_" }
+    Invoke-Git -GitArgs @('commit','-m',$CommitMessage)
+}
+Write-Host ''
+Write-Host '[5/5] Naar GitHub pushen' -ForegroundColor Cyan
 Invoke-Git -GitArgs @('push','origin',$ExpectedBranch)
-Write-Host 'Sync complete.' -ForegroundColor Green
+Write-Host 'Synchronisatie voltooid.' -ForegroundColor Green
 Invoke-Git -GitArgs @('status','--short','--branch')
