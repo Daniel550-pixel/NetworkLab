@@ -1,0 +1,15 @@
+﻿$ErrorActionPreference = "Continue"
+$Root = "C:\Users\Daan Salden\Downloads\NetworkLab"
+$EnsureScript = Join-Path $Root "powershell\diagnostics\Ensure-NetworkLabWebApps.ps1"
+$LogFile = Join-Path $Root "logs\networklab-autorecovery.log"
+
+while ($true) {
+    try {
+        & $EnsureScript
+    } catch {
+        Add-Content -LiteralPath $LogFile -Encoding UTF8 `
+            -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') SUPERVISOR ERROR: $($_.Exception.Message)"
+    }
+
+    Start-Sleep -Seconds 60
+}
