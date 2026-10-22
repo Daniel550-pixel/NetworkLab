@@ -52,6 +52,12 @@ Deze eerste versie is bewust read-only. Er zijn geen VM-start/stop-acties, virtu
 
 De bestaande documentatie rond B1-K2-W1 en B1-K2-W2 kan worden aangepast aan de nieuwe scope: webapps, servicebeschikbaarheid, API-controles, logging en testbewijs. Documentatie geldt niet als bewijs van een test die niet daadwerkelijk is uitgevoerd.
 
+## Projectstructuur en synchronisatie
+
+- De vaste mappenindeling staat in [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md).
+- Het script [Sync-NetworkLabToGitHub.ps1](powershell/maintenance/Sync-NetworkLabToGitHub.ps1) controleert de branch, haalt de remote-status op en pusht veilige lokale wijzigingen zonder force-push.
+- Runtime-JSON en logbestanden blijven standaard lokaal; controleer bewijs op gevoelige gegevens voordat je het deelt.
+
 ## Netwerktekening en pixelbewijs
 
 - Open de interactieve HTML/SVG-tekening: [`docs/networklab-pixel-netwerktekening.html`](docs/networklab-pixel-netwerktekening.html).
