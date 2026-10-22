@@ -1,0 +1,71 @@
+﻿=== 1. Python-tests ===
+
+
+=== 2. Runtime-testscript zoeken ===
+Gevonden: C:\Users\Daan Salden\Downloads\NetworkLab\powershell\diagnostics\Test-NetworkLabWebApps.ps1
+
+Name                      HttpStatus Result DurationMs Detail
+----                      ---------- ------ ---------- ------
+Client UI                        200 OK            108 HTTP 200
+Management UI                    200 OK             69 HTTP 200
+Infrastructure UI                200 OK             70 HTTP 200
+Infrastructure health API        200 OK            472 HTTP 200; API status=ok
+Infrastructure status API        200 OK             29 HTTP 200; API status=ok
+
+
+
+Runtime bewijs: C:\Users\Daan Salden\Downloads\NetworkLab\evidence\runtime\networklab-webapps-20261022-093919Z.json
+Samenvatting: 5 geslaagd; 0 mislukt; totaal 5.
+
+=== 3. Hersteltaak controleren ===
+
+
+TaskName : NetworkLab AutoRecovery
+State    : Ready
+
+
+
+
+
+LastRunTime    : 22-10-2026 11:38:27
+LastTaskResult : 0
+
+
+
+
+=== 4. Bestaand runtime-bewijs ===
+
+Name                                     LastWriteTime       Length
+----                                     -------------       ------
+networklab-autorecovery-test.txt         22-10-2026 10:27:03    730
+networklab-webapps-20261022-081449Z.json 22-10-2026 10:14:50   2104
+networklab-webapps-20261022-082642Z.json 22-10-2026 10:26:42   2100
+networklab-webapps-20261022-082730Z.json 22-10-2026 10:27:30   2100
+networklab-webapps-20261022-083210Z.json 22-10-2026 10:32:10   2100
+networklab-webapps-20261022-083628Z.json 22-10-2026 10:36:39   2300
+networklab-webapps-20261022-083718Z.json 22-10-2026 10:37:27   2255
+networklab-webapps-20261022-083832Z.json 22-10-2026 10:38:32   2100
+networklab-webapps-20261022-084009Z.json 22-10-2026 10:40:09   2101
+networklab-webapps-20261022-084145Z.json 22-10-2026 10:41:45   2100
+networklab-webapps-20261022-084503Z.json 22-10-2026 10:45:13   2300
+networklab-webapps-20261022-084631Z.json 22-10-2026 10:46:39   2210
+networklab-webapps-20261022-084811Z.json 22-10-2026 10:48:11   2101
+networklab-webapps-20261022-084906Z.json 22-10-2026 10:49:06   2101
+networklab-webapps-20261022-085112Z.json 22-10-2026 10:51:13   2102
+networklab-webapps-20261022-085311Z.json 22-10-2026 10:53:11   2100
+networklab-webapps-20261022-085340Z.json 22-10-2026 10:53:41   2102
+networklab-webapps-20261022-085709Z.json 22-10-2026 10:57:10   2101
+networklab-webapps-20261022-085941Z.json 22-10-2026 10:59:41   2100
+networklab-webapps-20261022-090206Z.json 22-10-2026 11:02:06   2103
+networklab-webapps-20261022-090657Z.json 22-10-2026 11:06:58   2102
+networklab-webapps-20261022-092405Z.json 22-10-2026 11:24:06   2101
+networklab-webapps-20261022-093227Z.json 22-10-2026 11:32:27   2100
+networklab-webapps-20261022-093919Z.json 22-10-2026 11:39:20   2102
+
+
+
+Bewijsrapport: C:\Users\Daan Salden\Downloads\NetworkLab\evidence\completion\completion-20261022-113916.txt
+**********************
+Windows PowerShell transcript end
+End time: 20261022113926
+**********************
