@@ -1,0 +1,516 @@
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+PS C:\WINDOWS\System32> .\Run-NetworkLab-WebApps.ps1
+.\Run-NetworkLab-WebApps.ps1 : The term '.\Run-NetworkLab-WebApps.ps1' is not recognized as the name of a cmdlet, funct
+ion, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path
+is correct and try again.
+At line:1 char:1
++ .\Run-NetworkLab-WebApps.ps1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (.\Run-NetworkLab-WebApps.ps1:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\WINDOWS\System32> Set-Location $HOME
+PS C:\Users\Daan Salden> Get-ChildItem -Path $HOME -Filter "Run-NetworkLab-WebApps.ps1" -File -Recurse -ErrorAction SilentlyContinue |
+>>     Select-Object -ExpandProperty FullName
+C:\Users\Daan Salden\Downloads\NetworkLab\Run-NetworkLab-WebApps.ps1
+C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\Run-NetworkLab-WebApps.ps1
+C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project\Run-NetworkLab-WebApps.ps1
+PS C:\Users\Daan Salden> & "VOLLEDIG_PAD_DAT_POWERSHELL_TOONT"
+& : The term 'VOLLEDIG_PAD_DAT_POWERSHELL_TOONT' is not recognized as the name of a cmdlet, function, script file, or o
+perable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try aga
+in.
+At line:1 char:3
++ & "VOLLEDIG_PAD_DAT_POWERSHELL_TOONT"
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (VOLLEDIG_PAD_DAT_POWERSHELL_TOONT:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\Daan Salden> & "C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project\Run-NetworkLab-WebApps.ps1"
+& : File C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project\Run-NetworkLab-WebApps
+.ps1 cannot be loaded. The file C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project
+\Run-NetworkLab-WebApps.ps1 is not digitally signed. You cannot run this script on the current system. For more informa
+tion about running scripts and setting execution policy, see about_Execution_Policies at https:/go.microsoft.com/fwlink
+/?LinkID=135170.
+At line:1 char:3
++ & "C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\Ne ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : SecurityError: (:) [], PSSecurityException
+    + FullyQualifiedErrorId : UnauthorizedAccess
+PS C:\Users\Daan Salden> Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+PS C:\Users\Daan Salden> & "C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project\Run-NetworkLab-WebApps.ps1"
+
+App    Process HTTP   PID URL
+---    ------- ----   --- ---
+CLIENT RUNNING 200  33628 http://127.0.0.1:8510/
+MGMT   RUNNING 200  33692 http://127.0.0.1:8511/
+INFRA  RUNNING 200  32220 http://127.0.0.1:8512/
+
+
+Logs: C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project\logs
+Alle apps binden aan 127.0.0.1; geen firewall- of hostnetwerkwijzigingen.
+Client : http://127.0.0.1:8510/
+MGMT   : http://127.0.0.1:8511/
+INFRA  : http://127.0.0.1:8512/
+PS C:\Users\Daan Salden> $urls = @(
+>>     "http://127.0.0.1:8510",
+>>     "http://127.0.0.1:8511",
+>>     "http://127.0.0.1:8512"
+>> )
+PS C:\Users\Daan Salden>
+PS C:\Users\Daan Salden> foreach ($url in $urls) {
+>>     try {
+>>         $response = Invoke-WebRequest -Uri $url -TimeoutSec 5
+>>         [PSCustomObject]@{
+>>             URL        = $url
+>>             StatusCode = [int]$response.StatusCode
+>>             Resultaat  = "OK"
+>>         }
+>>     }
+>>     catch {
+>>         [PSCustomObject]@{
+>>             URL        = $url
+>>             StatusCode = "FOUT"
+>>             Resultaat  = $_.Exception.Message
+>>         }
+>>     }
+>> } | Format-Table -AutoSize
+At line:17 char:3
++ } | Format-Table -AutoSize
++   ~
+An empty pipe element is not allowed.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : EmptyPipeElement
+
+PS C:\Users\Daan Salden> $results = foreach ($url in @(
+>>     "http://127.0.0.1:8510",
+>>     "http://127.0.0.1:8511",
+>>     "http://127.0.0.1:8512"
+>> )) {
+>>     try {
+>>         $r = Invoke-WebRequest -Uri $url -TimeoutSec 5
+>>         [PSCustomObject]@{
+>>             URL = $url
+>>             Status = [int]$r.StatusCode
+>>             Resultaat = "OK"
+>>         }
+>>     }
+>>     catch {
+>>         [PSCustomObject]@{
+>>             URL = $url
+>>             Status = "FOUT"
+>>             Resultaat = $_.Exception.Message
+>>         }
+>>     }
+>> }
+
+Security Warning: Script Execution Risk
+Invoke-WebRequest parses the content of the web page. Script code in the web page might be run when the page is
+parsed.
+      RECOMMENDED ACTION:
+      Use the -UseBasicParsing switch to avoid script code execution.
+
+      Do you want to continue?
+
+[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is "N"):
+
+Security Warning: Script Execution Risk
+Invoke-WebRequest parses the content of the web page. Script code in the web page might be run when the page is
+parsed.
+      RECOMMENDED ACTION:
+      Use the -UseBasicParsing switch to avoid script code execution.
+
+      Do you want to continue?
+
+[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is "N"): N
+
+Security Warning: Script Execution Risk
+Invoke-WebRequest parses the content of the web page. Script code in the web page might be run when the page is
+parsed.
+      RECOMMENDED ACTION:
+      Use the -UseBasicParsing switch to avoid script code execution.
+
+      Do you want to continue?
+
+[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is "N"): N
+PS C:\Users\Daan Salden> $results | Format-Table -AutoSize
+
+URL                   Status Resultaat
+---                   ------ ---------
+http://127.0.0.1:8510 FOUT   Operation cancelled due to security concerns. Use -UseBasicParsing parameter for safe H...
+http://127.0.0.1:8511 FOUT   Operation cancelled due to security concerns. Use -UseBasicParsing parameter for safe H...
+http://127.0.0.1:8512 FOUT   Operation cancelled due to security concerns. Use -UseBasicParsing parameter for safe H...
+
+
+PS C:\Users\Daan Salden> $results = foreach ($url in @(
+>>     "http://127.0.0.1:8510",
+>>     "http://127.0.0.1:8511",
+>>     "http://127.0.0.1:8512"
+>> )) {
+>>     try {
+>>         $r = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 5
+>>         [PSCustomObject]@{
+>>             URL = $url
+>>             Status = [int]$r.StatusCode
+>>             Resultaat = if ($r.StatusCode -eq 200) { "OK" } else { "Controleer" }
+>>         }
+>>     }
+>>     catch {
+>>         [PSCustomObject]@{
+>>             URL = $url
+>>             Status = "FOUT"
+>>             Resultaat = $_.Exception.Message
+>>         }
+>>     }
+>> }
+PS C:\Users\Daan Salden>
+PS C:\Users\Daan Salden> $results | Format-Table -AutoSize
+
+URL                   Status Resultaat
+---                   ------ ---------
+http://127.0.0.1:8510    200 OK
+http://127.0.0.1:8511    200 OK
+http://127.0.0.1:8512    200 OK
+
+
+PS C:\Users\Daan Salden> .\powershell\diagnostics\Test-NetworkLabWebApps.ps1
+.\powershell\diagnostics\Test-NetworkLabWebApps.ps1 : The term '.\powershell\diagnostics\Test-NetworkLabWebApps.ps1' is
+ not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or
+ if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ .\powershell\diagnostics\Test-NetworkLabWebApps.ps1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (.\powershell\di...kLabWebApps.ps1:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\Daan Salden> Set-Location "C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project"
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project>
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project> git status
+fatal: not a git repository (or any of the parent directories): .git
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project> git fetch origin feature/three-webapps-no-vms
+fatal: not a git repository (or any of the parent directories): .git
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project> git switch feature/three-webapps-no-vms
+fatal: not a git repository (or any of the parent directories): .git
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project> git pull --ff-only origin feature/three-webapps-no-vms
+fatal: not a git repository (or any of the parent directories): .git
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project> .\powershell\diagnostics\Test-NetworkLabWebApps.ps1
+.\powershell\diagnostics\Test-NetworkLabWebApps.ps1 : The term '.\powershell\diagnostics\Test-NetworkLabWebApps.ps1' is
+ not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or
+ if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ .\powershell\diagnostics\Test-NetworkLabWebApps.ps1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (.\powershell\di...kLabWebApps.ps1:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project> Set-Location "C:\Users\DaanSalden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project"
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project>
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project> git fetch origin
+fatal: not a git repository (or any of the parent directories): .git
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project> git switch feature/three-webapps-no-vms
+fatal: not a git repository (or any of the parent directories): .git
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project> git pull --ff-only origin feature/three-webapps-no-vms
+fatal: not a git repository (or any of the parent directories): .git
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project>
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project> .\powershell\diagnostics\Test-NetworkLabWebApps.ps1
+.\powershell\diagnostics\Test-NetworkLabWebApps.ps1 : The term '.\powershell\diagnostics\Test-NetworkLabWebApps.ps1' is
+ not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or
+ if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ .\powershell\diagnostics\Test-NetworkLabWebApps.ps1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (.\powershell\di...kLabWebApps.ps1:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project>
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project>
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project> $roots = @(
+>>     "C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2",
+>>     "C:\Users\Daan Salden\Downloads\NetworkLab"
+>> )
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project>
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project> foreach ($root in $roots) {
+>>     if (Test-Path -LiteralPath $root) {
+>>         Write-Host "`n=== $root ===" -ForegroundColor Cyan
+>>
+>>         Get-ChildItem -LiteralPath $root -Force |
+>>             Select-Object Mode, Name, FullName
+>>
+>>         Write-Host "`n--- Git-mappen ---" -ForegroundColor Yellow
+>>         Get-ChildItem -LiteralPath $root -Directory -Force -Recurse -Filter ".git" -ErrorAction SilentlyContinue |
+>>             Select-Object -ExpandProperty FullName
+>>
+>>         Write-Host "`n--- Testscript ---" -ForegroundColor Yellow
+>>         Get-ChildItem -LiteralPath $root -File -Recurse -Filter "Test-NetworkLabWebApps.ps1" -ErrorAction SilentlyContinue |
+>>             Select-Object -ExpandProperty FullName
+>>     }
+>> }
+
+=== C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2 ===
+
+
+--- Git-mappen ---
+
+--- Testscript ---
+
+=== C:\Users\Daan Salden\Downloads\NetworkLab ===
+
+--- Git-mappen ---
+
+--- Testscript ---
+Mode   Name                                                          FullName
+----   ----                                                          --------
+dar--l 00_Projectbeheer                                              C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+dar--l 01_Projectdocumentatie                                        C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+dar--l 02_Architectuur                                               C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+dar--l 03_Broncode                                                   C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+dar--l 04_Configuratie                                               C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+dar--l 05_Testresultaten                                             C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+dar--l 06_Incidenten                                                 C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+dar--l 07_Bewijsstukken                                              C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+dar--l 08_Backups                                                    C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+dar--l 09_Overdracht                                                 C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+dar--l apps                                                          C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+dar--l logs                                                          C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+d----l NetworkLab                                                    C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+dar--l NetworkLab-Full-Project                                       C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+dar--l tests                                                         C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+-a---l bot.py                                                        C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+-a---l ffmpeg-master-latest-win64-gpl-shared.zip                     C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+-a---l infra_app.py                                                  C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+-a---l linuxmint-22.3-xfce-64bit.iso                                 C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+-a---l mgmt_app.py                                                   C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+-a---l Microsoft.Services.Store.winmd                                C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+-a---l NetworkLab-Full-Project.zip                                   C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+-a---l README.md                                                     C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+-a---l Run-NetworkLab-WebApps.ps1                                    C:\Users\Daan Salden\OneDrive\Belgeler\NetworkL...
+d--h-- .git                                                          C:\Users\Daan Salden\Downloads\NetworkLab\.git
+d----- .github                                                       C:\Users\Daan Salden\Downloads\NetworkLab\.github
+d----- .networklab                                                   C:\Users\Daan Salden\Downloads\NetworkLab\.netw...
+d----- .pytest_cache                                                 C:\Users\Daan Salden\Downloads\NetworkLab\.pyte...
+d----- app                                                           C:\Users\Daan Salden\Downloads\NetworkLab\app
+d----- apps                                                          C:\Users\Daan Salden\Downloads\NetworkLab\apps
+d----- config                                                        C:\Users\Daan Salden\Downloads\NetworkLab\config
+d----- docs                                                          C:\Users\Daan Salden\Downloads\NetworkLab\docs
+d----- logs                                                          C:\Users\Daan Salden\Downloads\NetworkLab\logs
+d----- powershell                                                    C:\Users\Daan Salden\Downloads\NetworkLab\power...
+d----- python                                                        C:\Users\Daan Salden\Downloads\NetworkLab\python
+d----- telegram_bridge                                               C:\Users\Daan Salden\Downloads\NetworkLab\teleg...
+d----- tests                                                         C:\Users\Daan Salden\Downloads\NetworkLab\tests
+d----- web                                                           C:\Users\Daan Salden\Downloads\NetworkLab\web
+-a---- .gitignore                                                    C:\Users\Daan Salden\Downloads\NetworkLab\.giti...
+-a---- criptsInstall-SysCentreProject.ps1 -Full                      C:\Users\Daan Salden\Downloads\NetworkLab\cript...
+-a---- lukt. Stop hier.                                             C:\Users\Daan Salden\Downloads\NetworkLab\lukt....
+-a---- README.md                                                     C:\Users\Daan Salden\Downloads\NetworkLab\READM...
+-a---- requirements.txt                                              C:\Users\Daan Salden\Downloads\NetworkLab\requi...
+-a---- Run-NetworkLab-WebApps.ps1                                    C:\Users\Daan Salden\Downloads\NetworkLab\Run-N...
+-a---- Run-NetworkLab.ps1                                            C:\Users\Daan Salden\Downloads\NetworkLab\Run-N...
+-a---- t `n=== Remote branches bijwerken === -ForegroundColor Cyan C:\Users\Daan Salden\Downloads\NetworkLab\t `n...
+C:\Users\Daan Salden\Downloads\NetworkLab\.git
+
+
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project>
+PS C:\Users\Daan Salden\OneDrive\Belgeler\NetworkLab B1 K2 W1 & W2\NetworkLab-Full-Project> Set-Location "C:\Users\DaanSalden\Downloads\NetworkLab"
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> Write-Host "`n=== Git-status ===" -ForegroundColor Cyan
+
+=== Git-status ===
+PS C:\Users\Daan Salden\Downloads\NetworkLab> git status --short --branch
+## feature/three-webapps-no-vms...origin/feature/three-webapps-no-vms
+?? "criptsInstall-SysCentreProject.ps1 -Full"
+?? "lukt. Stop hier.\357\200\242"
+?? "t \357\200\242`n=== Remote branches bijwerken ===\357\200\242 -ForegroundColor Cyan"
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> Write-Host "`n=== Git-remotes ===" -ForegroundColor Cyan
+
+=== Git-remotes ===
+PS C:\Users\Daan Salden\Downloads\NetworkLab> git remote -v
+github-target   https://github.com/Daniel550-pixel/B1-K3-W1-W2-NotepadPP-Toolkit.git (fetch)
+github-target   https://github.com/Daniel550-pixel/B1-K3-W1-W2-NotepadPP-Toolkit.git (push)
+origin  https://github.com/Daniel550-pixel/NetworkLab.git (fetch)
+origin  https://github.com/Daniel550-pixel/NetworkLab.git (push)
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> Write-Host "`n=== Testscript controleren ===" -ForegroundColor Cyan
+
+=== Testscript controleren ===
+PS C:\Users\Daan Salden\Downloads\NetworkLab> Get-ChildItem ".\powershell" -Recurse -File -ErrorAction SilentlyContinue|
+>>     Where-Object { $_.Name -like "*NetworkLabWebApps*" } |
+>>     Select-Object FullName
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> git fetch origin
+remote: Enumerating objects: 20, done.
+remote: Counting objects: 100% (20/20), done.
+remote: Compressing objects: 100% (19/19), done.
+remote: Total 20 (delta 4), reused 0 (delta 0), pack-reused 0 (from 0)
+Unpacking objects: 100% (20/20), 10.61 KiB | 65.00 KiB/s, done.
+From https://github.com/Daniel550-pixel/NetworkLab
+   a1bb4ec..1d67943  feature/three-webapps-no-vms -> origin/feature/three-webapps-no-vms
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> git pull --ff-only origin feature/three-webapps-no-vms
+From https://github.com/Daniel550-pixel/NetworkLab
+ * branch            feature/three-webapps-no-vms -> FETCH_HEAD
+Updating a1bb4ec..1d67943
+Fast-forward
+ .gitignore                                        |   3 +
+ README.md                                         |  10 ++-
+ apps/mgmt/index.html                              |  41 ++++++---
+ docs/webapps-validation.html                      |  44 +++++++++
+ powershell/diagnostics/Test-NetworkLabWebApps.ps1 | 105 ++++++++++++++++++++++
+ tests/test_webapps_smoke.py                       |  67 ++++++++++++++
+ 6 files changed, 257 insertions(+), 13 deletions(-)
+ create mode 100644 docs/webapps-validation.html
+ create mode 100644 powershell/diagnostics/Test-NetworkLabWebApps.ps1
+ create mode 100644 tests/test_webapps_smoke.py
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> Write-Host "`n=== Laatste commit ===" -ForegroundColor Cyan
+
+=== Laatste commit ===
+PS C:\Users\Daan Salden\Downloads\NetworkLab> git log -1 --oneline
+1d67943 (HEAD -> feature/three-webapps-no-vms, origin/feature/three-webapps-no-vms) Add repeatable runtime health checks and evidence report
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> Write-Host "`n=== Testscript controleren ===" -ForegroundColor Cyan
+
+=== Testscript controleren ===
+PS C:\Users\Daan Salden\Downloads\NetworkLab> Test-Path ".\powershell\diagnostics\Test-NetworkLabWebApps.ps1"
+True
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> Write-Host "`n=== Beschikbare diagnostische scripts ===" -ForegroundColorCyan
+
+=== Beschikbare diagnostische scripts ===
+PS C:\Users\Daan Salden\Downloads\NetworkLab> Get-ChildItem ".\powershell" -Recurse -File -ErrorAction SilentlyContinue|
+>>     Where-Object { $_.Name -like "*Test*" -or $_.Name -like "*Health*" } |
+>>     Select-Object -ExpandProperty FullName
+C:\Users\Daan Salden\Downloads\NetworkLab\powershell\diagnostics\Get-NetworkLabWebHealth.ps1
+C:\Users\Daan Salden\Downloads\NetworkLab\powershell\diagnostics\Invoke-NetworkLabHealthCheck.ps1
+C:\Users\Daan Salden\Downloads\NetworkLab\powershell\diagnostics\Test-NetworkLabConfiguration.ps1
+C:\Users\Daan Salden\Downloads\NetworkLab\powershell\diagnostics\Test-NetworkLabConnectivity.ps1
+C:\Users\Daan Salden\Downloads\NetworkLab\powershell\diagnostics\Test-NetworkLabWebApps.ps1
+C:\Users\Daan Salden\Downloads\NetworkLab\powershell\manage\Get-NetworkLabHealth.ps1
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> Set-Location "C:\Users\Daan Salden\Downloads\NetworkLab"
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> .\powershell\diagnostics\Test-NetworkLabWebApps.ps1
+
+Name                      HttpStatus Result DurationMs Detail
+----                      ---------- ------ ---------- ------
+Client UI                        200 OK            101 HTTP 200
+Management UI                    200 OK            123 HTTP 200
+Infrastructure UI                200 OK             86 HTTP 200
+Infrastructure health API        200 OK            411 HTTP 200; API status=ok
+Infrastructure status API        200 OK            113 HTTP 200; API status=ok
+
+
+
+Runtime bewijs: C:\Users\Daan Salden\Downloads\NetworkLab\evidence\runtime\networklab-webapps-20261022-081449Z.json
+Samenvatting: 5 geslaagd; 0 mislukt; totaal 5.
+PS C:\Users\Daan Salden\Downloads\NetworkLab> notepad ".\evidence\runtime\networklab-webapps-20261022-081449Z.json"
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> Set-Location "C:\Users\Daan Salden\Downloads\NetworkLab"
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> $scriptPath = Join-Path (Get-Location) "powershell\diagnostics\Watch-NetworkLabWebApps.ps1"
+PS C:\Users\Daan Salden\Downloads\NetworkLab> $scriptDir = Split-Path -Parent $scriptPath
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> New-Item -ItemType Directory -Path $scriptDir -Force | Out-Null
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> @'
+>> [CmdletBinding()]
+>> param([int]$IntervalSeconds = 30)
+>>
+>> $ErrorActionPreference = "Stop"
+>> $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+>> $LogDir = Join-Path $ProjectRoot "logs"
+>> New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+>> $LogFile = Join-Path $LogDir "networklab-watchdog.log"
+>>
+>> $PythonCommand = Get-Command python -ErrorAction SilentlyContinue
+>> if (-not $PythonCommand) {
+>>     throw "Python is niet gevonden in PATH. Installeer Python of herstel PATH."
+>> }
+>> $Python = $PythonCommand.Source
+>>
+>> $Apps = @(
+>>     @{ Name="CLIENT"; Port=8510; Url="http://127.0.0.1:8510/"; Directory=(Join-Path $ProjectRoot "apps\client"); Kind="static" },
+>>     @{ Name="MGMT"; Port=8511; Url="http://127.0.0.1:8511/"; Directory=(Join-Path $ProjectRoot "apps\mgmt"); Kind="static" },
+>>     @{ Name="INFRA"; Port=8512; Url="http://127.0.0.1:8512/"; Directory=(Join-Path $ProjectRoot "apps\infra"); Kind="infra" }
+>> )
+>>
+>> function Write-WatchLog([string]$Message) {
+>>     $Line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $Message"
+>>     Add-Content -LiteralPath $LogFile -Value $Line -Encoding UTF8
+>>     Write-Host $Line
+>> }
+>>
+>> function Test-App([string]$Url) {
+>>     try {
+>>         $Response = Invoke-WebRequest -Uri $Url -Method Get -UseBasicParsing -TimeoutSec 4
+>>         return ([int]$Response.StatusCode -eq 200)
+>>     } catch {
+>>         return $false
+>>     }
+>> }
+>>
+>> function Start-App($App) {
+>>     if (-not (Test-Path -LiteralPath $App.Directory -PathType Container)) {
+>>         Write-WatchLog "ERROR $($App.Name): map ontbreekt: $($App.Directory)"
+>>         return
+>>     }
+>>
+>>     $Listener = Get-NetTCPConnection -State Listen -LocalPort $App.Port -ErrorAction SilentlyContinue
+>>     if ($Listener) {
+>>         Write-WatchLog "WARNING $($App.Name): poort $($App.Port) is bezet, maar de URL reageert niet. Geen proces gestopt."
+>>         return
+>>     }
+>>
+>>     $OutLog = Join-Path $LogDir ("networklab-" + $App.Name.ToLowerInvariant() + ".out.log")
+>>     $ErrLog = Join-Path $LogDir ("networklab-" + $App.Name.ToLowerInvariant() + ".err.log")
+>>
+>>     if ($App.Kind -eq "infra") {
+>>         $ServerFile = Join-Path $App.Directory "server.py"
+>>         if (-not (Test-Path -LiteralPath $ServerFile -PathType Leaf)) {
+>>             Write-WatchLog "ERROR $($App.Name): server.py ontbreekt."
+>>             return
+>>         }
+>>         $Arguments = '"' + $ServerFile + '"'
+>>     } else {
+>>         $Arguments = '-m http.server ' + $App.Port +
+>>             ' --bind 127.0.0.1 --directory "' + $App.Directory + '"'
+>>     }
+>>
+>>     try {
+>>         $null = Start-Process -FilePath $Python -ArgumentList $Arguments `
+>>             -WorkingDirectory $ProjectRoot -WindowStyle Hidden `
+>>             -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog -PassThru
+>>         Start-Sleep -Seconds 3
+>>
+>>         if (Test-App $App.Url) {
+>>             Write-WatchLog "RECOVERED $($App.Name): HTTP 200 op poort $($App.Port)."
+>>         } else {
+>>             Write-WatchLog "ERROR $($App.Name): gestart, maar nog geen HTTP 200. Controleer $ErrLog"
+>>         }
+>>     } catch {
+>>         Write-WatchLog "ERROR $($App.Name): starten mislukt: $($_.Exception.Message)"
+>>     }
+>> }
+>>
+>> Write-WatchLog "WATCHDOG gestart. Controle-interval: $IntervalSeconds seconden."
+>> Write-WatchLog "Projectmap: $ProjectRoot"
+>>
+>> while ($true) {
+>>     foreach ($App in $Apps) {
+>>         if (Test-App $App.Url) {
+>>             Write-Host "$(Get-Date -Format 'HH:mm:ss') OK $($App.Name)"
+>>         } else {
+>>             Write-WatchLog "DOWN $($App.Name): geen HTTP 200; herstelpoging."
+>>             Start-App $App
+>>         }
+>>     }
+>>
+>>     Start-Sleep -Seconds $IntervalSeconds
+>> }
+>> '@ | Set-Content -LiteralPath $scriptPath -Encoding UTF8
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab> Write-Host "Bewakingsscript aangemaakt: $scriptPath" -ForegroundColor Green
+Bewakingsscript aangemaakt: C:\Users\Daan Salden\Downloads\NetworkLab\powershell\diagnostics\Watch-NetworkLabWebApps.ps1
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
+PS C:\Users\Daan Salden\Downloads\NetworkLab>
