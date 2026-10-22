@@ -10,3 +10,6 @@ logs/*.log
 .venv/
 venv/
 .env
+
+# Local runtime evidence; review and sanitize before sharing
+evidence/runtime/

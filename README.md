@@ -18,7 +18,15 @@ Voer vanuit de repositoryroot uit:
 
     .\Run-NetworkLab-WebApps.ps1
 
-Open daarna de drie lokale URL's hierboven. De launcher controleert eerst of de poorten vrij zijn. Logs worden in logs/ geplaatst.
+Open daarna de drie lokale URL's hierboven. De launcher controleert eerst of de poorten vrij zijn. Logs worden in `logs/` geplaatst.
+
+### Runtime-test en bewijs
+
+Laat de webapps draaien en voer vanuit de repositoryroot uit:
+
+    .\powershell\diagnostics\Test-NetworkLabWebApps.ps1
+
+De test controleert de drie UI's en de twee Infrastructure API-routes. Verwacht vijf geslaagde controles. Een tijdgestempeld JSON-rapport wordt lokaal opgeslagen in `evidence/runtime/`; die map is uitgesloten van Git. Zie [`docs/webapps-validation.html`](docs/webapps-validation.html) voor de acceptatiecriteria en uitleg.
 
 ## Architectuur
 

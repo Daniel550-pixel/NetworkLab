@@ -35,6 +35,21 @@ class WebAppSmokeTests(unittest.TestCase):
         self.assertNotIn("subprocess.", server)
         self.assertNotIn("os.system(", server)
 
+    def test_runtime_health_check_covers_all_apps_and_api_routes(self):
+        script = (ROOT / "powershell" / "diagnostics" / "Test-NetworkLabWebApps.ps1").read_text(encoding="utf-8")
+        for url in (
+            "http://127.0.0.1:8510/",
+            "http://127.0.0.1:8511/",
+            "http://127.0.0.1:8512/",
+            "http://127.0.0.1:8512/api/health",
+            "http://127.0.0.1:8512/api/status",
+        ):
+            with self.subTest(url=url):
+                self.assertIn(url, script)
+        self.assertIn("-UseBasicParsing", script)
+        self.assertIn("ConvertTo-Json", script)
+        self.assertIn('exit 1', script)
+
     def test_frontends_do_not_depend_on_external_cdn_assets(self):
         for relative in (
             "apps/client/index.html",
