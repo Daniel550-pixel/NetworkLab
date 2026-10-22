@@ -53,6 +53,14 @@ class InfrastructureApiTests(unittest.TestCase):
                 _, _, headers = self.get_json("/api/health", origin)
                 self.assertEqual(headers.get("Access-Control-Allow-Origin"), origin)
 
+    def test_disallowed_origin_is_not_reflected(self):
+        _, _, headers = self.get_json("/api/health", "https://attacker.example")
+        self.assertIsNone(headers.get("Access-Control-Allow-Origin"))
+
+    def test_api_responses_are_not_cached(self):
+        _, _, headers = self.get_json("/api/health")
+        self.assertEqual(headers.get("Cache-Control"), "no-store")
+
     def test_unknown_route_returns_404(self):
         with self.assertRaises(HTTPError) as raised:
             urlopen(self.base + "/does-not-exist", timeout=3)
