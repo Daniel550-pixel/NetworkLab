@@ -8,7 +8,7 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$OutputPath = (Join-Path (Split-Path $PSScriptRoot -Parent | Split-Path -Parent | Split-Path -Parent) 'evidence\networklab-netwerkdiagram.png'),
+    [string]$OutputPath = (Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'evidence\networklab-netwerkdiagram.png'),
     [switch]$Open
 )
 
@@ -34,6 +34,7 @@ $Green = [System.Drawing.Color]::FromArgb(220, 252, 231)
 $GreenLine = [System.Drawing.Color]::FromArgb(21, 128, 61)
 $White = [System.Drawing.Color]::White
 $Grid = [System.Drawing.Color]::FromArgb(231, 237, 244)
+$GridPen = New-Object System.Drawing.Pen($Grid, 1)
 $Amber = [System.Drawing.Color]::FromArgb(180, 83, 9)
 $Font = New-Object System.Drawing.Font('Segoe UI', 16, [System.Drawing.FontStyle]::Regular)
 $Bold = New-Object System.Drawing.Font('Segoe UI', 19, [System.Drawing.FontStyle]::Bold)
@@ -85,10 +86,10 @@ function Draw-Section {
 try {
     # Pixelgrid op vaste intervallen
     for ($X = 0; $X -lt $Width; $X += 20) {
-        $Graphics.DrawLine((New-Object System.Drawing.Pen($Grid, 1)), $X, 0, $X, $Height)
+        $Graphics.DrawLine($GridPen, $X, 0, $X, $Height)
     }
     for ($Y = 0; $Y -lt $Height; $Y += 20) {
-        $Graphics.DrawLine((New-Object System.Drawing.Pen($Grid, 1)), 0, $Y, $Width, $Y)
+        $Graphics.DrawLine($GridPen, 0, $Y, $Width, $Y)
     }
 
     $Graphics.FillRectangle((New-Object System.Drawing.SolidBrush($Ink)), 40, 28, 1520, 92)
@@ -144,7 +145,7 @@ try {
 finally {
     $Graphics.Dispose()
     $Bitmap.Dispose()
-    foreach ($Item in @($Font,$Bold,$Small,$HeaderFont,$BrushInk,$BrushMuted,$BrushWhite,$BrushBlue,$BrushGreen,$PenBlue,$PenGreen,$PenGray,$PenAmber)) {
+    foreach ($Item in @($Font,$Bold,$Small,$HeaderFont,$BrushInk,$BrushMuted,$BrushWhite,$BrushBlue,$BrushGreen,$PenBlue,$PenGreen,$PenGray,$PenAmber,$GridPen)) {
         if ($null -ne $Item) { $Item.Dispose() }
     }
 }
