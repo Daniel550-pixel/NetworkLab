@@ -50,6 +50,17 @@ class WebAppSmokeTests(unittest.TestCase):
         self.assertIn("ConvertTo-Json", script)
         self.assertIn('exit 1', script)
 
+    def test_recovery_scripts_do_not_depend_on_one_users_absolute_path(self):
+        for relative in (
+            "powershell/diagnostics/Ensure-NetworkLabWebApps.ps1",
+            "powershell/diagnostics/Run-NetworkLabAutoRecovery.ps1",
+            "powershell/diagnostics/Watch-NetworkLabAutoRecovery.ps1",
+        ):
+            content = (ROOT / relative).read_text(encoding="utf-8-sig")
+            with self.subTest(path=relative):
+                self.assertNotIn("C:\\Users\\", content)
+                self.assertIn("Split-Path -Parent", content)
+
     def test_frontends_do_not_depend_on_external_cdn_assets(self):
         for relative in (
             "apps/client/index.html",
