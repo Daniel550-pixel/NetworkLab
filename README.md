@@ -74,3 +74,9 @@ De bestaande documentatie rond B1-K2-W1 en B1-K2-W2 kan worden aangepast aan de 
 
 - De PNG wordt standaard opgeslagen als `evidence/networklab-netwerkdiagram.png`. Het script tekent vaste pixelcoördinaten met `System.Drawing`; de HTML-versie bevat dezelfde architectuur als schaalbare SVG.
 - Het diagram is documentatie. Voor werkelijk uitgevoerde tests blijft het tijdgestempelde JSON-bestand in `evidence/runtime/` het runtime-bewijs.
+
+<!-- WIFI-PROFILE-MANAGER-LINK -->
+## WiFi Profile Manager
+Aanvullende Windows-wifi-profieltool:
+[Integratiedocumentatie](documentatie/WIFI-PROFILE-MANAGER-INTEGRATIE.md)
+<!-- /WIFI-PROFILE-MANAGER-LINK -->
