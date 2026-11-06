@@ -101,6 +101,12 @@ class WifiProfileManager(tk.Tk):
             wraplength=850,
         ).pack(anchor="w", pady=(3, 12))
 
+        ttk.Button(
+            outer,
+            text="NetworkLab-webapps",
+            command=self.open_networklab_status,
+        ).pack(anchor="w", pady=(0, 10))
+
         main = ttk.Panedwindow(outer, orient="horizontal")
         main.pack(fill="both", expand=True)
 
@@ -141,6 +147,16 @@ class WifiProfileManager(tk.Tk):
                  "en slaat geen wachtwoorden op.",
             wraplength=850,
         ).pack(anchor="w", pady=(8, 0))
+
+    def open_networklab_status(self) -> None:
+        try:
+            from networklab_status import open_networklab_status_window
+            open_networklab_status_window(self)
+        except Exception as exc:
+            messagebox.showerror(
+                APP_TITLE,
+                f"NetworkLab-statusvenster kon niet worden geopend:\n{exc}"
+            )
 
     def _set_details(self, text: str, warning: bool = False) -> None:
         self.details.configure(state="normal")
@@ -276,15 +292,6 @@ class WifiProfileManager(tk.Tk):
 if __name__ == "__main__":
     try:
         app = WifiProfileManager()
-        # NetworkLab-statusvenster geïntegreerd
-        from networklab_status import open_networklab_status_window
-        import tkinter as _networklab_tk
-        _networklab_status_button = _networklab_tk.Button(
-            app,
-            text='NetworkLab-webapps',
-            command=lambda: open_networklab_status_window(app)
-        )
-        _networklab_status_button.pack(padx=8, pady=6)
         app.mainloop()
     except Exception as exc:
         messagebox.showerror(APP_TITLE, f"De toepassing kon niet starten:\n{exc}")
