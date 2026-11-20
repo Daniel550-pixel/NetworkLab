@@ -26,3 +26,15 @@ Deze resultaten zijn gebaseerd op de handmatige controle die tijdens het project
 
 - apps/wifi-profile-manager/wifi_profile_manager.py
 - apps/wifi-profile-manager/networklab_status.py
+
+## Aanvullende GUI-controle — 2026-11-20
+
+De gebruiker heeft bevestigd dat alle drie webapps zijn gestart en dat de start-/navigatieknoppen in de GUI zichtbaar en bruikbaar zijn.
+
+| Controle | Resultaat | Bewijstype |
+|---|---|---|
+| Client, Management en Infrastructure gestart | Geslaagd volgens gebruikersmelding | Handmatige gebruikersbevestiging |
+| GUI-knoppen zichtbaar | Geslaagd volgens gebruikersmelding | Handmatige gebruikersbevestiging |
+| GUI-knoppen bruikbaar | Geslaagd volgens gebruikersmelding | Handmatige gebruikersbevestiging |
+
+**Bewijsbeperking:** voor deze aanvullende controle is nog geen nieuwe schermafbeelding of actuele HTTP-testuitvoer in de repository opgenomen. Voeg screenshots en een actuele vijfpuntstest toe voordat dit als volledig visueel/runtime-bewijs wordt ingeleverd. De huidige bevestiging wordt niet voorgesteld als onafhankelijke meting.
