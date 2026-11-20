@@ -61,6 +61,36 @@ class WebAppSmokeTests(unittest.TestCase):
                 self.assertNotIn("C:\\Users\\", content)
                 self.assertIn("Split-Path -Parent", content)
 
+    def test_infrastructure_ui_links_back_to_client_and_management(self):
+        page = (ROOT / "apps" / "infra" / "index.html").read_text(encoding="utf-8")
+        for url in (
+            "http://127.0.0.1:8510/",
+            "http://127.0.0.1:8511/",
+            "/api/health",
+            "/api/status",
+        ):
+            with self.subTest(url=url):
+                self.assertIn(url, page)
+
+    def test_wifi_profile_manager_exposes_networklab_status_action(self):
+        page = (ROOT / "apps" / "wifi-profile-manager" / "wifi_profile_manager.py").read_text(encoding="utf-8")
+        self.assertIn('text="NetworkLab-webapps"', page)
+        self.assertIn("command=self.open_networklab_status", page)
+        self.assertIn("def open_networklab_status(self)", page)
+        self.assertIn("open_networklab_status_window(self)", page)
+
+    def test_networklab_status_window_has_all_three_open_actions(self):
+        page = (ROOT / "apps" / "wifi-profile-manager" / "networklab_status.py").read_text(encoding="utf-8-sig")
+        for url in (
+            "http://127.0.0.1:8510",
+            "http://127.0.0.1:8511",
+            "http://127.0.0.1:8512",
+        ):
+            with self.subTest(url=url):
+                self.assertIn(url, page)
+        self.assertIn("Controleer verbindingen", page)
+        self.assertIn("threading.Thread", page)
+
     def test_frontends_do_not_depend_on_external_cdn_assets(self):
         for relative in (
             "apps/client/index.html",
