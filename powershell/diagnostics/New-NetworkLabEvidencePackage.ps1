@@ -36,8 +36,9 @@ $RuntimeScript = Join-Path $ProjectRoot "powershell\diagnostics\Test-NetworkLabW
 $PowerShellExe = Join-Path $PSHOME "powershell.exe"
 if (-not (Test-Path -LiteralPath $PowerShellExe)) {$PowerShellExe=(Get-Command powershell.exe -ErrorAction Stop).Source}
 $RuntimeLog = Join-Path $OutputDirectory "webapps-runtime-console.txt"
+$RuntimeErrorLog = Join-Path $OutputDirectory "webapps-runtime-error.txt"
 $Arguments = "-NoProfile -ExecutionPolicy Bypass -File " + [char]34 + $RuntimeScript + [char]34 + " -OutputPath " + [char]34 + $RuntimeReport + [char]34
-$RuntimeProcess = Start-Process -FilePath $PowerShellExe -ArgumentList $Arguments -Wait -PassThru -NoNewWindow -RedirectStandardOutput $RuntimeLog -RedirectStandardError $RuntimeLog
+$RuntimeProcess = Start-Process -FilePath $PowerShellExe -ArgumentList $Arguments -Wait -PassThru -NoNewWindow -RedirectStandardOutput $RuntimeLog -RedirectStandardError $RuntimeErrorLog
 if ($RuntimeProcess.ExitCode -eq 0 -and (Test-Path -LiteralPath $RuntimeReport)) {
     Add-Check "Five-point HTTP validation" "OK" "All five HTTP/API checks passed."
 } else {
