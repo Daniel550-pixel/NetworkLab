@@ -28,6 +28,12 @@ Laat de webapps draaien en voer vanuit de repositoryroot uit:
 
 De test controleert de drie UI's en de twee Infrastructure API-routes. Verwacht vijf geslaagde controles. Een tijdgestempeld JSON-rapport wordt lokaal opgeslagen in `evidence/runtime/`; die map is uitgesloten van Git. Zie [`docs/webapps-validation.html`](docs/webapps-validation.html) voor de acceptatiecriteria en uitleg.
 
+Maak daarna een uitgebreider lokaal bewijspakket (runtime-checks, Python-tests, listeners, Git-status en SHA-256-manifest):
+
+    .\powershell\diagnostics\New-NetworkLabEvidencePackage.ps1
+
+Het pakket komt in `evidence/runtime/evidence-package-<tijdstempel>`. Voeg screenshots handmatig toe volgens `MANUAL-CAPTURE-CHECKLIST.md`; het script verzint of simuleert geen GUI-bewijs.
+
 ## Architectuur
 
 - apps/client/: zelfstandige statische Client UI.
