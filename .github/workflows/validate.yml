@@ -1,8 +1,9 @@
 name: NetworkLab Validation
 
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
+    branches: ['**']
   pull_request:
     branches: [main]
 
@@ -15,7 +16,9 @@ jobs:
         with:
           python-version: '3.x'
       - name: Compile Python modules
-        run: python -m compileall -q python
+        run: python -m compileall -q python apps/infra tests
+      - name: Test Infrastructure API
+        run: python -m unittest discover -s tests -p "test_*.py" -v
       - name: Run monitoring runner
         run: python python/monitoring/run_monitor.py
       - name: Run report generator
@@ -29,7 +32,7 @@ jobs:
         shell: pwsh
         run: |
           $errors = @()
-          Get-ChildItem -Path powershell,tests -Filter *.ps1 -Recurse | ForEach-Object {
+          Get-ChildItem -Path . -Filter *.ps1 -Recurse | Where-Object { $_.FullName -notmatch '[\\/](\.git|\.venv|node_modules)[\\/]' } | ForEach-Object {
             $tokens = $null
             $parseErrors = $null
             [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$parseErrors) | Out-Null

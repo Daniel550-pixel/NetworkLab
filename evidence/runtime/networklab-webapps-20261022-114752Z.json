@@ -1,0 +1,53 @@
+﻿{
+    "Project":  "NetworkLab",
+    "GeneratedAtUtc":  "2026-10-22T11:47:52.9693778Z",
+    "Scope":  "Local read-only HTTP reachability; no configuration changes",
+    "Summary":  {
+                    "Total":  5,
+                    "Passed":  5,
+                    "Failed":  0,
+                    "Result":  "PASS"
+                },
+    "Checks":  [
+                   {
+                       "Name":  "Client UI",
+                       "Url":  "http://127.0.0.1:8510/",
+                       "HttpStatus":  200,
+                       "Result":  "OK",
+                       "DurationMs":  73,
+                       "Detail":  "HTTP 200"
+                   },
+                   {
+                       "Name":  "Management UI",
+                       "Url":  "http://127.0.0.1:8511/",
+                       "HttpStatus":  200,
+                       "Result":  "OK",
+                       "DurationMs":  54,
+                       "Detail":  "HTTP 200"
+                   },
+                   {
+                       "Name":  "Infrastructure UI",
+                       "Url":  "http://127.0.0.1:8512/",
+                       "HttpStatus":  200,
+                       "Result":  "OK",
+                       "DurationMs":  45,
+                       "Detail":  "HTTP 200"
+                   },
+                   {
+                       "Name":  "Infrastructure health API",
+                       "Url":  "http://127.0.0.1:8512/api/health",
+                       "HttpStatus":  200,
+                       "Result":  "OK",
+                       "DurationMs":  34,
+                       "Detail":  "HTTP 200; API status=ok"
+                   },
+                   {
+                       "Name":  "Infrastructure status API",
+                       "Url":  "http://127.0.0.1:8512/api/status",
+                       "HttpStatus":  200,
+                       "Result":  "OK",
+                       "DurationMs":  34,
+                       "Detail":  "HTTP 200; API status=ok"
+                   }
+               ]
+}

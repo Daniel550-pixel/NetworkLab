@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>NetworkLab — Pixel-netwerktekening</title>
+<style>
+:root{color-scheme:light;--ink:#172b4d;--muted:#52647b;--line:#8aa0b8;--bg:#f3f7fb;--panel:#fff;--blue:#dbeafe;--blue-line:#2563eb;--green:#dcfce7;--green-line:#15803d;--amber:#fef3c7;--amber-line:#b45309}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1440px;margin:0 auto;padding:28px 20px 48px}header{margin-bottom:20px}h1{margin:0 0 8px;font-size:clamp(1.6rem,3vw,2.4rem)}p{margin:6px 0;color:var(--muted)}.meta{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}.pill{display:inline-block;border:1px solid #cbd5e1;border-radius:4px;padding:5px 10px;background:white;font-size:.9rem}.diagram{background:var(--panel);border:1px solid #d3deea;border-radius:8px;padding:12px;box-shadow:0 8px 24px #172b4d0d;overflow-x:auto}.diagram svg{display:block;width:100%;min-width:900px;height:auto;image-rendering:pixelated}.legend{display:flex;gap:18px;flex-wrap:wrap;margin:16px 4px;color:var(--muted);font-size:.92rem}.swatch{display:inline-block;width:13px;height:13px;border:1px solid;margin-right:6px;vertical-align:-2px}.section{background:white;border:1px solid #d3deea;border-radius:8px;margin-top:18px;padding:18px}.section h2{margin:0 0 10px;font-size:1.2rem}.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.check{border:1px solid #cfe3d2;background:#f3fcf5;padding:12px;border-radius:5px}.check strong{display:block}.status{color:#166534;font-weight:700}.small{font-size:.9rem}code{overflow-wrap:anywhere}footer{margin-top:18px;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>NetworkLab — pixel-netwerktekening</h1>
+<p>Lokale webapps, automatische herstelbewaking en runtime-testbewijs op één Windows-laptop.</p>
+<div class="meta"><span class="pill">Host: Windows</span><span class="pill">Bind-adres: 127.0.0.1</span><span class="pill">Geen VM's vereist</span><span class="pill">Diagram: vaste pixelcoördinaten</span></div>
+</header>
+<div class="diagram" role="img" aria-label="Netwerkdiagram van NetworkLab met drie webapps, twee API-routes en de automatische watchdog en supervisor.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1050" role="img" aria-labelledby="svgtitle svgdesc" shape-rendering="crispEdges">
+<title id="svgtitle">NetworkLab architectuur en automatische herstelbewaking</title>
+<desc id="svgdesc">De browser gebruikt drie lokale webapps op poorten 8510, 8511 en 8512. De infrastructuur-app biedt health- en status-API's. Taakplanner start de watchdog bij aanmelden en periodiek; de watchdog bewaakt de supervisor en de supervisor laat de herstelworker de apps controleren.</desc>
+<defs>
+<pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#e7edf4" stroke-width="1"/></pattern>
+<marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#64748b"/></marker>
+</defs>
+<rect width="1600" height="1050" fill="#f8fafc"/><rect width="1600" height="1050" fill="url(#grid)"/>
+<rect x="40" y="28" width="1520" height="92" fill="#172b4d" stroke="#0f1f38" stroke-width="3"/>
+<text x="72" y="67" fill="#fff" font-size="30" font-weight="700">NETWORKLAB</text>
+<text x="72" y="96" fill="#dbeafe" font-size="17">Lokale architectuur • Windows PowerShell • runtime-bewijs</text>
+<rect x="55" y="150" width="1490" height="145" fill="#fff" stroke="#94a3b8" stroke-width="2"/>
+<text x="78" y="181" fill="#52647b" font-size="17" font-weight="700">GEBRUIK EN HOST</text>
+<rect x="82" y="199" width="270" height="68" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+<text x="217" y="227" text-anchor="middle" fill="#172b4d" font-size="19" font-weight="700">Gebruiker / browser</text><text x="217" y="250" text-anchor="middle" fill="#334155" font-size="15">Lokale webinterface</text>
+<path d="M352 233H410" fill="none" stroke="#64748b" stroke-width="4" marker-end="url(#arrow)"/>
+<rect x="420" y="199" width="1060" height="68" fill="#e2e8f0" stroke="#475569" stroke-width="3"/>
+<text x="950" y="227" text-anchor="middle" fill="#172b4d" font-size="21" font-weight="700">Windows-laptop • NetworkLab</text><text x="950" y="250" text-anchor="middle" fill="#334155" font-size="15">Alle services binden aan 127.0.0.1 — niet publiek op het LAN</text>
+<rect x="55" y="320" width="720" height="390" fill="#fff" stroke="#15803d" stroke-width="3"/>
+<text x="80" y="354" fill="#166534" font-size="22" font-weight="700">WEBAPPS EN API'S</text>
+<rect x="80" y="382" width="200" height="100" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="180" y="413" text-anchor="middle" fill="#14532d" font-size="18" font-weight="700">Client UI</text><text x="180" y="442" text-anchor="middle" fill="#14532d" font-size="16">Poort 8510</text><text x="180" y="465" text-anchor="middle" fill="#166534" font-size="14">HTTP 200 getest</text>
+<rect x="310" y="382" width="200" height="100" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="410" y="413" text-anchor="middle" fill="#14532d" font-size="18" font-weight="700">Management UI</text><text x="410" y="442" text-anchor="middle" fill="#14532d" font-size="16">Poort 8511</text><text x="410" y="465" text-anchor="middle" fill="#166534" font-size="14">HTTP 200 getest</text>
+<rect x="540" y="382" width="205" height="100" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="642" y="413" text-anchor="middle" fill="#14532d" font-size="18" font-weight="700">Infrastructure UI</text><text x="642" y="442" text-anchor="middle" fill="#14532d" font-size="16">Poort 8512</text><text x="642" y="465" text-anchor="middle" fill="#166534" font-size="14">HTTP 200 getest</text>
+<path d="M642 482V520" fill="none" stroke="#64748b" stroke-width="4" marker-end="url(#arrow)"/>
+<rect x="100" y="535" width="285" height="95" fill="#f0fdf4" stroke="#15803d" stroke-width="2"/>
+<text x="242" y="566" text-anchor="middle" fill="#14532d" font-size="17" font-weight="700">Health API</text><text x="242" y="593" text-anchor="middle" fill="#14532d" font-size="15">GET /api/health • HTTP 200</text>
+<rect x="405" y="535" width="340" height="95" fill="#f0fdf4" stroke="#15803d" stroke-width="2"/>
+<text x="575" y="566" text-anchor="middle" fill="#14532d" font-size="17" font-weight="700">Status API</text><text x="575" y="593" text-anchor="middle" fill="#14532d" font-size="15">GET /api/status • HTTP 200</text>
+<text x="80" y="674" fill="#52647b" font-size="15">Client en MGMT kunnen INFRA via HTTP om status vragen.</text>
+<rect x="805" y="320" width="740" height="390" fill="#fff" stroke="#2563eb" stroke-width="3"/>
+<text x="830" y="354" fill="#1d4ed8" font-size="22" font-weight="700">AUTOMATISCHE BESCHIKBAARHEID</text>
+<rect x="830" y="382" width="300" height="95" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+<text x="980" y="414" text-anchor="middle" fill="#1e3a8a" font-size="18" font-weight="700">Windows Taakplanner</text><text x="980" y="441" text-anchor="middle" fill="#1e40af" font-size="15">Bij aanmelden + elke minuut</text><text x="980" y="461" text-anchor="middle" fill="#1e40af" font-size="13">NetworkLab AutoRecovery</text>
+<path d="M1130 430H1170" fill="none" stroke="#64748b" stroke-width="4" marker-end="url(#arrow)"/>
+<rect x="1180" y="382" width="330" height="95" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+<text x="1345" y="414" text-anchor="middle" fill="#1e3a8a" font-size="18" font-weight="700">Watchdog</text><text x="1345" y="441" text-anchor="middle" fill="#1e40af" font-size="14">Watch-NetworkLabAutoRecovery.ps1</text><text x="1345" y="461" text-anchor="middle" fill="#1e40af" font-size="13">Start supervisor indien afwezig</text>
+<path d="M1345 477V512H980V530" fill="none" stroke="#64748b" stroke-width="4" marker-end="url(#arrow)"/>
+<rect x="830" y="540" width="300" height="100" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+<text x="980" y="573" text-anchor="middle" fill="#1e3a8a" font-size="18" font-weight="700">Supervisor</text><text x="980" y="599" text-anchor="middle" fill="#1e40af" font-size="14">Run-NetworkLabAutoRecovery.ps1</text><text x="980" y="620" text-anchor="middle" fill="#1e40af" font-size="14">Herstelcyclus: 60 seconden</text>
+<path d="M1130 590H1170" fill="none" stroke="#64748b" stroke-width="4" marker-end="url(#arrow)"/>
+<rect x="1180" y="540" width="330" height="100" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+<text x="1345" y="573" text-anchor="middle" fill="#1e3a8a" font-size="18" font-weight="700">Herstelworker</text><text x="1345" y="599" text-anchor="middle" fill="#1e40af" font-size="14">Ensure-NetworkLabWebApps.ps1</text><text x="1345" y="620" text-anchor="middle" fill="#1e40af" font-size="14">Controleert en herstelt services</text>
+<path d="M1345 640V683H415V711" fill="none" stroke="#b45309" stroke-width="4" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<text x="875" y="674" text-anchor="middle" fill="#92400e" font-size="14" font-weight="700">Controle-/herstelpad naar de drie webapps</text>
+<rect x="55" y="750" width="1490" height="250" fill="#fff" stroke="#64748b" stroke-width="3"/>
+<text x="82" y="790" fill="#172b4d" font-size="23" font-weight="700">TESTBEWIJS — LAATSTE GERAPPORTEERDE RUN</text>
+<rect x="85" y="818" width="250" height="115" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="210" y="860" text-anchor="middle" fill="#166534" font-size="34" font-weight="700">5 / 5</text><text x="210" y="892" text-anchor="middle" fill="#166534" font-size="18" font-weight="700">Geslaagd</text><text x="210" y="916" text-anchor="middle" fill="#166534" font-size="14">0 mislukt</text>
+<text x="375" y="835" fill="#172b4d" font-size="17" font-weight="700">Runtime-rapport (lokaal)</text>
+<text x="375" y="865" fill="#334155" font-size="15">evidence/runtime/networklab-webapps-20261022-090657Z.json</text>
+<text x="375" y="905" fill="#172b4d" font-size="17" font-weight="700">Bewakingslog</text>
+<text x="375" y="935" fill="#334155" font-size="15">logs/networklab-autorecovery.log</text>
+<text x="82" y="975" fill="#52647b" font-size="15">Rapportstatus is afkomstig uit de aangeleverde PowerShell-uitvoer; dit diagram zelf voert geen tests uit.</text>
+</svg>
+</div>
+<div class="legend"><span><i class="swatch" style="background:#dcfce7;border-color:#15803d"></i>Geteste webapps/API's</span><span><i class="swatch" style="background:#dbeafe;border-color:#2563eb"></i>Automatische bewaking</span><span><i class="swatch" style="background:#fef3c7;border-color:#b45309"></i>Herstel-/controlepad</span></div>
+<section class="section">
+<h2>Runtime-testresultaten</h2>
+<div class="checks">
+<div class="check"><strong>Client UI — 8510</strong><span class="status">HTTP 200 · OK</span></div>
+<div class="check"><strong>Management UI — 8511</strong><span class="status">HTTP 200 · OK</span></div>
+<div class="check"><strong>Infrastructure UI — 8512</strong><span class="status">HTTP 200 · OK</span></div>
+<div class="check"><strong>Infrastructure health API</strong><span class="status">HTTP 200 · API status=ok</span></div>
+<div class="check"><strong>Infrastructure status API</strong><span class="status">HTTP 200 · API status=ok</span></div>
+</div>
+<p class="small">Bronbestand: <code>evidence/runtime/networklab-webapps-20261022-090657Z.json</code>. De runtime-map is lokaal bewijs en wordt niet noodzakelijk naar Git gepusht.</p>
+</section>
+<section class="section">
+<h2>Netwerk- en veiligheidsgrenzen</h2>
+<ul>
+<li>Alle webapps draaien lokaal op <code>127.0.0.1</code>.</li>
+<li>Client UI: poort <code>8510</code>; Management UI: <code>8511</code>; Infrastructure UI/API: <code>8512</code>.</li>
+<li>Geen virtuele machines of externe frontend-CDN's nodig.</li>
+<li>De tekening toont de bedoelde architectuur; alleen de genoemde PowerShell-testuitvoer bewijst de bereikbaarheid op het moment van testen.</li>
+</ul>
+</section>
+<footer>NetworkLab · Architectuur-bewijs · HTML/SVG met vaste pixelcoördinaten · Houd runtime-bewijs en ontwerpdocumentatie van elkaar gescheiden.</footer>
+</main>
+</body>
+</html>

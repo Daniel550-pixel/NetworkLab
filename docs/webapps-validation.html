@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NetworkLab — Webapp-validatie</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6fa;color:#172033;font:16px/1.65 system-ui,sans-serif}
+header{background:#101c32;color:#fff;padding:18px max(22px,calc((100vw - 980px)/2))}
+main{max-width:980px;margin:28px auto;padding:clamp(20px,4vw,42px);background:#fff;border:1px solid #dce2eb;border-radius:14px}
+h1{font-size:2rem}h2{margin-top:2em;border-bottom:1px solid #dce2eb;padding-bottom:.3em}
+a{color:#185abd}code,pre{font-family:Consolas,monospace}code{background:#eef2f8;padding:.12em .3em;border-radius:4px}
+pre{background:#111827;color:#e5edf9;padding:16px;border-radius:9px;overflow:auto}
+table{width:100%;border-collapse:collapse}th,td{padding:9px;border:1px solid #dce2eb;text-align:left;vertical-align:top}th{background:#edf2f9}
+.note{padding:12px 15px;background:#eef5ff;border-left:4px solid #185abd}
+@media print{header{display:none}main{margin:0;border:0}}
+</style></head>
+<body><header><strong>NETWORKLAB · TESTDOCUMENTATIE</strong></header>
+<main>
+<h1>Webapp-validatie en runtime-bewijs</h1>
+<p>Dit document beschrijft de herhaalbare lokale controle van de drie NetworkLab-webapps en de Infrastructure API. De controle is alleen-lezen: er worden geen VM's gestart, geen netwerkadapters aangepast en geen hostconfiguraties gewijzigd.</p>
+<h2>Uitvoeren</h2>
+<p>Start eerst de webapps met <code>Run-NetworkLab-WebApps.ps1</code>. Open daarna een tweede PowerShell-venster in de repositoryroot en voer uit:</p>
+<pre><code>.\powershell\diagnostics\Test-NetworkLabWebApps.ps1</code></pre>
+<p>De test controleert de HTTP-respons van Client, Management en Infrastructure, plus <code>/api/health</code> en <code>/api/status</code>. Voor de API-routes wordt ook gecontroleerd of de JSON-status <code>ok</code> is.</p>
+<h2>Verwachte controles</h2>
+<table><thead><tr><th>Controle</th><th>Acceptatiecriterium</th></tr></thead><tbody>
+<tr><td>Client UI — poort 8510</td><td>HTTP 200</td></tr>
+<tr><td>Management UI — poort 8511</td><td>HTTP 200</td></tr>
+<tr><td>Infrastructure UI — poort 8512</td><td>HTTP 200</td></tr>
+<tr><td>Infrastructure <code>/api/health</code></td><td>HTTP 200 en JSON <code>status = ok</code></td></tr>
+<tr><td>Infrastructure <code>/api/status</code></td><td>HTTP 200 en JSON <code>status = ok</code></td></tr>
+</tbody></table>
+<h2>Bewijsbestand</h2>
+<p>De test maakt standaard een tijdgestempeld JSON-rapport in <code>evidence/runtime/</code>. Het rapport bevat UTC-tijd, URL's, HTTP-status, doorlooptijd, resultaat en een samenvatting. Deze map wordt lokaal gehouden en is uitgesloten van Git; voeg het rapport alleen handmatig toe als je het bewust hebt gecontroleerd en wilt delen.</p>
+<h2>Interpretatie</h2>
+<ul>
+<li><strong>PASS:</strong> alle vijf controles zijn geslaagd op het moment van uitvoeren.</li>
+<li><strong>FAIL:</strong> ten minste één controle is mislukt; bekijk de foutmelding en de app-logbestanden voordat je een conclusie trekt.</li>
+<li>Een lokale HTTP-test bewijst bereikbaarheid van de webapps, niet de installatie van VirtualBox-VM's of de volledige schoolcompetentie.</li>
+</ul>
+<div class="note">Bewaar ook screenshots van de browser en de PowerShell-uitvoer als visueel bewijs. Deel geen wachtwoorden, tokens of andere geheimen.</div>
+<p><a href="README.html">Terug naar de documentatie-index</a></p>
+</main></body></html>

@@ -5,8 +5,30 @@ __pycache__/
 
 # Local runtime logs
 logs/*.log
+*.log
 
-# Local environment
+# Local environment and secrets
 .venv/
 venv/
 .env
+.env.*
+!.env.example
+**/secrets/
+**/credentials.json
+**/id_rsa
+**/id_ed25519
+
+# Local runtime evidence; review and sanitize before sharing
+evidence/runtime/
+
+# Generated caches and build outputs
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+node_modules/
+.DS_Store
+Thumbs.db
