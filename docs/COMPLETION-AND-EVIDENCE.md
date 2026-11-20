@@ -1,6 +1,6 @@
 # NetworkLab — afrondings- en bewijschecklist
 
-Bijgewerkt: 22 oktober 2026. Dit document maakt onderscheid tussen repositorybewijs, uitgevoerde tests en bewijs dat nog op de Windows-laptop of in het School4-dossier moet worden vastgelegd.
+Bijgewerkt: 20 november 2026. Dit document maakt onderscheid tussen repositorybewijs, uitgevoerde tests en bewijs dat nog op de Windows-laptop of in het School4-dossier moet worden vastgelegd.
 
 ## 1. Gecontroleerde projectstatus
 
@@ -16,6 +16,28 @@ Bijgewerkt: 22 oktober 2026. Dit document maakt onderscheid tussen repositorybew
 | Schoolbeoordeling | Niet automatisch bewezen | De beoordelingscriteria van de opleiding moeten naast dit technische bewijs worden gelegd |
 
 Runtime-resultaten zijn momentopnamen. Bewaar het actuele JSON-rapport lokaal in `evidence/runtime/` en maak een screenshot van de testuitvoer voor het bewijsdossier.
+
+### Aanvullende handmatige GUI-controle — 20 november 2026
+
+De gebruiker heeft bevestigd dat alle drie webapps zijn gestart en dat de start-/navigatieknoppen in de GUI zichtbaar en bruikbaar zijn. Dit is gebruikersgerapporteerde handmatige verificatie; het is geen onafhankelijke runtime-meting en er is voor deze controle nog geen nieuw screenshot aan de repository toegevoegd.
+
+- [x] Drie webapps gestart volgens gebruikersmelding.
+- [x] GUI-knoppen zichtbaar volgens gebruikersmelding.
+- [x] GUI-knoppen bruikbaar volgens gebruikersmelding.
+- [ ] Actuele screenshots van de drie webapps en het WiFi Profile Manager-statusvenster toevoegen.
+- [ ] Actuele vijfpuntstest uitvoeren en het JSON-rapport bewaren.
+
+### Herhaalbaar bewijspakket
+
+Voer vanuit de repositoryroot in Windows PowerShell 5.1 uit:
+
+```powershell
+.\powershell\diagnostics\New-NetworkLabEvidencePackage.ps1
+```
+
+Het script verzamelt listener-PID's voor poorten 8510–8512, voert de vijf HTTP/API-controles uit, voert de Python-unittests en compileall uit, registreert de Git-branch/commit/status en maakt een SHA-256-manifest. Het maakt daarnaast een checklist voor screenshots en overige handmatige bewijsstukken. Het script wijzigt geen netwerkconfiguratie en stopt of start geen processen.
+
+De pakketmap wordt aangemaakt onder `evidence/runtime/evidence-package-<tijdstempel>`. Runtime-bewijs kan machine- of gebruikersinformatie bevatten; controleer en anonimiseer het voordat je het buiten je apparaat deelt.
 
 ## 2. B1-K2-W1 — installeren en configureren
 
@@ -58,8 +80,8 @@ In eerdere sessies is gemeld dat beide PowerShell-tests slaagden. De resterende 
 ## 6. Inlevercontrole
 
 - [ ] Officiële beoordelingscriteria/rubrics toegevoegd of vergeleken.
-- [ ] Screenshot van alle drie webapps.
-- [ ] Screenshot en JSON van 5/5 runtime-controles.
+- [ ] Screenshot van alle drie webapps (de gebruikersmelding van 20 november is nog geen screenshotbewijs).
+- [ ] Actuele screenshot en JSON van 5/5 runtime-controles.
 - [ ] Bewijs van gecontroleerde storing en herstel.
 - [ ] Bewijs van autostart na Windows-herstart.
 - [ ] Screenshots van B1-K3-W1 en B1-K3-W2 in de juiste inlevermap.
